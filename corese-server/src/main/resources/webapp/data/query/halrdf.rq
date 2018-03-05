@@ -1,0 +1,22 @@
+#
+# Dereference URI and return its graph
+#
+construct {
+    ?s ?p ?o
+}
+where {
+    bind (st:get(st:uri) as ?uri)
+    bind (kg:load(us:completehal(?uri)) as ?g)
+    graph ?g { 
+        ?s ?p ?o 
+    }
+}
+
+#
+# add /rdf for hal RDF resource URI
+#
+function us:completehal(?t) {
+    if (strends(?t, "rdf") || contains(?t, "#"), 
+        ?t, 
+        uri(concat(?t, if (strends(?t, "/"), "rdf", "/rdf"))))
+}
