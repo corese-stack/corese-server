@@ -1,0 +1,27 @@
+prefix o:   <http://dbpedia.org/ontology/>
+prefix cal: <http://ns.inria.fr/sparql-extension/calendar/>
+@bind kg:values
+construct  { 
+  ?x o:birthDate ?date ; rdfs:label ?l
+} 
+where {
+
+  bind (st:get(st:uri) as ?uri)
+  bind (st:set(st:year, xsd:integer(substr(?uri, strlen(st:) + 2))) as ?y)
+
+  bind (xsd:date(concat(?y, "-", 1, "-", 1,   "+02:00")) as ?start)
+  bind (xsd:date(concat(?y, "-", 12, "-", 31, "+02:00")) as ?end)
+
+  service <http://fr.dbpedia.org/sparql/> { 
+    select ?x ?d ?start ?end ?l where {  
+          values (?start ?end) { (UNDEF UNDEF) }
+          ?x o:birthDate ?d  
+          filter (datatype(?d) = xsd:date)         
+          filter (?d >= ?start && ?d <= ?end) 
+          ?x rdfs:label ?l
+          filter langMatches(lang(?l), "fr")
+    } 
+  }
+  
+  bind (cal:date(year(?d), month(?d), day(?d)) as ?date)
+}

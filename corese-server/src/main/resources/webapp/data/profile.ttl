@@ -1,0 +1,708 @@
+#
+# SWS profile: a construct query and a HTML transformation
+# st:param specify parameters passed to transformation 
+# accessible using st:get(st:lang)
+#
+
+prefix p:    <http://fr.dbpedia.org/property/>
+prefix o:    <http://dbpedia.org/ontology/>
+
+
+#[] owl:imports <profile2.ttl>
+
+
+
+
+
+st:dbpedia a st:Profile ;   
+  st:param [ 
+    st:lang "fr" ;
+    st:import st:dbpediaParam, st:mapParam  ;     
+  ] ;
+  st:workflow st:dbpediawf
+  .
+  
+  
+st:dbpediawf a sw:Workflow ;
+  sw:body ( 
+    <query/frdbpedia.rq> <query/frdbpediaclean.rq> 
+    [ a sw:Transformation ; sw:uri st:navlab ]
+  )
+.
+
+
+st:dbpediatest a st:Profile ;   
+  st:param [ 
+  st:export true;
+    st:lang "fr" ;
+    st:import st:dbpediaParam, st:mapParam  ;  
+    st:hyperlink true
+  ] ;
+  st:workflow st:dbpediatestwf
+  .
+  
+  
+st:dbpediatestwf a sw:Workflow ;
+  sw:body ( 
+    <query/frdbpedia.rq> <query/frdbpediaclean.rq> 
+    [ a sw:Transformation ; sw:uri st:hturtle ]
+  )
+.
+
+
+
+
+#http://localhost:8080/srv/template?profile=st:hal&uri=https://aurehal.archives-ouvertes.fr/structure/178918/rdf
+
+
+
+st:hal a st:Server ;
+st:service "hal" ;
+st:param [ 
+    # export context parameters to subtransformation (st:profile, etc.):
+    st:export true;
+    # transformation does not focus on uri but display whole graph:
+    st:focus false ;
+    # transformation generates HTML hypertext links:
+    st:hyperlink true ;
+    # generate number for each displayed resource
+    st:number true ;
+    st:lodprofile (
+        (<https://data.archives-ouvertes.fr/>    st:hal)
+        (<http://www.w3c.org/ns/org>             st:hal)    
+        (<http://fr.dbpedia.org/resource/>       st:dbpedia)
+        ("*"                                     st:lod)
+    ) 
+] ;
+st:workflow [
+    a sw:Workflow ;
+    sw:body (
+        <query/halquery.rq>
+        [ a sw:Transformation ; sw:uri st:hturtle ]
+    )
+]
+.
+
+
+
+st:hal3 a st:Server ;
+st:service "hal3" ;
+st:param [ 
+    # export context parameters to subtransformation (st:profile, etc.):
+    st:export true;
+    # transformation does not focus on uri but display whole graph:
+    st:focus false ;
+    # transformation generates HTML hypertext links:
+    st:hyperlink true ;
+    st:lodprofile (
+        (<https://aurehal.archives-ouvertes.fr/> st:hal)
+        (<https://data.archives-ouvertes.fr/> st:hal)
+        (<http://www.w3c.org/ns/org> st:hal)    
+        ("*" st:lod)
+    ) 
+] ;
+st:workflow [
+    a sw:Workflow ;
+    sw:body (
+        <query/halrdf.rq>
+        <query/halcomplete1.rq>
+        [ a sw:Transformation ; sw:uri st:hturtle ]
+    )
+]
+.
+
+#
+# Display SPARQL Results Format using W3C RDF graph format 
+# and hturtle with hyperlinks
+# To be used with query=...
+#
+st:halendpoint a st:Profile ;
+st:transform st:hturtle ;
+st:param [
+    st:hyperlink true ;
+    st:export true ;
+    st:param "verbatim" ;
+    st:lodprofile (
+        (<https://aurehal.archives-ouvertes.fr/> st:hal)
+        (<https://data.archives-ouvertes.fr/> st:hal)
+        (<http://www.w3c.org/ns/org> st:hal)    
+        ("*" st:lod)
+    ) 
+] .
+
+
+#
+# Display SPARQL Results Format using W3C RDF graph format 
+# and hturtle with hyperlinks
+# To be used with query=...
+#
+st:endpoint a st:Profile ;
+st:transform st:hturtle ;
+st:param [
+    st:hyperlink true ;
+    st:export true ;
+    st:param "verbatim" 
+] .
+
+
+
+
+st:hal2 a st:Server ;
+st:service "hal2" ;
+st:param [ 
+    st:focus false ;
+    st:export true ;
+    st:hyperlink true ;
+    st:lodprofile (
+        (<https://aurehal.archives-ouvertes.fr/> st:hal2)
+        (<http://www.w3c.org/ns/org> st:hal2)    
+        ("*" st:lod)
+    ) 
+] ;
+st:workflow [
+    a sw:Workflow ;
+    sw:body (
+        <query/halrdf.rq>
+        [ a sw:Transformation ; sw:uri st:hrdfxml ]
+    )
+]
+.
+
+
+
+st:geoloc a st:Profile ;
+st:workflow st:geoloc ;
+sw:body (
+    <query/geo.rq>
+    st:dbpediawf
+)
+.
+  
+st:hturtle a st:Profile ;
+st:workflow st:hturtleWF ;
+st:param [
+    st:hyperlink true ;
+    st:export true
+] .
+
+st:hturtleWF a sw:Workflow ; 
+sw:body ( 
+  [ a sw:Transformation ; sw:uri st:hturtle ] 
+)  . 
+
+st:turtle a st:Profile ;
+st:workflow st:turtleWF .
+
+st:turtleWF a sw:Workflow ; 
+sw:body ( 
+  [ a sw:Transformation ; sw:uri st:turtle ] 
+)  . 
+
+st:rdfxml a st:Profile ;
+st:workflow st:rdfxmlWF .
+
+st:rdfxmlWF a sw:Workflow ; 
+sw:body ( 
+  [ a sw:Transformation ; sw:uri st:rdfxml ] 
+)  . 
+
+st:json a st:Profile ;
+st:workflow st:jsonWF .
+
+st:jsonWF a sw:Workflow ; 
+sw:body ( 
+  [ a sw:Transformation ; sw:uri st:json ] 
+)  . 
+ 
+ 
+
+st:dbedit a st:Profile ;
+  st:param [
+    st:uri <http://ns.inria.fr/sparql-template/date/09/2015> ;
+    # st:plink() include in hyperlink: mode = dbo:Artist
+    st:include (("mode" st:mode))
+  ] ;
+#  st:transform "/home/corby/AAData/sttl/dbedit" .
+  st:transform st:dbedit .
+  
+
+  
+st:mapParam
+    st:param [ 
+        st:mapzoom 6 ;
+        st:mapsize "mapmedium" ;
+        st:mapicon1 "/img/bmarker.png" ;
+        st:mapicon2 "/img/smarker.png" 
+      ]  .
+  
+st:dbpediaParam 
+  st:param [
+  
+  st:person (
+          (p:dateDeNaissance 	"Naissance" 	"Birth")
+	  (p:dateDeDécès 	"Décès"		"Death")
+	  (o:predecessor 	"Prédécesseur"	"Predecessor")
+	  (o:successor          "Successeur"	"Successor")
+	  (o:father 		"Père"		"Father")
+	  (o:mother 		"Mère"		"Mother")
+	  (o:spouse 		"Conjoints"	"Spouse")
+	  (o:child 		"Enfants"	"Children")
+	  (o:residence          "Résidence"	"Residence")
+	  (rdfs:comment 	"Résumé"	"Abstract")
+	  (o:wikiPageRedirects  "Voir aussi"	"See Also")
+	  (o:wikipedia          "Wikipedia"	"Wikipedia")
+	  (o:dbpedia		"DBpedia"	"DBpedia"))
+  ] .
+  
+st:dbpediaen a st:Profile ;
+  st:query  <query/frdbpediaen.rq> ;
+  st:transform  st:navlab ;
+  st:param [
+    st:lang "en" ;
+  ] .
+  
+st:calendar a st:Profile ;
+  st:transform st:calendar ;
+  st:param [
+    st:debug true ;
+  ] .
+  
+ 
+st:calendar1 a st:Profile ;
+  st:query     <query/dbpediadate.rq> ;  
+  st:transform st:content ;
+   st:param [
+    st:uri   st:y2000 ;
+    st:title "Born calendar";
+  ] .
+
+st:calendar2 a st:Profile ;
+  st:query     <query/dbpediadate2.rq> ;
+  st:transform st:content ;
+  st:param [
+    st:uri    st:y2000 ;
+    st:title "Decease calendar";
+  ] .
+  
+st:calendar3 a st:Profile ;
+  st:query     <query/dbpediadate3.rq> ;
+  st:transform st:content ;  
+  st:param [
+    st:uri    st:y1944 ;
+    st:title "Event calendar";
+  ] .
+
+@prefix ct: <http://ns.inria.fr/sparql-template/content#>
+
+# calendar to query dbpedia for event given month-day for any year
+# show answer of such query
+st:gcalendar a st:Profile ;
+  st:query     <query/dbpediadatemd.rq> ;
+  st:transform ct:query ;  
+  st:param [
+    st:import st:cal ;
+    st:title "Born calendar";
+  ] .
+  
+# additional shared param
+st:cal 
+  st:param [
+    st:uri    st:d2000-02-29 ;
+].
+  
+  
+st:gcalendar2 a st:Profile ;
+  st:query     <query/dbpediadatemd2.rq> ;
+  st:transform ct:query ;  
+  st:param [
+    st:import st:cal ;
+    st:title "Decease calendar";
+  ] .
+  
+st:gcalendar3 a st:Profile ;
+  st:query  <query/dbpediadatemd3.rq> ;
+  st:transform ct:query ; 
+   st:param [
+    st:import st:cal ;
+    st:title "Born & Decease calendar";
+  ] .
+  
+
+st:dbpediasparql a st:Profile ;
+  st:query     <query/frdbpedia.rq> ;
+  st:transform st:sparql .
+
+
+st:dbpediacopy a st:Profile ;
+  st:query     <query/frdbpediacopy.rq> ;
+  st:transform st:navlab .
+  
+
+st:navlab a st:Profile ;
+ st:param [ 
+        st:mapzoom 7 ;
+        st:mapsize "maplarge" 
+ ] ;
+  st:workflow [ 
+    sw:body ( [ a sw:Transformation ; sw:uri st:navlab ] ) 
+  ] .
+
+st:web a st:Profile ;
+   st:transform st:web .
+
+st:weben a st:Profile ;
+   st:param [ st:lang 'en' ];
+   st:transform st:web .
+
+   # LDP on local dataset
+st:sparql a st:Profile ;
+    st:query <query/construct.rq> ;
+    st:variable "?r" ;
+    st:transform st:sparql .
+
+    # LDP on target URI
+st:std a st:Profile ;
+    st:query <query/construct.rq> ;
+    st:variable "?r" ;
+    st:transform st:sparql .
+
+st:rdfs a st:Profile ;
+    st:transform st:rdfs .
+    
+
+    
+# ******************************************************
+#
+#    Server Content
+#
+# ******************************************************
+ 
+#
+# Default server for the SPARQL endpoint, content loaded using -lp option
+# change name to st:default
+# User profile loaded using -pp option
+#
+st:default a st:Server ;
+st:param [ st:ldp <http://www.inria.fr/2015/humans-instances#> ] ;
+st:content st:humancontent
+.
+
+st:humancontent a sw:Workflow ; sw:body (
+    [ a sw:Load ; sw:path <tutorial/human1.rdf>  ; sw:name st:data1 ] 
+    [ a sw:Load ; sw:path <tutorial/human2.rdf>  ; sw:name st:data2 ] 
+    [ a sw:Load ; sw:path <tutorial/pragma.ttl>  ; sw:name st:pragma ]    
+  )
+.
+
+
+st:show a st:Server ;
+st:service "show" ;
+st:content st:humancontent ;
+st:workflow us:showWF
+.
+
+st:show2 a st:Server ;
+st:service "show2" ;
+st:content st:humancontent ;
+st:workflow us:showWF2
+.
+
+
+us:showWF2 a sw:Workflow ;
+sw:body (   
+  [ a sw:Template ; sw:uri <query/tabletemplate2.rq> ] 
+).
+
+us:showWF a sw:Workflow ;
+st:param [
+    st:hyperlink true ;
+    st:export true
+];
+sw:body (  
+  [ a sw:Parallel ; sw:body (
+    [a sw:Transformation ; sw:uri <http://ns.inria.fr/sparql-template/sparql#result>]
+    [a sw:Transformation ; sw:uri <http://ns.inria.fr/sparql-template/hturtle#result>]
+    [a sw:Transformation ; sw:uri <http://ns.inria.fr/sparql-template/rdfxml#result>]
+    [a sw:Transformation ; sw:uri <http://ns.inria.fr/sparql-template/json#result>]
+    [a sw:Template       ; sw:uri <query/tabletemplategraph.rq>]
+    )
+  ]
+  
+  [ a sw:Template ; sw:uri <query/tabletemplate.rq> ] 
+
+) .
+
+
+
+st:tutorial1 a st:Server ;
+  st:service "rdf" ;
+  st:transform st:web ;
+  st:content st:tutocontent
+.
+
+st:tutorial2 a st:Server ;
+  st:param [ st:lang 'en' ] ;
+  st:service "sparql" ;
+  st:transform st:web ;
+  st:content st:tutocontent
+.
+
+st:tutocontent a sw:Workflow ; sw:body ( 
+    [ a sw:Parallel ; sw:body (    
+      # main dataset
+      st:humancontent  
+      # context dataset with predefined queries in a specific graph
+      [ a sw:Workflow ; sw:name st:context ; sw:body ( 
+	  #[ a sw:Query ; sw:body "construct where {}" ]
+	  [ a sw:Load ; sw:path <tutorial/workflow.ttl>  ; sw:name st:context ]
+	  st:indexQuery ) ]
+    ) ]    
+    # set st:context graph as named graph of main
+    [a sw:Dataset]
+).
+
+ st:indexQuery a sw:Query ; 
+   sw:body 
+   "insert { ?q st:index ?n } where { ?q a sw:Query bind (kg:number() as ?n) }"
+.
+
+   
+# execute the whole query list of the tutorial above
+st:tutocheck a st:Profile ;
+   st:workflow  
+      [ a sw:Workflow ; sw:uri <tutorial/workflow.ttl>  ]      
+. 
+
+
+st:tutorialhal a st:Server ;
+  st:param [ st:lang 'en' ; 
+    st:sttl st:hturtle ; 
+    st:param "verbatim" ; 
+    st:hyperlink true ; 
+    st:number true ;
+    st:export true ;
+    st:focus false ;
+    st:lodprofile (
+        (<https://aurehal.archives-ouvertes.fr/> st:hal)
+        (<https://data.archives-ouvertes.fr/> st:hal)
+        (<http://www.w3c.org/ns/org> st:hal)    
+        ("*" st:lod)
+    ) 
+  ] ;
+  st:service "tutohal" ;
+  st:transform st:web ;
+  st:content st:tutohal
+.
+
+st:tutohal a sw:Workflow ; sw:body ( 
+    [ a sw:Parallel ; sw:body ( 
+      # main is empty
+          #  st:humancontent  
+
+      [ a sw:Workflow ; sw:body ( [ a sw:Load ; sw:path <tutorial/workflowhal.ttl> ] ) ]
+      
+      # context dataset with predefined queries in a specific graph
+      [ a sw:Workflow ; sw:name st:context ; sw:body ( 
+        [ a sw:Load ; sw:path <tutorial/workflowhal.ttl>  ; sw:name st:context ]
+        st:indexQuery ) ]
+	  
+      ) ]    
+    # set st:context graph as named graph of main
+    [a sw:Dataset]
+).
+
+
+
+  
+st:rome a st:Server ;   
+  st:service "rome" ;
+  st:param [ 
+    st:lang "fr" ;
+    st:import st:dbpediaParam, st:mapParam  ;   
+  ] ;
+  st:shareContent st:romecontent ;
+  st:transform  st:navlab .   
+  
+ st:romecontent a sw:Workflow ; sw:body ( 
+    [ a sw:Load ; sw:path <dbpedia/rome.ttl>  ] )
+.
+
+# geographic enclaves   
+st:geo a st:Server ;
+  st:service "geo" ;
+  st:transform st:navlab ; 
+  st:param [ 
+    st:lang "en"   ;
+    st:mapzoom 5 ;
+    st:mapsize "maplarge" ;
+    st:import  st:mapParam  ;
+  ] ;  
+  st:content st:geocontent
+.  
+  
+st:geocontent a sw:Workflow ; sw:body ( 
+    [ a sw:Load ; sw:path <dbpedia/dbpedia.ttl>  ] )
+.
+    
+
+st:inria a st:Server ;
+  st:service "inria" ;
+  st:transform st:navlab ; 
+  st:param [ 
+    st:lang "en"   ;
+    st:mapzoom 6 ;
+    st:mapsize "mapmedium" ;
+    st:import  st:mapParam  ;
+  ] ;  
+  st:content st:inriacontent
+.  
+  
+st:inriacontent a sw:Workflow ; sw:body ( 
+    [ a sw:Load ; sw:path <dbpedia/inria.ttl>  ] )
+.  
+    
+    
+  
+@prefix cn: <http://cdn.fr/schema/>
+  
+# /tutorial/cdn
+
+st:cdn a st:Server ;
+    st:service "cdn" ;
+    st:transform st:cdn ;
+    
+    st:param [
+      st:import st:history
+    ] ;
+    
+    st:content st:cdncontent  
+  .  
+    
+st:cdncontent a sw:Workflow ; sw:body ( 
+[ a sw:Load ; sw:named true ; sw:path 
+  <cdn/aa_siecle.ttl> ,  <cdn/fr.ttl> , 
+  <cdn/spqr.ttl> ,    <cdn/franc.ttl> , <cdn/eds.ttl> , 
+  <cdn/emp.ttl> ,     <cdn/provence.ttl> ,  <cdn/icon.rdf> , 
+  <cdn/icon.ttl> ,    <cdn/context.ttl> ,
+  <cdn/an1000.ttl> ,  <cdn/an1100.ttl> , 
+  <cdn/an1200.ttl> ,  <cdn/an1300.ttl> ,  <cdn/an1400.ttl> , 
+  <cdn/an1500.ttl> ,  <cdn/an1600.ttl> ,  <cdn/an1700.ttl> , 
+  <cdn/an1800.ttl> ,  <cdn/an1900.ttl>  ,  <cdn/pos.ttl>	
+] 
+).
+
+    
+ st:history a st:Profile ;
+    st:transform st:cdn ;        
+    st:param [
+      st:text ( "Antiquité" "France" "Contexte" "Savoie, Piémont" "Comté de Nice");
+      st:topic ( (cn:rome) (cn:fr) (cn:emp cn:context) (cn:mds) (cn:cdn)) ;      
+      st:min -700 ;
+      st:max 3000 ;
+    ] .
+    
+    
+ st:antiquity a st:Profile ;
+    st:transform st:cdn ;    
+    st:param [      
+      st:text ( "Antiquité"  "France" "Contexte" );
+      st:topic ( (cn:rome) (cn:fr) (cn:emp cn:context) ) ;      
+      st:uri cn:I ;
+      st:min -700 ;
+      st:max 500 ;
+    ] .
+          
+
+
+
+# ************************************************************************
+# Former Java hard coded Process implemented as declarative Workflow
+# These Profile are also Workflow
+#
+
+
+# get param=graph&mode=shape&format=st:turtle from server Context
+# workflow parser get them from server Context when creating ShapeProcess
+
+st:shape a st:Server ;
+    st:service "shape" ;
+    st:workflow st:shape  ;
+sw:body ( 
+    [ a sw:Shape  ]
+    [ a sw:Transformation ; sw:uri st:dsresult ]
+) .
+
+
+#
+# Generic type check 
+# Context st:param is the RDF to load
+# Context st:mode  is the transformation type checker
+#
+st:typecheck a st:Profile ;
+st:workflow st:typecheck ;
+sw:body (
+    [ a sw:Dataset ; sw:mode sw:new ] 
+    [ a sw:Load ] # sw:uri = st:param 
+    [ a sw:Probe ; sw:mode sw:visitor ]
+    [ a sw:Transformation ] # sw:uri = st:mode 
+    [ a sw:Transformation ; sw:uri st:hturtle ]
+)
+.
+
+st:typecheckowl a st:Profile ;
+st:workflow st:typecheckowl ;
+sw:body (
+    [ a sw:Dataset ; sw:mode sw:new ] 
+    [ a sw:Load ] # st:param 
+    [ a sw:Probe ; sw:mode sw:visitor ]
+    [ a sw:Transformation ; sw:uri st:owltc ]  
+    [ a sw:Transformation ; sw:uri st:owlrl ]  
+    [ a sw:Transformation ; sw:uri st:owlqltc ]  
+    [ a sw:Transformation ; sw:uri st:owleltc ]  
+    [ a sw:Transformation ; sw:uri st:hturtle ]
+)
+.
+
+
+st:display a st:Profile ;
+st:workflow st:display ;
+sw:body (
+    [ a sw:Dataset ; sw:mode sw:new ] 
+    [ a sw:Load ] # sw:uri = st:param 
+    [ a sw:Transformation ] # sw:uri = st:mode 
+)
+.
+
+
+st:sparqltc a st:Profile ;
+st:workflow st:sparqltc ;
+sw:body (
+    [ a sw:Dataset ; sw:mode sw:new ] 
+    [ a sw:Load ;    sw:mode sw:spin ] # sw:uri = st:param 
+    [ a sw:Probe ;   sw:mode sw:visitor ]
+    [ a sw:Transformation ; sw:uri st:spintc] 
+    [ a sw:Transformation ; sw:uri st:spinhtml ]
+)
+.
+
+
+st:sparqldsp a st:Profile ;
+st:workflow st:sparqldsp ;
+sw:body (
+    [ a sw:Dataset ; sw:mode sw:new ] 
+    [ a sw:Load    ; sw:mode sw:spin ] # sw:uri = st:param 
+    [ a sw:Transformation ] # sw:uri = st:mode 
+)
+.
+
+
+
+
+
+
+
+
+
+
+
+
