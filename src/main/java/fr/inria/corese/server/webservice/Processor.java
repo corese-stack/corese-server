@@ -1,6 +1,6 @@
 package fr.inria.corese.server.webservice;
 
-import fr.inria.corese.sparql.exceptions.EngineException;
+import fr.inria.corese.core.sparql.exceptions.EngineException;
 import fr.inria.corese.core.GraphStore;
 import fr.inria.corese.core.load.Load;
 import fr.inria.corese.core.load.LoadException;

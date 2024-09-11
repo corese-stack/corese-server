@@ -24,7 +24,7 @@ import org.apache.logging.log4j.Logger;
 import fr.inria.corese.core.Graph;
 import fr.inria.corese.core.load.Load;
 import fr.inria.corese.core.load.result.SPARQLResult;
-import fr.inria.corese.kgram.core.Mappings;
+import fr.inria.corese.core.kgram.core.Mappings;
 
 public class SPARQLTestUtils {
 

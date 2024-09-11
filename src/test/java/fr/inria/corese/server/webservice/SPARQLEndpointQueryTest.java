@@ -23,7 +23,7 @@ import fr.inria.corese.core.Graph;
 import fr.inria.corese.core.load.Load;
 import fr.inria.corese.core.load.result.SPARQLJSONResult;
 import fr.inria.corese.core.load.result.SPARQLResult;
-import fr.inria.corese.kgram.core.Mappings;
+import fr.inria.corese.core.kgram.core.Mappings;
 
 import static fr.inria.corese.core.print.ResultFormat.JSON_LD;
 import static fr.inria.corese.core.print.ResultFormat.NT_TEXT;

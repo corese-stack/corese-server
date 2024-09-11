@@ -1,9 +1,9 @@
 package fr.inria.corese.server.webservice;
 
 import fr.inria.corese.core.load.Service;
-import fr.inria.corese.kgram.core.Mapping;
-import fr.inria.corese.kgram.core.Mappings;
-import fr.inria.corese.sparql.triple.parser.URLServer;
+import fr.inria.corese.core.kgram.core.Mapping;
+import fr.inria.corese.core.kgram.core.Mappings;
+import fr.inria.corese.core.sparql.triple.parser.URLServer;
 
 import org.junit.BeforeClass;
 import org.junit.Test;

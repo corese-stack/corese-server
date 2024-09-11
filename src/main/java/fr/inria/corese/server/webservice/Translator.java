@@ -1,7 +1,7 @@
 package fr.inria.corese.server.webservice;
 
 import fr.inria.corese.core.workflow.PreProcessor;
-import fr.inria.corese.shex.shacl.Shex;
+import fr.inria.corese.core.shex.shacl.Shex;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;

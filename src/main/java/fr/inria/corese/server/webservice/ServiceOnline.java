@@ -1,10 +1,10 @@
 package fr.inria.corese.server.webservice;
 
 import fr.inria.corese.core.query.QueryProcess;
-import fr.inria.corese.kgram.core.Eval;
-import fr.inria.corese.kgram.core.Mappings;
+import fr.inria.corese.core.kgram.core.Eval;
+import fr.inria.corese.core.kgram.core.Mappings;
 import static fr.inria.corese.server.webservice.Utility.toStringList;
-import fr.inria.corese.sparql.exceptions.EngineException;
+import fr.inria.corese.core.sparql.exceptions.EngineException;
 
 import java.util.List;
 

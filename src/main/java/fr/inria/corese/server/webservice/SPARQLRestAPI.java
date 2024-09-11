@@ -13,13 +13,13 @@ import fr.inria.corese.core.print.JSOND3Format;
 import fr.inria.corese.core.print.JSONFormat;
 import fr.inria.corese.core.print.ResultFormat;
 import fr.inria.corese.core.query.QueryProcess;
-import fr.inria.corese.kgram.core.Eval;
-import fr.inria.corese.kgram.core.Mappings;
-import fr.inria.corese.sparql.api.ResultFormatDef;
-import fr.inria.corese.sparql.exceptions.EngineException;
-import fr.inria.corese.sparql.triple.parser.Dataset;
-import fr.inria.corese.sparql.triple.parser.NSManager;
-import fr.inria.corese.sparql.triple.parser.URLParam;
+import fr.inria.corese.core.kgram.core.Eval;
+import fr.inria.corese.core.kgram.core.Mappings;
+import fr.inria.corese.core.sparql.api.ResultFormatDef;
+import fr.inria.corese.core.sparql.exceptions.EngineException;
+import fr.inria.corese.core.sparql.triple.parser.Dataset;
+import fr.inria.corese.core.sparql.triple.parser.NSManager;
+import fr.inria.corese.core.sparql.triple.parser.URLParam;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
@@ -46,7 +46,7 @@ import jakarta.ws.rs.core.Response;
  */
 @Path("sparql")
 public class SPARQLRestAPI implements ResultFormatDef, URLParam {
-    private static final String ERROR_ENDPOINT = "Error while querying Corese SPARQL endpoint";
+    private static final String ERROR_ENDPOINT = "Error while querying Corese.Core.Sparql endpoint";
     private static final String HEADER_ACCESS_CONTROL_ALLOW_ORIGIN = "Access-Control-Allow-Origin";
     private static final String HEADER_CONTENT_TYPE = "Content-type";
     private static final String TEXT_PLAIN = "text/plain";

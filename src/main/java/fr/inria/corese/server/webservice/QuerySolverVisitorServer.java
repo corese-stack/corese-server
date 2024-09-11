@@ -1,15 +1,15 @@
 package fr.inria.corese.server.webservice;
 
-import fr.inria.corese.compiler.eval.QuerySolverVisitor;
+import fr.inria.corese.core.compiler.eval.QuerySolverVisitor;
 import fr.inria.corese.core.Graph;
 import fr.inria.corese.core.query.QueryProcess;
-import fr.inria.corese.kgram.core.Eval;
-import fr.inria.corese.kgram.core.Mappings;
-import fr.inria.corese.sparql.api.IDatatype;
-import fr.inria.corese.sparql.datatype.DatatypeMap;
-import fr.inria.corese.sparql.datatype.PointerObject;
-import fr.inria.corese.sparql.datatype.extension.CoreseMap;
-import fr.inria.corese.sparql.triple.parser.NSManager;
+import fr.inria.corese.core.kgram.core.Eval;
+import fr.inria.corese.core.kgram.core.Mappings;
+import fr.inria.corese.core.sparql.api.IDatatype;
+import fr.inria.corese.core.sparql.datatype.DatatypeMap;
+import fr.inria.corese.core.sparql.datatype.PointerObject;
+import fr.inria.corese.core.sparql.datatype.extension.CoreseMap;
+import fr.inria.corese.core.sparql.triple.parser.NSManager;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Enumeration;
 import jakarta.servlet.http.HttpServletRequest;

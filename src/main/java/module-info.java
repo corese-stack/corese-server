@@ -1,8 +1,7 @@
 module fr.inria.corese.corese_server {
-    requires fr.inria.corese.sparql;
     requires fr.inria.corese.corese_core;
-    requires fr.inria.corese.compiler;
-    requires fr.inria.corese.shex;
+    requires org.apache.jena.core;
+    requires fr.inria.corese.corese_jena;
     requires fr.inria.corese.corese_rdf4j;
 
     requires org.eclipse.jetty.server;
@@ -28,9 +27,7 @@ module fr.inria.corese.corese_server {
     requires java.logging;
 
     requires org.jsoup;
+    requires org.json;
 
     requires org.slf4j;
-
-    requires fr.inria.corese.corese_storage;
-
 }
