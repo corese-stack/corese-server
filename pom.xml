@@ -169,6 +169,11 @@
 			<artifactId>websocket-jetty-server</artifactId>
 			<version>11.0.24</version>
 		</dependency>
+		<dependency>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>jetty-util</artifactId>
+			<version>11.0.24</version>
+		</dependency>
 
 	</dependencies>
 
