@@ -74,7 +74,7 @@ public class SPARQLEndpointDescriptionTest {
                 "-lh",
                 "-l", turtleFileAbsolutePath,
                 "-l", trigFileAbsolutePath).start();
-        Thread.sleep(5000);
+        Thread.sleep(7000);
     }
 
     @AfterClass

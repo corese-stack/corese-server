@@ -125,7 +125,7 @@ public class HttpServerTest {
                 "-jar", "./target/corese-server-4.5.1.jar",
                 "-lh",
                 "-l", "./target/classes/webapp/data/dbpedia/dbpedia.ttl").start();
-        Thread.sleep(5000);
+        Thread.sleep(7000);
     }
 
     @AfterClass
