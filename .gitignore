@@ -1353,3 +1353,4 @@
 /build/tmp/javadocJar/MANIFEST.MF
 /build/tmp/shadowJar/MANIFEST.MF
 /build/tmp/sourcesJar/MANIFEST.MF
+/log/kgram_server.log
