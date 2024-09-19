@@ -15,6 +15,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -54,15 +55,19 @@ public class GraphStoreProtocolTest {
         File trigFile = new File("src/test/resources/data.trig");
         String trigFileAbsolutePath = trigFile.getAbsolutePath();
 
+        String startDirectory = "build";
+        Pattern pattern = Pattern.compile("corese-server-(\\d+)\\.(\\d+)\\.(\\d+)-SNAPSHOT-app\\.jar");
+        File jar_file = HTTPConnectionUtils.findFileRecursively(pattern, new File(startDirectory));
+
         logger.info("starting in " + System.getProperty("user.dir"));
         server = new ProcessBuilder().inheritIO().command(
                 "java",
-                "-jar", "./target/corese-server-4.5.1.jar",
+                "-jar", jar_file.getAbsolutePath(),
                 "-lh",
                 "-su",
                 "-l", trigFileAbsolutePath,
                 "-l", turtleFileAbsolutePath).start();
-        Thread.sleep(5000);
+        Thread.sleep(7000);
     }
 
     @AfterClass
