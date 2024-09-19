@@ -1,5 +1,6 @@
 package fr.inria.corese.server.webservice;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -7,6 +8,9 @@ import java.net.ProtocolException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 
 public class HTTPConnectionUtils {
 
@@ -84,5 +88,30 @@ public class HTTPConnectionUtils {
     public static HttpURLConnection headConnection(String url)
             throws IOException {
         return headConnection(url, new ArrayList<>());
+    }
+    
+    public static File findFileRecursively(Pattern filePattern, File directory) {
+        if (directory.isDirectory()) {
+            File[] files = directory.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isFile() && matchesPattern(filePattern, file.getName())) {
+                        return file;
+                    }
+                    if (file.isDirectory()) {
+                        File foundFile = findFileRecursively(filePattern, file);
+                        if (foundFile != null) {
+                            return foundFile;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private static boolean matchesPattern(Pattern filePattern, String fileName) {
+        Matcher matcher = filePattern.matcher(fileName);
+        return matcher.matches();
     }
 }

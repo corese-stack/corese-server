@@ -17,6 +17,7 @@ import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.WebTarget;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
@@ -28,6 +29,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
@@ -113,6 +115,7 @@ public class HttpServerTest {
         return generateSPARQLQueryUrl(query, new HashMap<>());
     }
 
+
     /**
      * Start the server before running the tests.
      * Loads a part of the DBpedia dataset in the server.
@@ -120,12 +123,16 @@ public class HttpServerTest {
     @BeforeClass
     public static void init() throws InterruptedException, IOException {
         System.out.println("starting in " + System.getProperty("user.dir"));
+        String startDirectory = "build";
+        Pattern pattern = Pattern.compile("corese-server-(\\d+)\\.(\\d+)\\.(\\d+)-SNAPSHOT-app\\.jar");
+        File jar_file = HTTPConnectionUtils.findFileRecursively(pattern, new File(startDirectory));
+
         server = new ProcessBuilder().inheritIO().command(
                 "java",
-                "-jar", "./target/corese-server-4.5.1.jar",
+                "-jar", jar_file.getAbsolutePath(),
                 "-lh",
-                "-l", "./target/classes/webapp/data/dbpedia/dbpedia.ttl").start();
-        Thread.sleep(5000);
+                "-l", "./build/resources/main/webapp/data/dbpedia/dbpedia.ttl").start();
+        Thread.sleep(7000);
     }
 
     @AfterClass
