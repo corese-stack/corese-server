@@ -42,32 +42,42 @@ repositories {
 }
 
 dependencies {
-    api(libs.fr.inria.corese.corese.core)
+    api("fr.inria.corese:corese-core:5.0.0-SNAPSHOT")
     api("fr.inria.corese:corese-jena:5.0.0-SNAPSHOT")
     api("fr.inria.corese:corese-rdf4j:5.0.0-SNAPSHOT")
-    api(libs.javax.xml.bind.jaxb.api)
-    api(libs.com.sun.xml.bind.jaxb.core)
-    api(libs.com.sun.xml.bind.jaxb.impl)
-    api(libs.org.glassfish.jersey.core.jersey.client)
-    api(libs.org.glassfish.jersey.containers.jersey.container.jetty.http)
-    api(libs.org.glassfish.jersey.media.jersey.media.multipart)
-    api(libs.org.glassfish.jersey.inject.jersey.hk2)
-    api(libs.org.glassfish.metro.webservices.rt)
-    api(libs.org.glassfish.jersey.containers.jersey.container.servlet.core)
-    api(libs.org.apache.logging.log4j.log4j.slf4j18.impl)
-    api(libs.org.apache.logging.log4j.log4j.api)
-    api(libs.org.apache.logging.log4j.log4j.core)
-    api(libs.commons.lang.commons.lang)
-    api(libs.commons.cli.commons.cli)
-    api(libs.commons.vfs.commons.vfs)
-    api(libs.commons.io.commons.io)
-    api(libs.org.jsoup.jsoup)
-    api(libs.org.json.json)
-    api(libs.org.eclipse.jetty.jetty.server)
-    api(libs.org.eclipse.jetty.jetty.servlets)
-    api(libs.org.eclipse.jetty.websocket.websocket.jetty.server)
-    api(libs.org.eclipse.jetty.jetty.util)
-    testImplementation(libs.junit.junit)
+    api("javax.xml.bind:jaxb-api:2.3.1")
+    api("com.sun.xml.bind:jaxb-core:2.3.0.1")
+    api("com.sun.xml.bind:jaxb-impl:2.3.2")
+
+    val jersey_version = "3.0.4"
+    api("org.glassfish.jersey.core:jersey-client:${jersey_version}")
+    api("org.glassfish.jersey.containers:jersey-container-jetty-http:${jersey_version}")
+    api("org.glassfish.jersey.containers:jersey-container-servlet-core:${jersey_version}")
+    api("org.glassfish.jersey.media:jersey-media-multipart:${jersey_version}")
+    api("org.glassfish.jersey.inject:jersey-hk2:${jersey_version}")
+
+    api("org.glassfish.metro:webservices-rt:4.0.4")
+
+    val lo4j_version = "2.18.0"
+    api("org.apache.logging.log4j:log4j-slf4j18-impl:${lo4j_version}")
+    api("org.apache.logging.log4j:log4j-api:${lo4j_version}")
+    api("org.apache.logging.log4j:log4j-core:${lo4j_version}")
+
+    api("commons-lang:commons-lang:2.4")
+    api("commons-cli:commons-cli:1.4")
+    api("commons-vfs:commons-vfs:1.0")
+    api("commons-io:commons-io:2.11.0")
+
+    api("org.jsoup:jsoup:1.15.3")
+    api("org.json:json:20240303")
+
+    val jetty_version = "11.0.24"
+    api("org.eclipse.jetty:jetty-server:${jetty_version}")
+    api("org.eclipse.jetty:jetty-servlets:${jetty_version}")
+    api("org.eclipse.jetty.websocket:websocket-jetty-server:${jetty_version}")
+    api("org.eclipse.jetty:jetty-util:${jetty_version}")
+
+    testImplementation("junit:junit:4.13.2")
 }
 
 group = "fr.inria.corese"
