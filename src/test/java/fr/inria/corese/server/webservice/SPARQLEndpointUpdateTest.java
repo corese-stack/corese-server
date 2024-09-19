@@ -62,7 +62,7 @@ public class SPARQLEndpointUpdateTest {
                 "-l", turtleFileAbsolutePath,
                 "-l", trigFileAbsolutePath,
                 "-su").start();
-        Thread.sleep(5000);
+        Thread.sleep(7000);
     }
 
     @AfterClass
