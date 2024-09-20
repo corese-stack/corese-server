@@ -13,7 +13,6 @@ module fr.inria.corese.corese_server {
     requires jersey.server;
     requires jersey.common;
     requires jersey.media.multipart;
-    requires jersey.container.jetty.http;
     requires jersey.container.servlet.core;
 
     requires jakarta.ws.rs;
@@ -21,7 +20,6 @@ module fr.inria.corese.corese_server {
     requires org.apache.logging.log4j;
 
     requires commons.cli;
-    requires commons.vfs;
     requires org.apache.commons.io;
 
     requires java.logging;
