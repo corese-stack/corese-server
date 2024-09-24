@@ -81,7 +81,8 @@ jobs:
           files: |
             build/test-results/**/*.xml
 
-      - name: Post Coverage Comment
+      - name: Post Coverage Comment to PR
+        if: github.event_name == 'pull_request'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: Code Coverage Report
