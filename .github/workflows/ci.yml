@@ -61,6 +61,12 @@ jobs:
           echo "Total coverage ${{ steps.jacoco.outputs.coverage-overall }}"
           echo "Changed Files coverage ${{ steps.jacoco.outputs.coverage-changed-files }}"
 
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: build/reports/jacoco/test/html
+
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action/linux@v2
         if: always()
@@ -74,6 +80,16 @@ jobs:
         with:
           files: |
             build/test-results/**/*.xml
+
+      - name: Post Coverage Comment to PR
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          header: Code Coverage Report
+          message: |
+            **Coverage**: ${{ steps.jacoco.outputs.coverage }}%
+            [View detailed coverage report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts)
 
       - name: Get test artifacts
         if: ${{ failure() }}
