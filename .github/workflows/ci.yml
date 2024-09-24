@@ -81,14 +81,12 @@ jobs:
           files: |
             build/test-results/**/*.xml
 
-      - name: Post Coverage Comment to PR
-        if: github.event_name == 'pull_request'
+      - name: Post Coverage Comment
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           header: Code Coverage Report
           message: |
-            **Coverage**: ${{ steps.jacoco.outputs.coverage }}%
+            **Coverage**: ${{ steps.jacoco.outputs.coverage-overall }}%
             [View detailed coverage report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts)
 
       - name: Get test artifacts
