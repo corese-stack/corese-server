@@ -59,10 +59,15 @@ public class GraphStoreProtocolTest {
         Pattern pattern = Pattern.compile("corese-server-(\\d+)\\.(\\d+)\\.(\\d+)-SNAPSHOT-app\\.jar");
         File jar_file = HTTPConnectionUtils.findFileRecursively(pattern, new File(startDirectory));
 
+        Pattern jacoco_pattern = Pattern.compile("jacocoagent\\.jar");
+        File jacoco_jar_file = HTTPConnectionUtils.findFileRecursively(jacoco_pattern, new File(startDirectory));
+        String jacocoAgentPath = jacoco_jar_file.getAbsolutePath();
+
         logger.info("starting in " + System.getProperty("user.dir"));
         server = new ProcessBuilder().inheritIO().command(
                 "java",
-                "-jar", jar_file.getAbsolutePath(),
+               "-javaagent:" + jacocoAgentPath + "=destfile=" + startDirectory+"/jacoco/server_graphstore.exec,includes=fr.inria.corese.*",
+                 "-jar", jar_file.getAbsolutePath(),
                 "-lh",
                 "-su",
                 "-l", trigFileAbsolutePath,

@@ -1,6 +1,7 @@
 plugins {
     `java-library`
     `maven-publish`
+    `jacoco`
     id("org.gradlex.extra-java-module-info") version "1.8"
     id("com.gradleup.shadow") version "8.3.1"
     signing
@@ -20,6 +21,19 @@ tasks.withType<JavaCompile>() {
 
 tasks.withType<Javadoc>() {
     options.encoding = "UTF-8"
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    executionData.setFrom(fileTree(buildDir).include("/jacoco/*.exec"))
+
+    reports {
+        xml.required.set(true)
+    }
+}
+
+tasks.test {
+    finalizedBy(tasks.jacocoTestReport)
 }
 
 project.setProperty("mainClassName","fr.inria.corese.server.webservice.EmbeddedJettyServer")
