@@ -49,10 +49,8 @@ tasks {
 }
 
 repositories {
-    mavenLocal()
-    maven {
-        url = uri("https://repo.maven.apache.org/maven2/")
-    }
+    mavenLocal()    // First, check the local Maven repository
+    mavenCentral()  // Then, check Maven Central
 }
 
 dependencies {
