@@ -25,8 +25,8 @@ import fr.inria.corese.core.Graph;
 import fr.inria.corese.core.load.Load;
 import static fr.inria.corese.core.print.ResultFormat.RDF_XML;
 import static fr.inria.corese.core.print.ResultFormat.TURTLE_TEXT;
-import static fr.inria.corese.core.api.Loader.RDFXML_FORMAT;
-import static fr.inria.corese.core.api.Loader.TURTLE_FORMAT;
+import static fr.inria.corese.core.api.Loader.format.RDFXML_FORMAT;
+import static fr.inria.corese.core.api.Loader.format.TURTLE_FORMAT;
 
 /**
  * Test of the behavior of the corese server against HTTP requests.
@@ -82,6 +82,7 @@ public class SPARQLEndpointDescriptionTest {
                 "-javaagent:" + jacocoAgentPath + "=destfile=" + startDirectory+"/jacoco/server_sparql_description.exec,includes=fr.inria.corese.*",
                  "-jar", jar_file.getAbsolutePath(),
                 "-lh",
+                "-pp", "src/test/resources/emptyProfile.ttl",
                 "-l", turtleFileAbsolutePath,
                 "-l", trigFileAbsolutePath).start();
         Thread.sleep(7000);

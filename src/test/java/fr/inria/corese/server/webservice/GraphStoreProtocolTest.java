@@ -1,7 +1,7 @@
 package fr.inria.corese.server.webservice;
 
 import static fr.inria.corese.core.print.ResultFormat.TURTLE_TEXT;
-import static fr.inria.corese.core.api.Loader.TURTLE_FORMAT;
+import static fr.inria.corese.core.api.Loader.format.TURTLE_FORMAT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -70,6 +70,7 @@ public class GraphStoreProtocolTest {
                  "-jar", jar_file.getAbsolutePath(),
                 "-lh",
                 "-su",
+                "-pp", "src/test/resources/emptyProfile.ttl",
                 "-l", trigFileAbsolutePath,
                 "-l", turtleFileAbsolutePath).start();
         Thread.sleep(7000);

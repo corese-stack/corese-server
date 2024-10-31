@@ -65,6 +65,7 @@ public class SPARQLEndpointUpdateTest {
                 "-javaagent:" + jacocoAgentPath + "=destfile=" + startDirectory+"/jacoco/server_sparqlep.exec,includes=fr.inria.corese.*",
                 "-jar", jar_file.getAbsolutePath(),
                 "-lh",
+                "-pp", "src/test/resources/emptyProfile.ttl",
                 "-l", turtleFileAbsolutePath,
                 "-l", trigFileAbsolutePath,
                 "-su").start();

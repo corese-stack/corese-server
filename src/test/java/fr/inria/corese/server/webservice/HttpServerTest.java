@@ -135,6 +135,7 @@ public class HttpServerTest {
                 "java",
                 "-javaagent:" + jacocoAgentPath + "=destfile=" + startDirectory+"/jacoco/server_http.exec,includes=fr.inria.corese.*",
                 "-jar", jar_file.getAbsolutePath(),
+                "-pp", "src/test/resources/emptyProfile.ttl",
                 "-lh",
                 "-l", "./build/resources/main/webapp/data/dbpedia/dbpedia.ttl").start();
         Thread.sleep(7000);

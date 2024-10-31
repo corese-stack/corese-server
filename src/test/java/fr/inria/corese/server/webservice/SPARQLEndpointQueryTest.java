@@ -40,12 +40,12 @@ import static fr.inria.corese.core.print.ResultFormat.SPARQL_RESULTS_XML;
 import static fr.inria.corese.core.print.ResultFormat.TRIG;
 import static fr.inria.corese.core.print.ResultFormat.TURTLE;
 import static fr.inria.corese.core.print.ResultFormat.TURTLE_TEXT;
-import static fr.inria.corese.core.api.Loader.JSONLD_FORMAT;
-import static fr.inria.corese.core.api.Loader.NQUADS_FORMAT;
-import static fr.inria.corese.core.api.Loader.NT_FORMAT;
-import static fr.inria.corese.core.api.Loader.RDFXML_FORMAT;
-import static fr.inria.corese.core.api.Loader.TRIG_FORMAT;
-import static fr.inria.corese.core.api.Loader.TURTLE_FORMAT;
+import static fr.inria.corese.core.api.Loader.format.JSONLD_FORMAT;
+import static fr.inria.corese.core.api.Loader.format.NQUADS_FORMAT;
+import static fr.inria.corese.core.api.Loader.format.NT_FORMAT;
+import static fr.inria.corese.core.api.Loader.format.RDFXML_FORMAT;
+import static fr.inria.corese.core.api.Loader.format.TRIG_FORMAT;
+import static fr.inria.corese.core.api.Loader.format.TURTLE_FORMAT;
 import static jakarta.ws.rs.core.MediaType.TEXT_HTML;
 
 /**
@@ -116,6 +116,7 @@ public class SPARQLEndpointQueryTest {
                 "-javaagent:" + jacocoAgentPath + "=destfile=" + startDirectory+"/jacoco/server_sparql_ep_query.exec,includes=fr.inria.corese.*",
                 "-jar", jar_file.getAbsolutePath(),
                 "-lh",
+                "-pp", "src/test/resources/emptyProfile.ttl",
                 "-l", turtleFileAbsolutePath,
                 "-l", trigFileAbsolutePath).start();
         Thread.sleep(7000);
