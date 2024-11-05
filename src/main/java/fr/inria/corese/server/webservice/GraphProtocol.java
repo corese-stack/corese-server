@@ -2,14 +2,13 @@ package fr.inria.corese.server.webservice;
 
 import java.util.List;
 
+import fr.inria.corese.core.sparql.api.ResultFormatDef;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import fr.inria.corese.core.print.ResultFormat;
 import fr.inria.corese.core.sparql.triple.parser.NSManager;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
@@ -17,7 +16,6 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 /**
@@ -36,7 +34,7 @@ public class GraphProtocol {
     static final String NAMED_GRAPH_INSERT = "INSERT DATA { GRAPH <%s> {%s}}";
     static final String DEFAULT_GRAPH_INSERT = "INSERT DATA {%s}";
 
-    Response get(HttpServletRequest request, String name, String graph, String pattern, String access, int format) {
+    Response get(HttpServletRequest request, String name, String graph, String pattern, String access, ResultFormatDef.format format) {
         String query = pattern;
         if (name != null) {
             query = String.format(pattern, NSManager.nsm().toNamespace(graph));
@@ -45,15 +43,14 @@ public class GraphProtocol {
                 format);
     }
 
-    Response post(HttpServletRequest request, String name, String graph, String pattern, String access, int format) {
+    Response post(HttpServletRequest request, String name, String graph, String pattern, String access, ResultFormatDef.format format) {
         String query;
         if (graph == null) {
             query = String.format(DEFAULT_GRAPH_INSERT, pattern);
         } else {
             query = String.format(NAMED_GRAPH_INSERT, NSManager.nsm().toNamespace(graph), pattern);
         }
-        return new SPARQLRestAPI().getResultFormat(request, name, null, null, null, null, query, access, null, null,
-                format);
+        return new SPARQLRestAPI().getResultFormat(request, name, null, null, null, null, query, access, null, null, format);
     }
 
     String getQuery(String name) {
@@ -81,7 +78,7 @@ public class GraphProtocol {
             @QueryParam("mode") List<String> mode) {
 
         logger.info("getTurtle");
-        return get(request, name, graph, getQuery(graph), access, ResultFormat.TURTLE_FORMAT);
+        return get(request, name, graph, getQuery(graph), access, ResultFormatDef.format.TURTLE_FORMAT);
     }
 
     @GET
@@ -93,7 +90,7 @@ public class GraphProtocol {
             @QueryParam("mode") List<String> mode) {
 
         logger.info("getXML");
-        return get(request, name, graph, getQuery(graph), access, ResultFormat.RDF_XML_FORMAT);
+        return get(request, name, graph, getQuery(graph), access, ResultFormatDef.format.RDF_XML_FORMAT);
     }
 
     @GET
@@ -105,7 +102,7 @@ public class GraphProtocol {
             @QueryParam("mode") List<String> mode) {
 
         logger.info("getJSON");
-        return get(request, name, graph, getQuery(graph), access, ResultFormat.JSONLD_FORMAT);
+        return get(request, name, graph, getQuery(graph), access, ResultFormatDef.format.JSONLD_FORMAT);
     }
 
     @PUT
@@ -117,7 +114,7 @@ public class GraphProtocol {
             @QueryParam("mode") List<String> mode) {
 
         logger.info("put");
-        return post(request, name, graph, getQuery(graph), access, ResultFormat.XML_FORMAT);
+        return post(request, name, graph, getQuery(graph), access, ResultFormatDef.format.XML_FORMAT);
     }
 
     @POST
@@ -128,7 +125,7 @@ public class GraphProtocol {
             @QueryParam("mode") List<String> mode) {
 
         logger.info("post");
-        return post(request, name, graph, getQuery(graph), access, ResultFormat.XML_FORMAT);
+        return post(request, name, graph, getQuery(graph), access, ResultFormatDef.format.XML_FORMAT);
     }
 
 }

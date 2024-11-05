@@ -28,4 +28,5 @@ module fr.inria.corese.corese_server {
     requires org.json;
 
     requires org.slf4j;
+    requires commons.vfs;
 }

@@ -45,8 +45,6 @@ public class TransformerEngine {
     // Web service parameters
     Param param;
 
-    private boolean debug = false;
-
     /**
      * 
      * @param graph   RDF graph to be processed
@@ -76,11 +74,6 @@ public class TransformerEngine {
     public Data process() throws EngineException, LoadException {
         Dataset ds = createDataset(param.getFrom(), param.getNamed());
         SemanticWorkflow sw = workflow(getContext(), ds, profile);
-        // sw.setDebug(isDebug());
-        if (isDebug()) {
-            logger.info("Run workflow");
-            // graph.setVerbose(true);
-        }
         if (getEventManager() != null) {
             getEventManager().call(sw.getContext());
         }
@@ -282,20 +275,6 @@ public class TransformerEngine {
      */
     public void setContext(Context context) {
         this.context = context;
-    }
-
-    /**
-     * @return the debug
-     */
-    public boolean isDebug() {
-        return debug;
-    }
-
-    /**
-     * @param debug the debug to set
-     */
-    public void setDebug(boolean debug) {
-        this.debug = debug;
     }
 
     public DataManager getDataManager() {

@@ -4,6 +4,7 @@ import fr.inria.corese.core.sparql.triple.parser.Context;
 import fr.inria.corese.core.sparql.triple.parser.NSManager;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 
 /**
@@ -65,7 +66,7 @@ public class Service {
      */
     public List<Doc> getSchema() {
         if (schema == null) {
-            schema = new ArrayList();
+            schema = new ArrayList<>();
         }
         return schema;
     }
@@ -82,7 +83,7 @@ public class Service {
      */
     public List<Doc> getContext() {
         if (context == null) {
-            context = new ArrayList();
+            context = new ArrayList<>();
         }
         return context;
     }
@@ -223,7 +224,7 @@ public class Service {
                 return false;
             }
             if (getName() == null || d.getName() == null){
-                return getName() == d.getName();
+                return Objects.equals(getName(), d.getName());
             }
             return  getName().equals(d.getName());
         }

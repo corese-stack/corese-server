@@ -276,7 +276,6 @@ public class Manager {
             Load lq = Load.create(gg);
 
             for (Service.Doc d : s.getContext()) {
-                // lq.load(d.getUri(), d.getUri(), d.getName());
                 lq.parse(d.getUri(), d.getName());
 
             }

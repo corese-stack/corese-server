@@ -1,5 +1,6 @@
 package fr.inria.corese.server.webservice;
 
+import fr.inria.corese.core.api.Loader;
 import fr.inria.corese.core.compiler.federate.FederateVisitor;
 import fr.inria.corese.core.sparql.api.IDatatype;
 import fr.inria.corese.core.sparql.datatype.DatatypeMap;
@@ -55,12 +56,14 @@ public class Profile {
     static final String NL = System.getProperty("line.separator");
     
     private static  Profile profileManager;
-    //static  String SERVER, DATA, QUERY;
     private static EventManager eventManager;
   
-    String server, data, query;
+    String server;
+    String data;
+    String query;
       
-    HashMap<String,  Service> services, servers; 
+    HashMap<String,  Service> services;
+    HashMap<String, Service> servers;
     NSManager nsm;
     IDatatype profileDatatype;
     GraphStore profileGraph;
@@ -374,7 +377,7 @@ public class Profile {
     void load(GraphStore g, String path, boolean event) throws LoadException{
         Load load = Load.create(g);
         load.setEvent(event);
-        load.parse(path, Load.TURTLE_FORMAT);       
+        load.parse(path, Loader.format.TURTLE_FORMAT);
     }
 
     String read(String path) throws IOException, LoadException {
@@ -387,9 +390,6 @@ public class Profile {
     }
 
     String loadQuery(String path) throws IOException, LoadException {
-//        if (isProtected && !path.startsWith(getServer())) {
-//            throw new IOException(path);
-//        }
         if (path.startsWith(getServer())) {
             // OK
         } else {
@@ -416,7 +416,6 @@ public class Profile {
 
     
     void initService(Graph g, String name) throws IOException, EngineException {
-        //String str = read(QUERY + "profile.rq");
         String str = getResource("query/profile.rq");
         if (name != null){
             str += String.format("\nvalues ?p { <%s> }", name);
@@ -441,11 +440,6 @@ public class Profile {
     void initParameter(Graph g, String q) throws IOException, EngineException {        
         QueryProcess exec = QueryProcess.create(g);
         Mappings map = exec.query(q);
-//        if (true) {
-//            System.out.println("profile: " + q);
-//            System.out.println(map);
-//            System.out.println();
-//        }
         for (Mapping m : map) {
             IDatatype dt   = getValue(m, "?url");
             IDatatype list = getValue(m, "?list");
@@ -620,8 +614,7 @@ public class Profile {
     
     String getResource(String name) throws IOException{
         QueryLoad ql = QueryLoad.create();
-        String str = ql.getResource("/webapp/data/" + name);
-        return str;
+        return ql.getResource("/webapp/data/" + name);
     }
     
      void initFunction2() throws IOException, EngineException, LoadException{
@@ -645,41 +638,7 @@ public class Profile {
     Service getServer(String name){
         return servers.get(name);
     }
-    
- 
-      /**
-     * 
-     * @param g
-     * @throws IOException
-     * @throws EngineException 
-     * 
-     */
-//    void initLoad(Graph g) throws IOException, EngineException {
-//        String str = read(getQueryPath("profileLoad.rq"));
-//        QueryProcess exec = QueryProcess.create(g);
-//        Mappings map = exec.query(str);
-//        for (Mapping m : map) {
-//            initLoad(m);
-//        }
-//    }
 
-    /**
-     * 
-     * @param m 
-     *
-     */
-//    void initLoad(Mapping m) {
-//        Node profile = m.getNode("?p");
-//        Node load = m.getNode("?ld");
-//        if (load == null) {
-//            return;
-//        }
-//        String[] list = load.getLabel().split(";");
-//        Service s = new Service(profile.getLabel());
-//        s.setLoad(list);
-//        services.put(profile.getLabel(), s);
-//    }
-    
       /**
      * @return the profileManager
      */

@@ -8,6 +8,7 @@ import fr.inria.corese.core.sparql.exceptions.EngineException;
 
 import java.util.List;
 
+import fr.inria.corese.core.util.HTTPHeaders;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.GET;
@@ -37,20 +38,14 @@ import jakarta.servlet.http.HttpServletRequest;
 @Path("service/{serv}")
 public class ServiceOnline {
 
-    static private final Logger logger = LogManager.getLogger(ServiceOnline.class);
+    private static final Logger logger = LogManager.getLogger(ServiceOnline.class);
     static final int ERROR = 500;
-    private static final String headerAccept = "Access-Control-Allow-Origin";
 
-    static final String SERVICE = "/service/"; 
-    
-    static {
-        //Manager.getManager().init();
-    }
+    static final String SERVICE = "/service/";
     
     QuerySolverVisitorServer visitor;
 
     public ServiceOnline() {
-        //setVisitor(QuerySolverVisitorServer.create(createEval()));
     }
     
     QuerySolverVisitorServer getVisitor() {
@@ -381,7 +376,7 @@ public class ServiceOnline {
     {
         
         if (! Manager.getManager().isInitDone()) {
-            return Response.status(ERROR).header(headerAccept, "*").entity("Server not initialized").build();
+            return Response.status(ERROR).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity("Server not initialized").build();
         }
         
         if (mode == null && modeList!=null && ! modeList.isEmpty()) {

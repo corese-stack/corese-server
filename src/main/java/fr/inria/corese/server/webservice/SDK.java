@@ -16,11 +16,6 @@ import jakarta.ws.rs.core.Response;
 import org.apache.logging.log4j.LogManager;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /**
  *
  * @author Olivier Corby, Wimmics INRIA I3S, 2015

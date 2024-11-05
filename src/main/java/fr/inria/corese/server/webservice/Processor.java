@@ -5,6 +5,7 @@ import fr.inria.corese.core.GraphStore;
 import fr.inria.corese.core.load.Load;
 import fr.inria.corese.core.load.LoadException;
 import fr.inria.corese.core.load.QueryLoad;
+import fr.inria.corese.core.util.HTTPHeaders;
 import fr.inria.corese.core.util.SPINProcess;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -34,7 +35,6 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 @Deprecated
 public class Processor {
 
-    private static final String headerAccept = "Access-Control-Allow-Origin";
     public static final String SERVICE  = "/typecheck";
     public static final String GRAPHIC  = "graphic";
     
@@ -117,13 +117,13 @@ public class Processor {
                 }
             } catch (LoadException ex) {
                 LogManager.getLogger(Processor.class.getName()).log(Level.ERROR, "", ex);
-                return Response.status(500).header(headerAccept, "*").entity(error(ex.toString(), null)).build();
+                return Response.status(500).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(error(ex.toString(), null)).build();
             } catch (EngineException ex) {
                 LogManager.getLogger(Processor.class.getName()).log(Level.ERROR, "", ex);
-                return Response.status(500).header(headerAccept, "*").entity(error(ex.toString(), null)).build();
+                return Response.status(500).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(error(ex.toString(), null)).build();
             } catch (URISyntaxException ex) {
                 LogManager.getLogger(Processor.class.getName()).log(Level.ERROR, "", ex);
-                return Response.status(500).header(headerAccept, "*").entity(error(ex.toString(), null)).build();
+                return Response.status(500).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(error(ex.toString(), null)).build();
             }
         }
         

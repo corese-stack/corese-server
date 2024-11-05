@@ -5,6 +5,7 @@ import static fr.inria.corese.server.webservice.Utility.toStringList;
 import java.util.HashMap;
 import java.util.List;
 
+import fr.inria.corese.core.util.HTTPHeaders;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -43,13 +44,10 @@ import jakarta.ws.rs.core.Response.ResponseBuilder;
 public class Transformer {
 
     private static Logger logger = LogManager.getLogger(Transformer.class);
-    private static final String headerAccept = "Access-Control-Allow-Origin";
     private static final String TEMPLATE_SERVICE = "/template";
     private static final String RESULT = NSManager.STL + "result";
     private static final String LOAD = NSManager.STL + "load";
     private static NSManager nsm;
-    boolean isDebug, isDetail;
-    static boolean isTest = false;
     static HashMap<String, String> contentType;
 
     static {
@@ -195,43 +193,36 @@ public class Transformer {
             TransformerEngine engine = new TransformerEngine(store.getGraph(), Profile.getProfile().getProfileGraph(),
                     par);
             engine.setDataManager(store.getDataManager());
-            engine.setDebug(EmbeddedJettyServer.isDebug());
             engine.setEventManager(EventManager.getSingleton());
             context = engine.getContext();
 
-            Level level = par.getLevel(); // Access.getQueryAccessLevel(true);
+            Level level = par.getLevel();
             String prof = context.getProfile();
             if (prof != null && !Access.acceptNamespace(Feature.LINKED_TRANSFORMATION, level, prof)) {
-                return Response.status(500).header(headerAccept, "*").entity("Undefined profile: " + prof).build();
+                return Response.status(500).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity("Undefined profile: " + prof).build();
             }
             String trans = context.getTransform();
             if (trans != null && !Access.acceptNamespace(Feature.LINKED_TRANSFORMATION, level, trans)) {
-                return Response.status(500).header(headerAccept, "*").entity("Undefined transformation: " + trans)
+                return Response.status(500).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity("Undefined transformation: " + trans)
                         .build();
             }
 
             Data data = engine.process();
             return process(data, par, context);
         } catch (Exception ex) {
-            logger.error("Error while querying the remote corese server");
-            ex.printStackTrace();
+            logger.error("Error while querying the remote corese server", ex);
             String err = ex.toString();
             String q = null;
             if (context != null && context.getQueryString() != null) {
                 q = context.getQueryString();
             }
-            return Response.status(500).header(headerAccept, "*").entity(error(err, q)).build();
+            return Response.status(500).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(error(err, q)).build();
         }
     }
 
     public Response process(Data data, Param par, Context ctx) {
         try {
-            if (ctx.hasValue(Context.STL_MODE, URLParam.DEBUG)) {
-                System.out.println("Result:");
-                System.out.println(ctx);
-                System.out.println(data.stringValue());
-            }
-            ResponseBuilder rb = Response.status(200).header(headerAccept, "*").entity(result(par, data.stringValue()));
+            ResponseBuilder rb = Response.status(200).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(result(par, data.stringValue()));
             String format = getContentType(data);
             if (format != null && !ctx.getService().contains("srv")) {
                 rb.header("Content-type", format);
@@ -245,7 +236,7 @@ public class Transformer {
             if (ctx != null && ctx.getQueryString() != null) {
                 q = ctx.getQueryString();
             }
-            return Response.status(500).header(headerAccept, "*").entity(error(err, q)).build();
+            return Response.status(500).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(error(err, q)).build();
         }
     }
 

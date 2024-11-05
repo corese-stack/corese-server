@@ -25,7 +25,6 @@ import org.apache.commons.vfs.VFS;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.http.HttpVersion;
-import org.eclipse.jetty.http.MimeTypes;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
@@ -87,14 +86,14 @@ public class EmbeddedJettyServer extends ResourceConfig {
     // options for SSL connection
     private static boolean enableSsl = false;
     private static int portSsl = 8443;
-    private static String keystore, password;
+    private static String keystore;
+    private static String password;
 
     public static URI resourceURI;
     // Homepage webapp/demo_new.html call javascript js/server.js
     // server.js insert HTML content from webapp/html
     public static String HOME_PAGE;
     private static boolean isLocalHost;
-    private static boolean debug = false;
 
     public static String BASE_URI;
 
@@ -113,8 +112,7 @@ public class EmbeddedJettyServer extends ResourceConfig {
             log4jfile = EmbeddedJettyServer.class.getClassLoader().getResource("log4j.properties");
         }
         logger.info("Loading log4j configuration: " + log4jfile);
-        logger.info(
-                "To override log4j configuration add JVM option: -Dlog4j.configurationFile=file:/home/.../your_log4j2.xml");
+        logger.info("To override log4j configuration add JVM option: -Dlog4j.configurationFile=file:/home/.../your_log4j2.xml");
 
         HOME_PAGE = SPARQLRestAPI.isAjax ? "demo_new.html" : "demo.html";
 
@@ -129,7 +127,6 @@ public class EmbeddedJettyServer extends ResourceConfig {
         Option locProfileOpt = new Option("pp", "profile", true, "local profile");
         Option versionOpt = new Option("v", "version", false, "print the version information and exit");
         Option localhost = new Option("lh", "localhost", false, "set server name as localhost");
-        Option optDebug = new Option("debug", "debug", false, "set server mode as debug");
         Option protect = new Option("protect", "protect", false, "set server mode as protect");
         Option string = new Option("string", "string", false, "pprint string with xsd:string");
         Option linkedFun = new Option("lf", "linkedfunction", false, "authorize linked function");
@@ -156,7 +153,6 @@ public class EmbeddedJettyServer extends ResourceConfig {
         options.addOption(helpOpt);
         options.addOption(versionOpt);
         options.addOption(localhost);
-        options.addOption(optDebug);
         options.addOption(protect);
         options.addOption(string);
         options.addOption(linkedFun);
@@ -235,10 +231,6 @@ public class EmbeddedJettyServer extends ResourceConfig {
                 isLocalHost = true;
                 logger.info("localhost");
             }
-            if (cmd.hasOption("debug")) {
-                logger.info("debug");
-                setDebug(true);
-            }
             if (cmd.hasOption("string")) {
                 logger.info("string with xsd:string");
                 Constant.setString(true);
@@ -279,7 +271,7 @@ public class EmbeddedJettyServer extends ResourceConfig {
             }
             if (cmd.hasOption("init")) {
                 String prop = cmd.getOptionValue("init");
-                logger.info("init = " + prop);
+                logger.info("init = {}", prop);
                 if (prop != null) {
                     try {
                         Property.load(prop);
@@ -325,11 +317,6 @@ public class EmbeddedJettyServer extends ResourceConfig {
             logger.info("Corese/KGRAM webapp UI started on http://localhost:" + port);
             logger.info("----------------------------------------------");
 
-            // @TODO Check regularly whether it is still required by jetty or it is already
-            // set.
-            MimeTypes mimeTypes = new MimeTypes();
-            mimeTypes.addMimeMapping("mjs", "application/javascript");
-            staticContextHandler.setMimeTypes(mimeTypes);
 
             // Server server = JettyHttpContainerFactory.createServer(baseUri, config,
             // false);
@@ -394,17 +381,9 @@ public class EmbeddedJettyServer extends ResourceConfig {
             }
             logger.info("before localhost uri: " + uri);
 
-            if (true) {
-                target.path("sparql").path("reset")
-                        .request(APPLICATION_FORM_URLENCODED_TYPE)
-                        .post(Entity.form(formData));
-            } else {
-                new SPARQLRestAPI().initRDF(
-                        Boolean.toString(owlrl),
-                        Boolean.toString(entailments),
-                        Boolean.toString(loadProfileData),
-                        localProfile, "false");
-            }
+            target.path("sparql").path("reset")
+                    .request(APPLICATION_FORM_URLENCODED_TYPE)
+                    .post(Entity.form(formData));
             logger.info("after localhost uri");
 
             if (dataPaths != null) {
@@ -424,7 +403,7 @@ public class EmbeddedJettyServer extends ResourceConfig {
             server.join();
 
         } catch (ParseException exp) {
-            logger.error("Parsing failed.  Reason: " + exp.getMessage());
+            logger.error(exp);
         }
     }
 
@@ -491,19 +470,5 @@ public class EmbeddedJettyServer extends ResourceConfig {
             logger.error("Error extracting directory: " + e.getMessage());
             return null;
         }
-    }
-
-    /**
-     * @return the debug
-     */
-    public static boolean isDebug() {
-        return debug;
-    }
-
-    /**
-     * @param aDebug the debug to set
-     */
-    public static void setDebug(boolean aDebug) {
-        debug = aDebug;
     }
 }

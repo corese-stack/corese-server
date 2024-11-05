@@ -1,5 +1,6 @@
 package fr.inria.corese.server.webservice;
 
+import fr.inria.corese.core.util.HTTPHeaders;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -17,7 +18,6 @@ import fr.inria.corese.core.sparql.api.IDatatype;
  */
 @Path("agent")
 public class Agent {
-    private static final String headerAccept = "Access-Control-Allow-Origin";
     
     QuerySolverVisitorServer visitor;
 
@@ -43,7 +43,7 @@ public class Agent {
         if (dt != null) {
             mess = dt.getLabel();
         }
-        return Response.status(200).header(headerAccept, "*").entity(mess).build();
+        return Response.status(200).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(mess).build();
     }
     
     

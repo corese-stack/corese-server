@@ -88,7 +88,6 @@ public class TripleStoreLog implements URLParam {
         LogManager log = new LogManager(clog);
         String uri = document(log.toString(), "log", ".ttl");
         map.addLink(uri);
-        System.out.println("server report: " + uri);
     }
 
     
@@ -154,12 +153,6 @@ public class TripleStoreLog implements URLParam {
     void messageExplain(Mappings map) {
         String url = document(getJson().toString(), WHY, "");
         map.addLink(url);
-    }
-    
-   
-    
-    void addLink(Mappings map, String url) {
-        //map.addLink(url);
     }
     
     
@@ -233,25 +226,6 @@ public class TripleStoreLog implements URLParam {
             String url = document(sourceQuery, QUERY.concat(SRC), "");
             getJson().setLink(SRC, create(url));
         }
-        
-//        if (log.getASTSelect() != null) {
-//            String query = log.getASTSelect().toString();
-//            query = String.format("# source selection query \n%s", query);
-//            String result = null;
-//                                   
-//            if (log.getSelectMap() != null) {
-//                ResultFormat fm = ResultFormat.create(log.getSelectMap());
-//                result = fm.toString();               
-//            }
-//            
-//            String url1 = document(query, QUERY.concat(SEL), "");
-//            String url2 = null;
-//            if (result != null) {
-//                url2 = document(result, OUTPUT, "");
-//            }
-//            
-//            getJson().setLink(SEL, create(url1, url2));
-//        }
         
         logAST("selection", log.getASTSelect(), log.getSelectMap(), SEL, OUTPUT);
         logAST("discovery", log.getASTIndex(), log.getIndexMap(), INDEX, OUTPUT_INDEX);

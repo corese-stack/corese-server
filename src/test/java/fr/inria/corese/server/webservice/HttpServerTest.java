@@ -122,7 +122,6 @@ public class HttpServerTest {
      */
     @BeforeClass
     public static void init() throws InterruptedException, IOException {
-        System.out.println("starting in " + System.getProperty("user.dir"));
         String startDirectory = "build";
         Pattern pattern = Pattern.compile("corese-server-(\\d+)\\.(\\d+)\\.(\\d+)-SNAPSHOT-app\\.jar");
         File jar_file = HTTPConnectionUtils.findFileRecursively(pattern, new File(startDirectory));

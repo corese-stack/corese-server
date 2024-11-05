@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import fr.inria.corese.core.util.HTTPHeaders;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -47,31 +48,10 @@ import jakarta.ws.rs.core.Response;
 @Path("sparql")
 public class SPARQLRestAPI implements ResultFormatDef, URLParam {
     private static final String ERROR_ENDPOINT = "Error while querying Corese.Core.Sparql endpoint";
-    private static final String HEADER_ACCESS_CONTROL_ALLOW_ORIGIN = "Access-Control-Allow-Origin";
-    private static final String HEADER_CONTENT_TYPE = "Content-type";
     private static final String TEXT_PLAIN = "text/plain";
 
-    static final String SPARQL_RESULTS_XML = ResultFormat.SPARQL_RESULTS_XML;
-    static final String SPARQL_RESULTS_JSON = ResultFormat.SPARQL_RESULTS_JSON;
-    static final String SPARQL_RESULTS_CSV = ResultFormat.SPARQL_RESULTS_CSV;
-    static final String SPARQL_RESULTS_TSV = ResultFormat.SPARQL_RESULTS_TSV;
-    static final String SPARQL_RESULTS_MD = ResultFormat.SPARQL_RESULTS_MD;
     static final String SPARQL_QUERY = ResultFormat.SPARQL_QUERY;
     static final String SPARQL_UPDATE_QUERY = "application/sparql-update";
-
-    static final String XML = ResultFormat.XML;
-    static final String RDF_XML = ResultFormat.RDF_XML;
-    static final String TURTLE = ResultFormat.TURTLE;
-    static final String TURTLE_TEXT = ResultFormat.TURTLE_TEXT;
-    static final String JSON_LD = ResultFormat.JSON_LD;
-    static final String JSON = ResultFormat.JSON;
-    static final String TRIG = ResultFormat.TRIG;
-    static final String TRIG_TEXT = ResultFormat.TRIG_TEXT;
-    static final String NT_TEXT = ResultFormat.NT_TEXT;
-    static final String N_TRIPLES = ResultFormat.N_TRIPLES;
-    static final String N_QUADS = ResultFormat.N_QUADS;
-    static final String TEXT = ResultFormat.TEXT;
-    static final String HTML = ResultFormat.HTML;
 
     // Profiles
     private final String CN10_SHA = "https://www.w3.org/TR/rdf-canon";
@@ -188,7 +168,7 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
         setVisitor(QuerySolverVisitorServer.create(createEval()));
         getVisitor().initServer(EmbeddedJettyServer.BASE_URI);
         init();
-        return Response.status(200).header(HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity("Endpoint reset").build();
+        return Response.status(200).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity("Endpoint reset").build();
     }
 
     void init() {
@@ -246,7 +226,7 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
         if (remotePath == null) {
             String error = "Null remote path";
             logger.error(error);
-            return Response.status(404).header(HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(error).build();
+            return Response.status(404).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(error).build();
         }
 
         logger.debug(remotePath);
@@ -260,10 +240,10 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             }
         } catch (LoadException ex) {
             logger.error(ex);
-            return Response.status(404).header(HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(output).build();
+            return Response.status(404).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(output).build();
         }
 
-        return Response.status(200).header(HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(output).build();
+        return Response.status(200).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(output).build();
     }
 
     @GET
@@ -275,7 +255,7 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
         if (detail != null) {
             isDetail = detail.equals("true");
         }
-        return Response.status(200).header(HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, "*")
+        return Response.status(200).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*")
                 .entity("debug: " + isDebug + " ; " + "detail: " + isDetail).build();
     }
 
@@ -298,7 +278,7 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
      * .
      */
     @GET
-    @Produces({ SPARQL_RESULTS_XML, XML })
+    @Produces({ ResultFormat.SPARQL_RESULTS_XML, ResultFormat.XML })
     public Response getSPARQLXMLForGet(@jakarta.ws.rs.core.Context HttpServletRequest request,
             // name of server from SPARQLService
             @PathParam("name") String name,
@@ -315,23 +295,23 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             @QueryParam("uri") List<String> uri) {
 
         String ft = request.getHeader("Accept");
-        if (ft.contains(SPARQL_RESULTS_XML) || ft.contains(XML)) {
+        if (ft.contains(ResultFormat.SPARQL_RESULTS_XML) || ft.contains(ResultFormat.XML)) {
             // Explicit @Produces, skip format parameter
-            format = SPARQL_RESULTS_XML;
+            format = ResultFormat.SPARQL_RESULTS_XML;
         }
         // default function called in absence of http header accept
         // in this case, the value of format is taken into account
         // if there is header accept, the value of format is overloaded by header accept
         // if there is no header and no format, default format is chosen (xml or turtle)
         return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, format,
-                UNDEF_FORMAT, transform);
+                ResultFormatDef.format.UNDEF_FORMAT, transform);
     }
 
     public Response getResultFormat(HttpServletRequest request,
             String name, String oper, List<String> uri, List<String> param, List<String> mode,
             String query, String access,
             List<String> defaut, List<String> named,
-            String format, int type, List<String> transform) {
+            String format, ResultFormatDef.format type, List<String> transform) {
         return new SPARQLResult(request).setVisitor(getVisitor())
                 .getResultFormat(name, oper, uri, param, mode, query, access, defaut, named, format, type, transform);
     }
@@ -339,8 +319,7 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
     public Response getResultFormat(HttpServletRequest request,
             String name, String oper, List<String> uri, List<String> param, List<String> mode,
             String query, String access,
-            List<String> defaut, List<String> named,
-            int type) {
+            List<String> defaut, List<String> named, ResultFormatDef.format type) {
         return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, null, type, null);
     }
 
@@ -385,7 +364,7 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
     }
 
     @GET
-    @Produces({ HTML })
+    @Produces({ ResultFormat.HTML })
     public Response getHTMLForGet(@jakarta.ws.rs.core.Context HttpServletRequest request,
             // name of server from SPARQLService
             @PathParam("name") String name,
@@ -422,7 +401,7 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
                             defaut,
                             named);
         }
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, null, HTML_FORMAT,
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, null, ResultFormatDef.format.HTML_FORMAT,
                 transform);
     }
 
@@ -439,11 +418,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             @QueryParam("mode") List<String> mode,
             @QueryParam("uri") List<String> uri) {
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, TEXT_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.TEXT_FORMAT);
     }
 
     @GET
-    @Produces(SPARQL_RESULTS_JSON)
+    @Produces(ResultFormat.SPARQL_RESULTS_JSON)
     public Response getTriplesJSONForGet(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
             @PathParam("oper") String oper,
@@ -456,12 +435,12 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             @QueryParam("mode") List<String> mode,
             @QueryParam("uri") List<String> uri) {
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, null, JSON_FORMAT,
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, null, ResultFormatDef.format.JSON_FORMAT,
                 transform);
     }
 
     @GET
-    @Produces(SPARQL_RESULTS_CSV)
+    @Produces(ResultFormat.SPARQL_RESULTS_CSV)
     public Response getTriplesCSVForGet(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
             @PathParam("oper") String oper,
@@ -473,11 +452,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             @QueryParam("mode") List<String> mode,
             @QueryParam("uri") List<String> uri) {
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, CSV_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.CSV_FORMAT);
     }
 
     @GET
-    @Produces(SPARQL_RESULTS_TSV)
+    @Produces(ResultFormat.SPARQL_RESULTS_TSV)
     public Response getTriplesTSVForGet(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
             @PathParam("oper") String oper,
@@ -489,11 +468,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             @QueryParam("mode") List<String> mode,
             @QueryParam("uri") List<String> uri) {
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, TSV_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.TSV_FORMAT);
     }
 
     @GET
-    @Produces(SPARQL_RESULTS_MD)
+    @Produces(ResultFormat.SPARQL_RESULTS_MD)
     public Response getTriplesMDForGet(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
             @PathParam("oper") String oper,
@@ -505,7 +484,7 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             @QueryParam("mode") List<String> mode,
             @QueryParam("uri") List<String> uri) {
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, MARKDOWN_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.MARKDOWN_FORMAT);
     }
 
     // ----------------------------------------------------
@@ -513,7 +492,7 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
     // ----------------------------------------------------
 
     @GET
-    @Produces(RDF_XML)
+    @Produces(ResultFormat.RDF_XML)
     public Response getRDFGraphXMLForGet(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
             @PathParam("oper") String oper,
@@ -525,11 +504,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             @QueryParam("mode") List<String> mode,
             @QueryParam("uri") List<String> uri) {
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, RDF_XML_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.RDF_XML_FORMAT);
     }
 
     @GET
-    @Produces({ TURTLE_TEXT, TURTLE, NT_TEXT })
+    @Produces({ ResultFormat.TURTLE_TEXT, ResultFormat.TURTLE, ResultFormat.NT_TEXT })
     public Response getRDFGraphNTripleForGet(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
             @PathParam("oper") String oper,
@@ -541,11 +520,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             @QueryParam("mode") List<String> mode,
             @QueryParam("uri") List<String> uri) {
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, TURTLE_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.TURTLE_FORMAT);
     }
 
     @GET
-    @Produces({ TRIG_TEXT, TRIG })
+    @Produces({ ResultFormat.TRIG_TEXT, ResultFormat.TRIG })
     public Response getRDFGraphTrigForGet(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
             @PathParam("oper") String oper,
@@ -557,11 +536,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             @QueryParam("mode") List<String> mode,
             @QueryParam("uri") List<String> uri) {
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, TRIG_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.TRIG_FORMAT);
     }
 
     @GET
-    @Produces({ JSON, JSON_LD })
+    @Produces({ ResultFormat.JSON, ResultFormat.JSON_LD })
     public Response getRDFGraphJsonLDForGet(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
             @PathParam("oper") String oper,
@@ -573,11 +552,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             @QueryParam("mode") List<String> mode,
             @QueryParam("uri") List<String> uri) {
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, JSONLD_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.JSONLD_FORMAT);
     }
 
     @GET
-    @Produces({ N_TRIPLES })
+    @Produces({ ResultFormat.N_TRIPLES })
     public Response getRDFGraphNTriplesForGet(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
             @PathParam("oper") String oper,
@@ -589,11 +568,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             @QueryParam("mode") List<String> mode,
             @QueryParam("uri") List<String> uri) {
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, NTRIPLES_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.NTRIPLES_FORMAT);
     }
 
     @GET
-    @Produces({ N_QUADS })
+    @Produces({ ResultFormat.N_QUADS })
     public Response getRDFGraphNQuadsForGet(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
             @PathParam("oper") String oper,
@@ -612,16 +591,16 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             if (profile.equals(this.CN10_SHA) || profile.equals(this.CN10_SHA256)) {
 
                 return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named,
-                        RDFC10_FORMAT);
+                        ResultFormatDef.format.RDFC10_FORMAT);
             }
             if (profile.equals(this.CN10_SHA384)) {
 
                 return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named,
-                        RDFC10_SHA384_FORMAT);
+                        ResultFormatDef.format.RDFC10_SHA384_FORMAT);
             }
         }
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, NQUADS_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.NQUADS_FORMAT);
     }
 
     // ----------------------------------------------------
@@ -637,7 +616,7 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
     }
 
     @POST
-    @Produces({ SPARQL_RESULTS_XML, XML })
+    @Produces({ ResultFormat.SPARQL_RESULTS_XML, ResultFormat.XML })
     @Consumes(SPARQL_QUERY)
     public Response getXMLForPost(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
@@ -654,11 +633,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
 
         query = getQuery(query, update, message);
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, XML_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.XML_FORMAT);
     }
 
     @POST
-    @Produces({ SPARQL_RESULTS_CSV })
+    @Produces({ ResultFormat.SPARQL_RESULTS_CSV })
     @Consumes(SPARQL_QUERY)
     public Response getCSVForPost(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
@@ -675,11 +654,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
 
         query = getQuery(query, update, message);
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, CSV_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.CSV_FORMAT);
     }
 
     @POST
-    @Produces({ SPARQL_RESULTS_TSV })
+    @Produces({ ResultFormat.SPARQL_RESULTS_TSV })
     @Consumes(SPARQL_QUERY)
     public Response getTSVForPost(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
@@ -696,11 +675,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
 
         query = getQuery(query, update, message);
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, TSV_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.TSV_FORMAT);
     }
 
     @POST
-    @Produces({ SPARQL_RESULTS_MD })
+    @Produces({ ResultFormat.SPARQL_RESULTS_MD })
     @Consumes(SPARQL_QUERY)
     public Response getMDForPost(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
@@ -717,11 +696,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
 
         query = getQuery(query, update, message);
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, MARKDOWN_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.MARKDOWN_FORMAT);
     }
 
     @POST
-    @Produces({ TURTLE, TURTLE_TEXT })
+    @Produces({ ResultFormat.TURTLE, ResultFormat.TURTLE_TEXT })
     @Consumes(SPARQL_QUERY)
     public Response getTurtleForPost(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
@@ -738,11 +717,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
 
         query = getQuery(query, update, message);
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, TURTLE_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.TURTLE_FORMAT);
     }
 
     @POST
-    @Produces({ RDF_XML })
+    @Produces({ ResultFormat.RDF_XML })
     @Consumes(SPARQL_QUERY)
     public Response getRDFXMLForPost(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
@@ -759,11 +738,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
 
         query = getQuery(query, update, message);
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, RDF_XML_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.RDF_XML_FORMAT);
     }
 
     @POST
-    @Produces({ TRIG })
+    @Produces({ ResultFormat.TRIG })
     @Consumes(SPARQL_QUERY)
     public Response getTrigForPost(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
@@ -780,11 +759,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
 
         query = getQuery(query, update, message);
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, TRIG_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.TRIG_FORMAT);
     }
 
     @POST
-    @Produces({ JSON_LD })
+    @Produces({ ResultFormat.JSON_LD })
     @Consumes(SPARQL_QUERY)
     public Response getJSONLDForPost(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
@@ -801,11 +780,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
 
         query = getQuery(query, update, message);
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, JSONLD_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.JSONLD_FORMAT);
     }
 
     @POST
-    @Produces({ NT_TEXT, N_TRIPLES })
+    @Produces({ ResultFormat.NT_TEXT, ResultFormat.N_TRIPLES })
     @Consumes(SPARQL_QUERY)
     public Response getNTriplesForPost(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
@@ -822,11 +801,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
 
         query = getQuery(query, update, message);
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, NTRIPLES_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.NTRIPLES_FORMAT);
     }
 
     @POST
-    @Produces({ N_QUADS })
+    @Produces({ ResultFormat.N_QUADS })
     @Consumes(SPARQL_QUERY)
     public Response getNQuadsForPost(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
@@ -843,11 +822,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
 
         query = getQuery(query, update, message);
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, NQUADS_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.NQUADS_FORMAT);
     }
 
     @POST
-    @Produces({ TEXT })
+    @Produces({ ResultFormat.TEXT })
     @Consumes(SPARQL_QUERY)
     public Response getXMLForPostText(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
@@ -864,11 +843,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
 
         query = getQuery(query, update, message);
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, TEXT_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.TEXT_FORMAT);
     }
 
     @POST
-    @Produces(SPARQL_RESULTS_JSON)
+    @Produces(ResultFormat.SPARQL_RESULTS_JSON)
     @Consumes(SPARQL_QUERY)
     public Response getTriplesJSONForPost(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
@@ -884,7 +863,7 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             String message) {
         query = getQuery(query, update, message);
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, JSON_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.JSON_FORMAT);
     }
 
     /**
@@ -892,7 +871,7 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
      * SPARQL service clause executed here by corese
      */
     @POST
-    @Produces({ SPARQL_RESULTS_XML, XML })
+    @Produces({ ResultFormat.SPARQL_RESULTS_XML, ResultFormat.XML })
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response getTriplesXMLForPost(@jakarta.ws.rs.core.Context HttpServletRequest request,
             // name of server with a specific rdf graph (SPARQLService)
@@ -916,13 +895,13 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
 
         query = getQuery(query, update, message);
 
-        if (accept.contains(SPARQL_RESULTS_XML) || accept.contains(XML)) {
-            format = SPARQL_RESULTS_XML;
+        if (accept.contains(ResultFormat.SPARQL_RESULTS_XML) || accept.contains(ResultFormat.XML)) {
+            format = ResultFormat.SPARQL_RESULTS_XML;
         }
 
         // dataset(defaut, using), dataset(named, usingNamed)
         return getResultFormat(request, name, oper, uri, param, mode, query,
-                access, defaut, named, format, UNDEF_FORMAT, transform);
+                access, defaut, named, format, ResultFormatDef.format.UNDEF_FORMAT, transform);
     }
 
     List<String> dataset(List<String> from, List<String> using) {
@@ -933,7 +912,7 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
     }
 
     @POST
-    @Produces(HTML)
+    @Produces(ResultFormat.HTML)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response getHTMLForPost(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
@@ -950,11 +929,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
 
         query = getQuery(query, update, message);
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, HTML_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.HTML_FORMAT);
     }
 
     @POST
-    @Produces(TEXT)
+    @Produces(ResultFormat.TEXT)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response getTriplesTEXTForPost(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
@@ -970,11 +949,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             String message) {
         query = getQuery(query, update, message);
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, TEXT_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.TEXT_FORMAT);
     }
 
     @POST
-    @Produces(SPARQL_RESULTS_JSON)
+    @Produces(ResultFormat.SPARQL_RESULTS_JSON)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response getTriplesJSONForPostFormUrlEncoded(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
@@ -991,12 +970,12 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             String message) {
 
         query = getQuery(query, update, message);
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, null, JSON_FORMAT,
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, null, ResultFormatDef.format.JSON_FORMAT,
                 transform);
     }
 
     @POST
-    @Produces(SPARQL_RESULTS_CSV)
+    @Produces(ResultFormat.SPARQL_RESULTS_CSV)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response getTriplesCSVForPost(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
@@ -1014,12 +993,12 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
 
         query = getQuery(query, update, message);
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, null, CSV_FORMAT,
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, null, ResultFormatDef.format.CSV_FORMAT,
                 transform);
     }
 
     @POST
-    @Produces(SPARQL_RESULTS_TSV)
+    @Produces(ResultFormat.SPARQL_RESULTS_TSV)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response getTriplesTSVForPost(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
@@ -1036,7 +1015,7 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             String message) {
         query = getQuery(query, update, message);
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, null, TSV_FORMAT,
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, null, ResultFormatDef.format.TSV_FORMAT,
                 transform);
     }
 
@@ -1045,7 +1024,7 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
     // ----------------------------------------------------
 
     @POST
-    @Produces(RDF_XML)
+    @Produces(ResultFormat.RDF_XML)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response getRDFGraphXMLForPost(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
@@ -1062,11 +1041,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
 
         query = getQuery(query, update, message);
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, RDF_XML_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.RDF_XML_FORMAT);
     }
 
     @POST
-    @Produces({ TURTLE_TEXT, TURTLE, NT_TEXT })
+    @Produces({ ResultFormat.TURTLE_TEXT, ResultFormat.TURTLE, ResultFormat.NT_TEXT })
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response getRDFGraphNTripleForPost(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
@@ -1083,11 +1062,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
 
         query = getQuery(query, update, message);
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, TURTLE_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.TURTLE_FORMAT);
     }
 
     @POST
-    @Produces({ SPARQL_RESULTS_MD })
+    @Produces({ ResultFormat.SPARQL_RESULTS_MD })
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response getRDFGraphMDForPost(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
@@ -1104,11 +1083,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
 
         query = getQuery(query, update, message);
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, MARKDOWN_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.MARKDOWN_FORMAT);
     }
 
     @POST
-    @Produces({ JSON, JSON_LD })
+    @Produces({ ResultFormat.JSON, ResultFormat.JSON_LD })
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response getRDFGraphJsonLDForPost(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
@@ -1124,11 +1103,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             String message) {
         query = getQuery(query, update, message);
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, JSONLD_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.JSONLD_FORMAT);
     }
 
     @POST
-    @Produces({ N_TRIPLES })
+    @Produces({ ResultFormat.N_TRIPLES })
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response getRDFGraphNTriplesForPost(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
@@ -1144,11 +1123,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             String message) {
         query = getQuery(query, update, message);
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, NTRIPLES_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.NTRIPLES_FORMAT);
     }
 
     @POST
-    @Produces({ TRIG, TRIG_TEXT })
+    @Produces({ ResultFormat.TRIG, ResultFormat.TRIG_TEXT })
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response getRDFGraphTrigForPost(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
@@ -1164,11 +1143,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             String message) {
         query = getQuery(query, update, message);
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, TRIG_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.TRIG_FORMAT);
     }
 
     @POST
-    @Produces({ N_QUADS })
+    @Produces({ ResultFormat.N_QUADS })
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response getRDFGraphNQuadsForPost(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @PathParam("name") String name,
@@ -1191,16 +1170,16 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             if (profile.equals(this.CN10_SHA) || profile.equals(this.CN10_SHA256)) {
 
                 return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named,
-                        RDFC10_FORMAT);
+                        ResultFormatDef.format.RDFC10_FORMAT);
             }
             if (profile.equals(this.CN10_SHA384)) {
 
                 return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named,
-                        RDFC10_SHA384_FORMAT);
+                        ResultFormatDef.format.RDFC10_SHA384_FORMAT);
             }
         }
 
-        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, NQUADS_FORMAT);
+        return getResultFormat(request, name, oper, uri, param, mode, query, access, defaut, named, ResultFormatDef.format.NQUADS_FORMAT);
     }
 
     // ----------------------------------------------------
@@ -1221,7 +1200,7 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
 
     @POST
     @Consumes(SPARQL_UPDATE_QUERY)
-    @Produces(SPARQL_RESULTS_XML)
+    @Produces(ResultFormat.SPARQL_RESULTS_XML)
     public Response updateTriplesDirectXML(@jakarta.ws.rs.core.Context HttpServletRequest request,
             String message, // standard parameter, do not add @QueryParam()
             @PathParam("name") String name,
@@ -1233,17 +1212,17 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             @QueryParam("mode") List<String> mode,
             @QueryParam("uri") List<String> uri) {
         if (message != null) {
-            return getResultFormat(request, name, oper, uri, param, mode, message, access, defaut, named, XML_FORMAT);
+            return getResultFormat(request, name, oper, uri, param, mode, message, access, defaut, named, ResultFormatDef.format.XML_FORMAT);
         } else {
             logger.warn("Null update query !");
-            return Response.status(ERROR).header(HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(ERROR_ENDPOINT)
+            return Response.status(ERROR).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(ERROR_ENDPOINT)
                     .build();
         }
     }
 
     @POST
     @Consumes(SPARQL_UPDATE_QUERY)
-    @Produces(SPARQL_RESULTS_CSV)
+    @Produces(ResultFormat.SPARQL_RESULTS_CSV)
     public Response updateTriplesDirectCSV(@jakarta.ws.rs.core.Context HttpServletRequest request,
             String message, // standard parameter, do not add @QueryParam()
             @PathParam("name") String name,
@@ -1255,17 +1234,17 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             @QueryParam("mode") List<String> mode,
             @QueryParam("uri") List<String> uri) {
         if (message != null) {
-            return getResultFormat(request, name, oper, uri, param, mode, message, access, defaut, named, CSV_FORMAT);
+            return getResultFormat(request, name, oper, uri, param, mode, message, access, defaut, named, ResultFormatDef.format.CSV_FORMAT);
         } else {
             logger.warn("Null update query !");
-            return Response.status(ERROR).header(HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(ERROR_ENDPOINT)
+            return Response.status(ERROR).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(ERROR_ENDPOINT)
                     .build();
         }
     }
 
     @POST
     @Consumes(SPARQL_UPDATE_QUERY)
-    @Produces(SPARQL_RESULTS_TSV)
+    @Produces(ResultFormat.SPARQL_RESULTS_TSV)
     public Response updateTriplesDirectTSV(@jakarta.ws.rs.core.Context HttpServletRequest request,
             String message, // standard parameter, do not add @QueryParam()
             @PathParam("name") String name,
@@ -1277,17 +1256,17 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             @QueryParam("mode") List<String> mode,
             @QueryParam("uri") List<String> uri) {
         if (message != null) {
-            return getResultFormat(request, name, oper, uri, param, mode, message, access, defaut, named, TSV_FORMAT);
+            return getResultFormat(request, name, oper, uri, param, mode, message, access, defaut, named, ResultFormatDef.format.TSV_FORMAT);
         } else {
             logger.warn("Null update query !");
-            return Response.status(ERROR).header(HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(ERROR_ENDPOINT)
+            return Response.status(ERROR).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(ERROR_ENDPOINT)
                     .build();
         }
     }
 
     @POST
     @Consumes(SPARQL_UPDATE_QUERY)
-    @Produces(SPARQL_RESULTS_JSON)
+    @Produces(ResultFormat.SPARQL_RESULTS_JSON)
     public Response updateTriplesDirectJSON(@jakarta.ws.rs.core.Context HttpServletRequest request,
             String message, // standard parameter, do not add @QueryParam()
             @PathParam("name") String name,
@@ -1299,17 +1278,17 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             @QueryParam("mode") List<String> mode,
             @QueryParam("uri") List<String> uri) {
         if (message != null) {
-            return getResultFormat(request, name, oper, uri, param, mode, message, access, defaut, named, JSON_FORMAT);
+            return getResultFormat(request, name, oper, uri, param, mode, message, access, defaut, named, ResultFormatDef.format.JSON_FORMAT);
         } else {
             logger.warn("Null update query !");
-            return Response.status(ERROR).header(HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(ERROR_ENDPOINT)
+            return Response.status(ERROR).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(ERROR_ENDPOINT)
                     .build();
         }
     }
 
     @POST
     @Consumes(SPARQL_UPDATE_QUERY)
-    @Produces(SPARQL_RESULTS_MD)
+    @Produces(ResultFormat.SPARQL_RESULTS_MD)
     public Response updateTriplesDirectMD(@jakarta.ws.rs.core.Context HttpServletRequest request,
             String message, // standard parameter, do not add @QueryParam()
             @PathParam("name") String name,
@@ -1321,10 +1300,10 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             @QueryParam("mode") List<String> mode,
             @QueryParam("uri") List<String> uri) {
         if (message != null) {
-            return getResultFormat(request, name, oper, uri, param, mode, message, access, defaut, named, MARKDOWN_FORMAT);
+            return getResultFormat(request, name, oper, uri, param, mode, message, access, defaut, named, ResultFormatDef.format.MARKDOWN_FORMAT);
         } else {
             logger.warn("Null update query !");
-            return Response.status(ERROR).header(HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(ERROR_ENDPOINT)
+            return Response.status(ERROR).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(ERROR_ENDPOINT)
                     .build();
         }
     }
@@ -1338,19 +1317,19 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
             @QueryParam("named-graph-uri") List<String> named) {
         try {
             Mappings mp = getTripleStore(name).query(request, query, createDataset(request, defaut, named, access));
-            return Response.status(mp.size() > 0 ? 200 : 400).header(HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, "*")
+            return Response.status(mp.size() > 0 ? 200 : 400).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*")
                     .entity("Query has no response")
                     .build();
         } catch (Exception ex) {
             logger.error(ERROR_ENDPOINT, ex);
-            return Response.status(ERROR).header(HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(ERROR_ENDPOINT)
+            return Response.status(ERROR).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(ERROR_ENDPOINT)
                     .build();
         }
     }
 
     @GET
     @Path("/draw")
-    @Produces(SPARQL_RESULTS_JSON)
+    @Produces(ResultFormat.SPARQL_RESULTS_JSON)
     public Response getJSON(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @QueryParam("query") String query) {
         if (logger.isDebugEnabled())
@@ -1373,7 +1352,7 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
 
     @GET
     @Path("/d3")
-    @Produces(SPARQL_RESULTS_JSON)
+    @Produces(ResultFormat.SPARQL_RESULTS_JSON)
     public Response getTriplesJSONForGetWithGraph(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @QueryParam("query") String query,
             @QueryParam("access") String access,
@@ -1388,11 +1367,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
 
             String mapsD3 = "{ \"mappings\" : " + JSONFormat.create(m).toString() + " , " + "\"d3\" : "
                     + JSOND3Format.create((Graph) m.getGraph()).toString() + " }";
-            return Response.status(200).header("Access-Control-Allow-Origin", "*").entity(mapsD3).build();
+            return Response.status(200).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(mapsD3).build();
 
         } catch (Exception ex) {
             logger.error(ERROR_ENDPOINT, ex);
-            return Response.status(ERROR).header(HEADER_ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(ERROR_ENDPOINT)
+            return Response.status(ERROR).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(ERROR_ENDPOINT)
                     .build();
         }
     }

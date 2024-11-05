@@ -1,5 +1,6 @@
 package fr.inria.corese.server.webservice;
 
+import fr.inria.corese.core.api.Loader;
 import fr.inria.corese.core.sparql.exceptions.EngineException;
 import fr.inria.corese.core.sparql.triple.parser.Context;
 import fr.inria.corese.core.Graph;
@@ -7,6 +8,7 @@ import fr.inria.corese.core.load.Load;
 import fr.inria.corese.core.load.LoadException;
 import fr.inria.corese.core.print.HTMLFormat;
 import fr.inria.corese.core.transform.Transformer;
+import fr.inria.corese.core.util.HTTPHeaders;
 import fr.inria.corese.core.util.SPINProcess;
 import org.apache.logging.log4j.Level;
 import jakarta.ws.rs.Consumes;
@@ -28,7 +30,6 @@ import org.apache.logging.log4j.LogManager;
 @Path("spin")
 public class SPIN {
 
-    private static final String headerAccept = "Access-Control-Allow-Origin";
     public static final String TOSPIN_SERVICE = "/spin/tospin";
     public static final String TOSPARQL_SERVICE = "/spin/tosparql";
 
@@ -66,11 +67,11 @@ public class SPIN {
             complete(c);
             HTMLFormat ft = HTMLFormat.create(g, c);
 
-            return Response.status(200).header(headerAccept, "*").entity(ft.toString()).build();
+            return Response.status(200).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(ft.toString()).build();
 
         } catch (EngineException ex) {
             LogManager.getLogger(SPARQLRestAPI.class.getName()).log(Level.ERROR, "", ex);
-            return Response.status(500).header(headerAccept, "*").entity("Error while querying the remote KGRAM engine").build();
+            return Response.status(500).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity("Error while querying the remote KGRAM engine").build();
         }
     }
 
@@ -113,17 +114,17 @@ public class SPIN {
                         + "    sp:predicate [sp:varName \"p\"] ;\n"
                         + "    sp:subject [sp:varName \"x\"]])] .";
             }
-            ld.loadString(query, Load.TURTLE_FORMAT);
+            ld.loadString(query, Loader.format.TURTLE_FORMAT);
 
             Context c = new Context().setTransform(Transformer.TOSPIN).setQueryString(query).setService(TOSPARQL_SERVICE);
             complete(c);
             HTMLFormat ft = HTMLFormat.create(g, c);
 
-            return Response.status(200).header(headerAccept, "*").entity(ft.toString()).build();
+            return Response.status(200).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(ft.toString()).build();
 
         } catch (LoadException ex) {
             LogManager.getLogger(SPARQLRestAPI.class.getName()).log(Level.ERROR, "", ex);
-            return Response.status(500).header(headerAccept, "*").entity("Error while querying the remote KGRAM engine").build();
+            return Response.status(500).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity("Error while querying the remote KGRAM engine").build();
         }
     }
 }

@@ -9,12 +9,13 @@ import fr.inria.corese.core.kgram.core.Mapping;
 import fr.inria.corese.core.kgram.core.Mappings;
 import fr.inria.corese.core.kgram.core.Query;
 import static fr.inria.corese.server.webservice.SPARQLRestAPI.ERROR;
-import static fr.inria.corese.server.webservice.SPARQLRestAPI.SPARQL_RESULTS_XML;
 import fr.inria.corese.core.sparql.api.IDatatype;
 import fr.inria.corese.core.sparql.datatype.DatatypeMap;
 import fr.inria.corese.core.sparql.exceptions.EngineException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+
+import fr.inria.corese.core.util.HTTPHeaders;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
@@ -39,11 +40,10 @@ import org.apache.logging.log4j.LogManager;
  * service <http://corese.inria.fr/compute/test> { values (?x ?res) { (1 undef) }}
  */
 public class ServiceCompute  {
-    private static final String headerAccept = "Access-Control-Allow-Origin";
-    static private final org.apache.logging.log4j.Logger logger = LogManager.getLogger(ServiceCompute.class);
+    private static final org.apache.logging.log4j.Logger logger = LogManager.getLogger(ServiceCompute.class);
     
     @POST
-    @Produces({SPARQL_RESULTS_XML})
+    @Produces({ResultFormat.SPARQL_RESULTS_XML})
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response compute(@Context HttpServletRequest request,
             @PathParam("name") String name, 
@@ -58,16 +58,15 @@ public class ServiceCompute  {
             ResultFormat rf = ResultFormat.create(map);
             String res = rf.toString();
 
-            Response resp = Response.status(200)
-                    .header(headerAccept, "*")
+            return Response.status(200)
+                    .header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*")
                     .header("Content-Type", rf.getContentType())
                     .entity(res).build();
-            return resp;
         
         }  
         catch (EngineException |NoSuchMethodException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
             logger.error("Error in service call", ex);
-            return Response.status(ERROR).header(headerAccept, "*").entity("Error while querying the remote KGRAM engine").build();        
+            return Response.status(ERROR).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity("Error while querying the remote KGRAM engine").build();
         }
     }
     
@@ -129,26 +128,13 @@ public class ServiceCompute  {
             m.initValues();
             DatatypeValue x = m.getValue("?x");
             DatatypeValue y = m.getValue("?y");
-            //m.addNode(qn, DatatypeMap.newInstance(x.intValue() + y.intValue()));
             m.addNode(qn, DatatypeMap.newInstance(request.getRequestURL().toString()));
         }
         
         return map;
     }
     
-    void trace(HttpServletRequest request) {
-        System.out.println("param: " + request.getParameterMap().size());
-        System.out.println("query string: " + request.getQueryString());
-        System.out.println("path info: " + request.getPathInfo());
-        System.out.println("path trans: " + request.getPathTranslated());
-        System.out.println("context: " + request.getContextPath());
-        for (String key : request.getParameterMap().keySet()) {
-            System.out.println(key + " = " + request.getParameter(key));
-        }
-    }
-    
     String getQuery(String query, String message) {
-        //System.out.println("query:" + query);
         return (query.isEmpty()) ? message : query;
     }
     

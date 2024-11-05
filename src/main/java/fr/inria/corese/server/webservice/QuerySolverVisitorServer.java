@@ -44,36 +44,15 @@ public class QuerySolverVisitorServer extends QuerySolverVisitor {
     }
    
     public IDatatype beforeRequest(HttpServletRequest request, String query) {
-        //trace(request);
-        IDatatype dt = callback(getEval(), BEFORE_REQUEST, toArray(request, query));
-        return dt;
+        return callback(getEval(), BEFORE_REQUEST, toArray(request, query));
     }
     
     public IDatatype afterRequest(HttpServletRequest request, String query, Mappings map) {
-        IDatatype dt = callback(getEval(), AFTER_REQUEST, toArray(request, query, map));
-        return dt;
+        return callback(getEval(), AFTER_REQUEST, toArray(request, query, map));
     }
     
     public IDatatype afterRequest(HttpServletRequest request, Response resp, String query, Mappings map, String res) {
-        //trace(resp);
-        IDatatype dt = callback(getEval(), AFTER_REQUEST, toArray(request, resp, query, map, res));
-        return dt;
-    }
-    
-    void trace(HttpServletRequest req) {
-        System.out.println("Request header: ");
-        Enumeration en = req.getHeaderNames();
-        
-        while (en.hasMoreElements()) {
-            String key = (String) en.nextElement();
-            String val = req.getHeader(key);
-            System.out.println(key + " " + val);
-        }
-    }
-    
-    void trace(Response resp) {
-        System.out.println("Response header: " + resp.getStringHeaders());
-        System.out.println("media type: " + resp.getMediaType());
+        return callback(getEval(), AFTER_REQUEST, toArray(request, resp, query, map, res));
     }
     
     /**
@@ -82,8 +61,7 @@ public class QuerySolverVisitorServer extends QuerySolverVisitor {
      * Draft event function in webapp/data/demo/system/event.rq
      * loaded by st:default service content in profile.ttl
      */
-    public IDatatype message(HttpServletRequest request) { 
-        //IDatatype dt = funcall(getEval(), MESSAGE_FUN, toArray(request));
+    public IDatatype message(HttpServletRequest request) {
         IDatatype dt = callback(getEval(), MESSAGE, toArray(request));
         return dt;
     }

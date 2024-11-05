@@ -65,17 +65,8 @@ public class EventManager {
      */
     synchronized void call(Context context) {
         record(context);
-        log(context);
     }
-    
-    void log(Context context) {
-        logger.info("Workflow Context:\n" + context);
-        logger.info(globalMap.getMap());
-        logger.info(getCountMap().getMap());
-        //logger.info(getDateMap().getMap());
-        logger.info(hostLiteMap.getMap());
-    }
-    
+
     /**
      * 
      */

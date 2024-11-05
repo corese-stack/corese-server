@@ -12,6 +12,8 @@ import fr.inria.corese.core.print.JSONFormat;
 import fr.inria.corese.core.print.TripleFormat;
 
 import java.io.IOException;
+
+import fr.inria.corese.core.util.HTTPHeaders;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.GET;
@@ -50,9 +52,8 @@ public class LdpRequestAPI {
 
     private static final TripleStore store = new TripleStore();
     private static final QueryProcess exec = QueryProcess.create( store.graph );
-    private final String headerAccept = "Access-Control-Allow-Origin";
-    private final static String SERVER = "http://localhost:8080/ldp/";
-    private final static String LDP_NAME = NSManager.STL + "ldp";
+    private static final String SERVER = "http://localhost:8080/ldp/";
+    private static final String LDP_NAME = NSManager.STL + "ldp";
 
     //^(?!upload|create)(.*)$
     @GET
@@ -66,7 +67,7 @@ public class LdpRequestAPI {
         } catch (EngineException ex)
         {
             logger.error( ex );
-            return Response.serverError().header( headerAccept, "*" ).entity( ex ).build();
+            return Response.serverError().header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*" ).entity( ex ).build();
         }
     }
 
@@ -91,11 +92,11 @@ public class LdpRequestAPI {
             }
             logger.info( query );
             String json = JSONFormat.create( exec.query( query ) ).toString();
-            return Response.status( 200 ).header( headerAccept, "*" ).entity( json ).build();
+            return Response.status( 200 ).header( HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*" ).entity( json ).build();
         } catch (EngineException ex)
         {
             logger.error( ex );
-            return Response.serverError().header( headerAccept, "*" ).entity( ex ).build();
+            return Response.serverError().header( HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*" ).entity( ex ).build();
         }
     }
 
@@ -109,7 +110,7 @@ public class LdpRequestAPI {
         } catch (EngineException ex)
         {
             logger.error( ex );
-            return Response.serverError().header( headerAccept, "*" ).entity( ex ).build();
+            return Response.serverError().header( HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*" ).entity( ex ).build();
         }
     }
 
@@ -117,7 +118,7 @@ public class LdpRequestAPI {
     @Path("{path:.+}")
     public Response getResourceOPTIONS(@PathParam("path") String resource)
     {
-        return Response.ok().header( headerAccept, "*" ).header( "Allow", "GET, HEAD, OPTIONS" ).build();
+        return Response.ok().header( HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*" ).header( "Allow", "GET, HEAD, OPTIONS" ).build();
     }
 
     @POST
@@ -136,11 +137,11 @@ public class LdpRequestAPI {
                 logger.warn( "Null update query !" );
             }
 
-            return Response.ok().header( headerAccept, "*" ).build();
+            return Response.ok().header( HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*" ).build();
         } catch (EngineException ex)
         {
             logger.error( ex );
-            return Response.serverError().header( headerAccept, "*" ).entity( ex ).build();
+            return Response.serverError().header( HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*" ).entity( ex ).build();
         }
     }
 
@@ -149,7 +150,7 @@ public class LdpRequestAPI {
     @Path("/upload")
     public Response uploadTriplesOPTIONS()
     {
-        return Response.ok().header( headerAccept, "*" ).header( "Allow", "POST, OPTIONS" ).build();
+        return Response.ok().header( HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*" ).header( "Allow", "POST, OPTIONS" ).build();
     }
 
     Context getContext()
@@ -199,7 +200,7 @@ public class LdpRequestAPI {
         //TODO, check the resource type:LDPR, LDP-NR, LDPC, etc..
         rb.header( "Link", "<http://www.w3.org/ns/ldp#RDFResource>; rel = \"type\"" );
         rb.header( "Preference-Applied", "return=presentation" );
-        rb.header( headerAccept, "*" );
+        rb.header( HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*" );
 
         return rb.build();
     }

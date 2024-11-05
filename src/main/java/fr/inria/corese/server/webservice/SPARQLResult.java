@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import fr.inria.corese.core.util.HTTPHeaders;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -35,7 +36,6 @@ import jakarta.ws.rs.core.Response.ResponseBuilder;
 public class SPARQLResult implements ResultFormatDef, URLParam {
 
     static private final Logger logger = LogManager.getLogger(SPARQLResult.class);
-    private static final String headerAccept = "Access-Control-Allow-Origin";
     private static final String ERROR_ENDPOINT = "Error while querying Corese.Core.Sparql endpoint";
     private static final String OPER = "operation";
     private static final String URL = Context.URL;
@@ -76,7 +76,8 @@ public class SPARQLResult implements ResultFormatDef, URLParam {
      *       sparql endpoint
      * @oper is sparql | federate | symbolic name defined in urlprofile.ttl
      * @uri is optional list of URI. use case: URL of shacl shape
-     * @param is optional parameter in format: param=key~val;val
+     * @param param is optional parameter in format: param=key~val;val
+     * @param type
      * @mode is such as mode=debug;link;log
      * @access is a key that may give access to protected features
      * @defaut and @named are graph name URI
@@ -87,10 +88,10 @@ public class SPARQLResult implements ResultFormatDef, URLParam {
      * @transform is list of transformation such as st:map
      */
     public Response getResultFormat(String name, String oper,
-            List<String> uri, List<String> param, List<String> mode,
-            String query, String access,
-            List<String> defaut, List<String> named,
-            String format, int type, List<String> transform) {
+                                    List<String> uri, List<String> param, List<String> mode,
+                                    String query, String access,
+                                    List<String> defaut, List<String> named,
+                                    String format, format type, List<String> transform) {
 
         try {
             logger.info("Endpoint URL: " + getRequest().getRequestURL());
@@ -112,7 +113,7 @@ public class SPARQLResult implements ResultFormatDef, URLParam {
             ResultFormat rf = getFormat(map, ds, format, type, transform);
             String res = rf.toString();
 
-            ResponseBuilder rb = Response.status(Response.Status.OK).header(headerAccept, "*");
+            ResponseBuilder rb = Response.status(Response.Status.OK).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 
             if (format != null) {
                 // real content type of result, possibly different from @Produces
@@ -127,15 +128,14 @@ public class SPARQLResult implements ResultFormatDef, URLParam {
             String errorMessage = "Unable to canonicalize the RDF data. " + ex.getMessage();
             logger.error(errorMessage);
             return Response.status(ERROR)
-                    .header(headerAccept, "*")
+                    .header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*")
                     .entity(errorMessage)
                     .build();
         } catch (EngineException ex) {
-            logger.error("query:");
-            logger.error(query);
+            logger.error("query: {}", query);
             logger.error(ERROR_ENDPOINT, ex);
             String message = String.format("%s\n%s", ERROR_ENDPOINT, ex.getMessage());
-            return Response.status(ERROR).header(headerAccept, "*").entity(message).build();
+            return Response.status(ERROR).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(message).build();
         }
     }
 
@@ -182,9 +182,7 @@ public class SPARQLResult implements ResultFormatDef, URLParam {
             ds = new Dataset();
         }
         boolean b = SPARQLRestAPI.hasKey(request, access);
-        if (b) {
-            System.out.println("has key access");
-        }
+
         Level level = Access.getQueryAccessLevel(true, b);
         ds.getCreateContext().setLevel(level);
         ds.getContext().setURI(URL, request.getRequestURL().toString());
@@ -335,7 +333,6 @@ public class SPARQLResult implements ResultFormatDef, URLParam {
 
     void defineFederation(Dataset ds, List<String> federation) {
         ds.setUriList(federation);
-        // ds.getContext().set(FEDERATION, DatatypeMap.listResource(federation));
     }
 
     String decode(String value) {
@@ -365,16 +362,6 @@ public class SPARQLResult implements ResultFormatDef, URLParam {
     }
 
     void afterParameter(Dataset ds, Mappings map) {
-        if (ds.getContext().hasValue(TRACE)) {
-            System.out.println("SPARQL endpoint");
-            System.out.println(map.getQuery().getAST());
-            System.out.println(map.toString(false, true, 10));
-        }
-        // draft for testing
-        if (ds.getContext().hasValue(FORMAT)) {
-            ResultFormat ft = ResultFormat.create(map, ds.getContext().get(FORMAT).getLabel());
-            System.out.println(ft);
-        }
     }
 
     QuerySolverVisitorServer getVisitor() {
@@ -406,12 +393,9 @@ public class SPARQLResult implements ResultFormatDef, URLParam {
     }
 
     void afterRequest(Mappings map, Dataset ds, String res) {
-        if (ds.getContext().hasValue(TRACE)) {
-            System.out.println("service result: \n" + res);
-        }
     }
 
-    ResultFormat getFormat(Mappings map, Dataset ds, String format, int type, List<String> transformList) {
+    ResultFormat getFormat(Mappings map, Dataset ds, String format, ResultFormatDef.format type, List<String> transformList) {
         // predefined parameter associated to URL/mode in urlparameter.ttl
         transformList = selectTransformation(ds.getContext(), getValue(ds.getContext(), TRANSFORM, transformList));
         if (map.getQuery().isDebug()) {
@@ -431,7 +415,7 @@ public class SPARQLResult implements ResultFormatDef, URLParam {
      * document
      * b) otherwise transformation result
      */
-    ResultFormat getFormatTransform(Mappings map, Dataset ds, String format, int type, List<String> transformList) {
+    ResultFormat getFormatTransform(Mappings map, Dataset ds, String format, ResultFormatDef.format type, List<String> transformList) {
         logger.info("Transform: " + transformList);
 
         boolean link = ds.getContext().hasAnyValue(LINK, LINK_REST);
@@ -450,7 +434,7 @@ public class SPARQLResult implements ResultFormatDef, URLParam {
         } else {
             // return transform result
             // record std result in href document in case transform generate link href
-            int mytype = (type == ResultFormat.HTML_FORMAT) ? ResultFormat.UNDEF_FORMAT : type;
+            ResultFormatDef.format mytype = (type == ResultFormatDef.format.HTML_FORMAT) ? ResultFormatDef.format.UNDEF_FORMAT : type;
             std = getFormatSimple(map, ds, format, mytype);
         }
 
@@ -482,7 +466,7 @@ public class SPARQLResult implements ResultFormatDef, URLParam {
      * and return empty
      * Otherwise return result of (first) transformation
      */
-    Optional<ResultFormat> getFormatTransformList(Mappings map, Dataset ds, String format, int type,
+    Optional<ResultFormat> getFormatTransformList(Mappings map, Dataset ds, String format, ResultFormatDef.format type,
             List<String> transformList) {
         ResultFormat fst = null;
         Context c = ds.getContext();
@@ -548,9 +532,9 @@ public class SPARQLResult implements ResultFormatDef, URLParam {
         return null;
     }
 
-    ResultFormat getFormatTransform(Mappings map, Dataset ds, String format, int type, String transform) {
+    ResultFormat getFormatTransform(Mappings map, Dataset ds, String format, ResultFormatDef.format type, String transform) {
         ResultFormat ft;
-        if (type == UNDEF_FORMAT) {
+        if (type == ResultFormatDef.format.UNDEF_FORMAT) {
             ft = ResultFormat.create(map, format, transform).init(ds);
         } else {
             ft = ResultFormat.create(map, type, transform).init(ds);
@@ -562,8 +546,8 @@ public class SPARQLResult implements ResultFormatDef, URLParam {
         return ft;
     }
 
-    ResultFormat getFormatSimple(Mappings map, Dataset ds, String format, int type) {
-        if (type == UNDEF_FORMAT) {
+    ResultFormat getFormatSimple(Mappings map, Dataset ds, String format, ResultFormatDef.format type) {
+        if (type == ResultFormatDef.format.UNDEF_FORMAT) {
             return ResultFormat.create(map, format).init(ds);
         } else {
             return ResultFormat.create(map, type).init(ds);
@@ -598,10 +582,6 @@ public class SPARQLResult implements ResultFormatDef, URLParam {
      * st:all -> st:xml st:json
      */
     List<String> prepare(List<String> transformList) {
-        if (true) {
-            System.out.println("transform list: : " + transformList);
-            System.out.println("server context: " + getContext());
-        }
         List<String> list = new ArrayList<>();
 
         for (String name : transformList) {

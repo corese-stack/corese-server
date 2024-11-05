@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import fr.inria.corese.core.util.HTTPHeaders;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -41,7 +42,6 @@ import jakarta.ws.rs.core.Response;
 @Path("/srv")
 public class SrvWrapper {
 
-	private static final String headerAccept = "Access-Control-Allow-Origin";
 	static final String CONTENT_HTML = "<div class=\"content\" id=\"contentOfSite\">";
 	private static final String pathRegex = "/{path:template|spin/tospin|spin/tosparql|sdk|tutorial/.*|service/.*|process/.*}";
 	private static Logger logger = LogManager.getLogger(SrvWrapper.class);
@@ -91,11 +91,11 @@ public class SrvWrapper {
 		} else if (path.startsWith("process")) {
 			rs = new Processor().typecheck(resource, "std", transform, query, getService(path));
 		} else {
-			rs = Response.status(Response.Status.BAD_REQUEST).header(headerAccept, "*")
+			rs = Response.status(Response.Status.BAD_REQUEST).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*")
 					.entity("Can not get right service solver.").build();
 		}
 
-		return Response.status(rs.getStatus()).header(headerAccept, "*").entity(wrapper(rs).toString()).build();
+		return Response.status(rs.getStatus()).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(wrapper(rs).toString()).build();
 	}
 
 	@POST
@@ -141,11 +141,11 @@ public class SrvWrapper {
 		} else if (path.startsWith("process")) {
 			rs = new Processor().typecheck(resource, "std", transform, query, getService(path));
 		} else {
-			rs = Response.status(Response.Status.BAD_REQUEST).header(headerAccept, "*")
+			rs = Response.status(Response.Status.BAD_REQUEST).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*")
 					.entity("Can not get right service solver.").build();
 		}
 
-		return Response.status(rs.getStatus()).header(headerAccept, "*").entity(wrapper(rs).toString()).build();
+		return Response.status(rs.getStatus()).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(wrapper(rs).toString()).build();
 	}
 
 	@POST
@@ -190,11 +190,11 @@ public class SrvWrapper {
 		} else if (path.startsWith("process")) {
 			rs = new Processor().typecheckPost_MD(resource, "std", transform, query, getService(path));
 		} else {
-			rs = Response.status(Response.Status.BAD_REQUEST).header(headerAccept, "*")
+			rs = Response.status(Response.Status.BAD_REQUEST).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*")
 					.entity("Can not get right service solver.").build();
 		}
 
-		return Response.status(rs.getStatus()).header(headerAccept, "*").entity(wrapper(rs).toString()).build();
+		return Response.status(rs.getStatus()).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(wrapper(rs).toString()).build();
 	}
 
 	// Put the response text in the #content of home page
