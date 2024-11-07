@@ -148,10 +148,10 @@ public class Profile {
     Param complete(Param par) throws IOException, LoadException {
         Context serverContext = null;
         if (par.getServer() != null){           
-            Service server = getServer(par.getServer());
-            if (server.getParam() != null){
+            Service serverComplete = getServer(par.getServer());
+            if (serverComplete.getParam() != null){
                 // may set a profile according to URI
-                serverContext = server.getParam(); //.copy();
+                serverContext = serverComplete.getParam(); //.copy();
                 complete(par, serverContext);
             }
         }
@@ -203,7 +203,7 @@ public class Profile {
                 query = loadQuery(par.getName());
             }
         }
-        else { //if (isProtected) {
+        else {
             par.setUserQuery(true);
         }
 
@@ -278,12 +278,10 @@ public class Profile {
                 initService(g, name);
             } catch (LoadException ex) {
                 logger.error("Load error: "+ ex.getMessage());
-            } catch (IOException ex) {
-                logger.error(ex.getMessage());
-            } catch (EngineException ex) {
+            } catch (IOException | EngineException ex) {
                 logger.error(ex.getMessage());
             }
-            
+
         }
     }
 
@@ -313,20 +311,18 @@ public class Profile {
     void init(String path, String local) {
         try {
             logger.info("Load: " + path);
-            GraphStore g = load(path, Parameter.PROFILE_EVENT);
+            GraphStore g = load(path);
             if (local != null){
             logger.info("Load: " + local);
-                load(g, local, Parameter.PROFILE_EVENT);
+                load(g, local);
             }
             setProfile(g);
             process(g);
             initFunction();
-        } catch (IOException ex) {
+        } catch (IOException | EngineException ex) {
                 logger.error(ex.getMessage());
         } catch (LoadException ex) {
                 logger.error(ex.getMessage() + " " + ex.getPath());
-        } catch (EngineException ex) {
-                logger.error(ex.getMessage());
         }
     }
     
@@ -359,24 +355,15 @@ public class Profile {
     GraphStore loadServer(String name) throws IOException, LoadException {
         return load(getDataPath(name));
     }
-
-    GraphStore load(String path) throws IOException, LoadException {
-        return load(path, true);
-    }
     
-    GraphStore load(String path, boolean event) throws IOException, LoadException {
+    GraphStore load(String path) throws IOException, LoadException {
         GraphStore g = GraphStore.create();
-        load(g, path, event);
+        load(g, path);
         return g;
     }
-    
-    void load(GraphStore g, String path) throws LoadException{
-        load(g, path, true);
-    }
 
-    void load(GraphStore g, String path, boolean event) throws LoadException{
+    void load(GraphStore g, String path) throws LoadException{
         Load load = Load.create(g);
-        load.setEvent(event);
         load.parse(path, Loader.format.TURTLE_FORMAT);
     }
 
@@ -431,9 +418,6 @@ public class Profile {
         initParameter(g, getResource("query/urlparameter.rq"));
         initParameter(g, getResource("query/urlequivalence.rq"));
         initParameter(g, getResource("query/urlmode.rq"));
-        
-        logger.info("Parameter Context");
-        logger.info(getContext());
     }
 
     
@@ -489,7 +473,6 @@ public class Profile {
                     alist.add(String.format("%s/%s/sparql", getServer(), dt.getLabel()));
                 }
             }
-            System.out.println("federation: " + local1 + " : " + alist);
             FederateVisitor.defineFederation(local1, alist);           
             FederateVisitor.defineFederation(local2, alist);           
             FederateVisitor.defineFederation(local3, alist);           
