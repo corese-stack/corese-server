@@ -21,25 +21,16 @@ public class ElasticsearchTest {
     private static class TestEdgeChangeListener extends EdgeChangeListener {
         public int nbTripleInserted = 0;
         public int nbTripleDeleted = 0;
-        public List<Node> subjectChanged = new ArrayList<>();
-        public List<Node> propertyChanged = new ArrayList<>();
-        public List<Node> objectChanged = new ArrayList<>();
+        public List<Edge> edgesDeleted = new ArrayList<>();
+        public List<Edge> edgesInserted = new ArrayList<>();
 
         @Override
         public void onBulkEdgeChange(List<Edge> delete, List<Edge> insert) {
-            System.out.println("Bulk edge change: " + delete + " " + insert);
             nbTripleInserted += insert.size();
             nbTripleDeleted += delete.size();
-            for (Edge edge : delete) {
-                subjectChanged.add(edge.getSubjectNode());
-                propertyChanged.add(edge.getPropertyNode());
-                objectChanged.add(edge.getObjectNode());
-            }
-            for (Edge edge : insert) {
-                subjectChanged.add(edge.getSubjectNode());
-                propertyChanged.add(edge.getPropertyNode());
-                objectChanged.add(edge.getObjectNode());
-            }
+            edgesDeleted.addAll(delete);
+            edgesInserted.addAll(insert);
+            System.out.println("Bulk edge change: " + delete + " " + insert);
         }
     }
 
@@ -47,13 +38,11 @@ public class ElasticsearchTest {
     public void insertListenerTest() throws EngineException {
         Graph testGraph = Graph.create();
         TestEdgeChangeListener listener = new TestEdgeChangeListener();
-        testGraph.addEdgeChangeListener(listener);
+        testGraph.addEdgeChangeListener(listener); // FIXME the edges sent using this method have no properties
         QueryProcess queryProc = QueryProcess.create(testGraph);
         queryProc.query("INSERT DATA { <http://example.com/subject> <http://example.com/property> <http://example.com/object> }");
 
-        assertTrue(listener.subjectChanged.stream().anyMatch(node -> node.getLabel().equals("http://example.com/subject")));
-        assertTrue(listener.propertyChanged.stream().anyMatch(node -> node.getLabel().equals("http://example.com/property")));
-        assertTrue(listener.objectChanged.stream().anyMatch(node -> node.getLabel().equals("http://example.com/object")));
+        assertTrue(listener.edgesInserted.stream().anyMatch(edge -> edge.getSubjectNode().getLabel().equals("http://example.com/subject") && edge.getPropertyNode().getLabel().equals("http://example.com/property") && edge.getObjectNode().getLabel().equals("http://example.com/object")));
         assertEquals(0, listener.nbTripleDeleted);
         assertEquals(1, listener.nbTripleInserted);
     }
@@ -62,35 +51,44 @@ public class ElasticsearchTest {
     public void deleteListenerTest() throws EngineException {
         Graph testGraph = Graph.create();
         TestEdgeChangeListener listener = new TestEdgeChangeListener();
-        testGraph.addEdgeChangeListener(listener);
+        testGraph.addEdgeChangeListener(listener); // FIXME the edges sent using this method have no properties
         QueryProcess queryProc = QueryProcess.create(testGraph);
         queryProc.query("INSERT DATA { <http://example.com/subject1> <http://example.com/property1> <http://example.com/object1> . <http://example.com/subject2> <http://example.com/property2> <http://example.com/object2> }");
-        queryProc.query("DELETE DATA { <http://example.com/subject> <http://example.com/property> <http://example.com/object> }");
-
-        assertEquals(1, listener.nbTripleDeleted);
         assertEquals(2, listener.nbTripleInserted);
-        assertTrue(listener.subjectChanged.stream().anyMatch(node -> node.getLabel().equals("http://example.com/subject")));
-        assertTrue(listener.propertyChanged.stream().anyMatch(node -> node.getLabel().equals("http://example.com/property")));
-        assertTrue(listener.objectChanged.stream().anyMatch(node -> node.getLabel().equals("http://example.com/object")));
+        queryProc.query("DELETE DATA { <http://example.com/subject> <http://example.com/property> <http://example.com/object> }");
+        assertEquals(0, listener.nbTripleDeleted);
+        queryProc.query("DELETE DATA { <http://example.com/subject1> <http://example.com/property1> <http://example.com/object1> }");
+        assertEquals(1, listener.nbTripleDeleted);
+        assertFalse(listener.edgesDeleted.stream().anyMatch(edge -> edge.getSubjectNode().getLabel().equals("http://example.com/subject") && edge.getPropertyNode().getLabel().equals("http://example.com/property") && edge.getObjectNode().getLabel().equals("http://example.com/object")));
+        assertTrue(listener.edgesDeleted.stream().anyMatch(edge -> edge.getSubjectNode().getLabel().equals("http://example.com/subject1") && edge.getPropertyNode().getLabel().equals("http://example.com/property1") && edge.getObjectNode().getLabel().equals("http://example.com/object1")));
     }
 
     @Test
-    public void loadListenerTest() throws LoadException {
+    public void fileLoadListenerTest() throws LoadException {
         Graph testGraph = Graph.create();
         TestEdgeChangeListener listener = new TestEdgeChangeListener();
         testGraph.addEdgeChangeListener(listener);
         Load fileLoader = Load.create(testGraph);
         fileLoader.parse("src/test/resources/elasticsearch/data.ttl");
 
-        System.out.println("Subject changed: " + listener.subjectChanged);
-        System.out.println("Property changed: " + listener.propertyChanged);
-        System.out.println("Object changed: " + listener.objectChanged);
+        assertEquals(0, listener.nbTripleDeleted);
+        assertEquals(2, listener.nbTripleInserted);
+        assertTrue(listener.edgesInserted.stream().anyMatch(edge -> edge.getSubjectNode().getLabel().equals("http://example.com/subject") && edge.getPropertyNode().getLabel().equals("http://example.com/property") && edge.getObjectNode().getLabel().equals("http://example.com/object2")));
+        assertTrue(listener.edgesInserted.stream().anyMatch(edge -> edge.getSubjectNode().getLabel().equals("http://example.com/subject") && edge.getPropertyNode().getLabel().equals("http://example.com/property") && edge.getObjectNode().getLabel().equals("object1")));
+    }
+
+    @Test
+    public void loadListenerTest() throws LoadException, EngineException {
+        Graph testGraph = Graph.create();
+        TestEdgeChangeListener listener = new TestEdgeChangeListener();
+        testGraph.addEdgeChangeListener(listener);
+
+        QueryProcess queryProc = QueryProcess.create(testGraph);
+        queryProc.query("LOAD <src/test/resources/elasticsearch/data.ttl>");
 
         assertEquals(0, listener.nbTripleDeleted);
         assertEquals(2, listener.nbTripleInserted);
-        assertTrue(listener.subjectChanged.stream().anyMatch(node -> node.getLabel().equals("http://example.com/subject")));
-        assertTrue(listener.propertyChanged.stream().anyMatch(node -> node.getLabel().equals("http://example.com/property")));
-        assertTrue(listener.objectChanged.stream().anyMatch(node -> node.getLabel().equals("object1")));
-        assertTrue(listener.objectChanged.stream().anyMatch(node -> node.getLabel().equals("http://example.com/object2")));
+        assertTrue(listener.edgesInserted.stream().anyMatch(edge -> edge.getSubjectNode().getLabel().equals("http://example.com/subject") && edge.getPropertyNode().getLabel().equals("http://example.com/property") && edge.getObjectNode().getLabel().equals("http://example.com/object2")));
+        assertTrue(listener.edgesInserted.stream().anyMatch(edge -> edge.getSubjectNode().getLabel().equals("http://example.com/subject") && edge.getPropertyNode().getLabel().equals("http://example.com/property") && edge.getObjectNode().getLabel().equals("object1")));
     }
 }

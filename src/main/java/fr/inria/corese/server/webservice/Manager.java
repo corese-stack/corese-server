@@ -291,6 +291,7 @@ public class Manager {
      * 
      * @deprecated
      */
+    @Deprecated
     void init(Graph g) {
         String init = "insert { ?q st:index ?n }"
                 + "where  { ?q a st:Query bind (kg:number() as ?n) }";
