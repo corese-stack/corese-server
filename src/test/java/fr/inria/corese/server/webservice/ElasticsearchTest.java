@@ -39,6 +39,7 @@ public class ElasticsearchTest {
             public void onBulkEdgeChange(List<Edge> delete, List<Edge> insert) {
                 super.onBulkEdgeChange(delete, insert);
 
+                // Double check that the listener is called with the correct data
                 assertEquals(0, delete.size());
                 assertEquals(1, insert.size());
                 assertEquals("http://example.com/subject", insert.get(0).getSubjectNode().getLabel());
@@ -53,6 +54,7 @@ public class ElasticsearchTest {
         EdgeChangeListenerTest edgeChangeListenerTest = new EdgeChangeListenerTest(connexion);
         graphStore.addEdgeChangeListener(edgeChangeListenerTest);
 
+        // Stub the elasticsearch service that accepts calls with the right key and content type
         elasticsearchService.stubFor(post("/")
                 .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticSearchKey()))
                 .withHeader(HTTPHeaders.CONTENT_TYPE, containing("application/json"))
@@ -62,7 +64,8 @@ public class ElasticsearchTest {
         QueryProcess queryProcess = QueryProcess.create(graphStore);
         queryProcess.query(query);
 
-        elasticsearchService.verify(postRequestedFor(urlEqualTo("/")).withRequestBody(
+        // Verify that the elasticsearch service was called with the right data
+        elasticsearchService.verify(exactly(1), postRequestedFor(urlEqualTo("/")).withRequestBody(
                 matchingJsonPath("$.insert[0].subject", equalTo("http://example.com/subject"))
                         .and(matchingJsonPath("$.insert[0].predicate", equalTo("http://example.com/property")))
                         .and(matchingJsonPath("$.insert[0].object", equalTo("http://example.com/object")))));
@@ -72,16 +75,117 @@ public class ElasticsearchTest {
     public void deleteNonExistingTest() throws EngineException {
         String insertQuery = "INSERT DATA { <http://example.com/subject1> <http://example.com/property1> <http://example.com/object1> . <http://example.com/subject2> <http://example.com/property2> <http://example.com/object2> }";
         String deletenonexisttingQueryy = "DELETE DATA { <http://example.com/subject3> <http://example.com/property3> <http://example.com/object3> }";
+
+        GraphStore graphStore = GraphStore.create();
+
+        ElasticsearchConnexion connexion = ElasticsearchConnexion.create();
+        connexion.setElasticSearchKey("test");
+        connexion.setElasticSearchUrl(elasticsearchService.baseUrl());
+
+        ElasticsearchListener edgeChangeListenerTest = new ElasticsearchListener(connexion);
+        graphStore.addEdgeChangeListener(edgeChangeListenerTest);
+
+        // Stub the elasticsearch service that accepts calls with the right key and content type
+        elasticsearchService.stubFor(post("/")
+                .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticSearchKey()))
+                .withHeader(HTTPHeaders.CONTENT_TYPE, containing("application/json"))
+                .willReturn(ok())
+        );
+
+        QueryProcess queryProcess = QueryProcess.create(graphStore);
+        queryProcess.query(insertQuery);
+        queryProcess.query(deletenonexisttingQueryy);
+
+        // Verify that the elasticsearch service was called with the right data
+        // Verify that the two insertion have been done
+        elasticsearchService.verify(exactly(1), postRequestedFor(urlEqualTo("/")).withRequestBody(
+                matchingJsonPath("$.insert[0].subject", equalTo("http://example.com/subject1"))
+                        .and(matchingJsonPath("$.insert[0].predicate", equalTo("http://example.com/property1")))
+                        .and(matchingJsonPath("$.insert[0].object", equalTo("http://example.com/object1")))));
+        elasticsearchService.verify(exactly(1), postRequestedFor(urlEqualTo("/")).withRequestBody(
+                matchingJsonPath("$.insert[0].subject", equalTo("http://example.com/subject2"))
+                        .and(matchingJsonPath("$.insert[0].predicate", equalTo("http://example.com/property2")))
+                        .and(matchingJsonPath("$.insert[0].object", equalTo("http://example.com/object2")))));
+        // Verify that no deletion has been done
+        elasticsearchService.verify(exactly(0), postRequestedFor(urlEqualTo("/")).withRequestBody(
+                matchingJsonPath("$.delete[0].subject", equalTo("http://example.com/subject3"))
+                        .and(matchingJsonPath("$.delete[0].predicate", equalTo("http://example.com/property3")))
+                        .and(matchingJsonPath("$.delete[0].object", equalTo("http://example.com/object3")))));
     }
 
     @Test
-    public void deleteExistingTest() {
+    public void deleteExistingTest() throws EngineException {
         String insertQuery = "INSERT DATA { <http://example.com/subject1> <http://example.com/property1> <http://example.com/object1> . <http://example.com/subject2> <http://example.com/property2> <http://example.com/object2> }";
         String deleteQuery = "DELETE DATA { <http://example.com/subject1> <http://example.com/property1> <http://example.com/object1> }";
+
+        GraphStore graphStore = GraphStore.create();
+
+        ElasticsearchConnexion connexion = ElasticsearchConnexion.create();
+        connexion.setElasticSearchKey("test");
+        connexion.setElasticSearchUrl(elasticsearchService.baseUrl());
+
+        ElasticsearchListener edgeChangeListenerTest = new ElasticsearchListener(connexion);
+        graphStore.addEdgeChangeListener(edgeChangeListenerTest);
+
+        // Stub the elasticsearch service that accepts calls with the right key and content type
+        elasticsearchService.stubFor(post("/")
+                .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticSearchKey()))
+                .withHeader(HTTPHeaders.CONTENT_TYPE, containing("application/json"))
+                .willReturn(ok())
+        );
+
+        QueryProcess queryProcess = QueryProcess.create(graphStore);
+        queryProcess.query(insertQuery);
+        queryProcess.query(deleteQuery);
+
+        // Verify that the elasticsearch service was called with the right data
+        // Verify that the two insertion have been done
+        elasticsearchService.verify(exactly(1), postRequestedFor(urlEqualTo("/")).withRequestBody(
+                matchingJsonPath("$.insert[0].subject", equalTo("http://example.com/subject1"))
+                        .and(matchingJsonPath("$.insert[0].predicate", equalTo("http://example.com/property1")))
+                        .and(matchingJsonPath("$.insert[0].object", equalTo("http://example.com/object1")))));
+        elasticsearchService.verify(exactly(1), postRequestedFor(urlEqualTo("/")).withRequestBody(
+                matchingJsonPath("$.insert[0].subject", equalTo("http://example.com/subject2"))
+                        .and(matchingJsonPath("$.insert[0].predicate", equalTo("http://example.com/property2")))
+                        .and(matchingJsonPath("$.insert[0].object", equalTo("http://example.com/object2")))));
+        // Verify that deletion has been done
+        elasticsearchService.verify(exactly(1), postRequestedFor(urlEqualTo("/")).withRequestBody(
+                matchingJsonPath("$.delete[0].subject", equalTo("http://example.com/subject1"))
+                        .and(matchingJsonPath("$.delete[0].predicate", equalTo("http://example.com/property1")))
+                        .and(matchingJsonPath("$.delete[0].object", equalTo("http://example.com/object1")))));
     }
 
     @Test
-    public void loadTest() throws LoadException {
+    public void loadTest() throws LoadException, EngineException {
         String query = "LOAD <src/test/resources/elasticsearch/data.ttl>";
+
+        GraphStore graphStore = GraphStore.create();
+
+        ElasticsearchConnexion connexion = ElasticsearchConnexion.create();
+        connexion.setElasticSearchKey("test");
+        connexion.setElasticSearchUrl(elasticsearchService.baseUrl());
+
+        ElasticsearchListener edgeChangeListenerTest = new ElasticsearchListener(connexion);
+        graphStore.addEdgeChangeListener(edgeChangeListenerTest);
+
+        // Stub the elasticsearch service that accepts calls with the right key and content type
+        elasticsearchService.stubFor(post("/")
+                .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticSearchKey()))
+                .withHeader(HTTPHeaders.CONTENT_TYPE, containing("application/json"))
+                .willReturn(ok())
+        );
+
+        QueryProcess queryProcess = QueryProcess.create(graphStore);
+        queryProcess.query(query);
+
+        // Verify that the elasticsearch service was called with the right data
+        elasticsearchService.verify(exactly(1), postRequestedFor(urlEqualTo("/")).withRequestBody(
+                matchingJsonPath("$.insert[0].subject", equalTo("http://example.com/subject"))
+                        .and(matchingJsonPath("$.insert[0].predicate", equalTo("http://example.com/property")))
+                        .and(matchingJsonPath("$.insert[0].object", equalTo("http://example.com/object2")))));
+        elasticsearchService.verify(exactly(1), postRequestedFor(urlEqualTo("/")).withRequestBody(
+                matchingJsonPath("$.insert[0].subject", equalTo("http://example.com/subject"))
+                        .and(matchingJsonPath("$.insert[0].predicate", equalTo("http://example.com/property")))
+                        .and(matchingJsonPath("$.insert[0].object", equalTo("object1")))));
     }
 }
