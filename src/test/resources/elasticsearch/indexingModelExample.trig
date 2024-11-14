@@ -1,0 +1,83 @@
+@prefix im: <http://ns.mnemotix.com/ontologies/2019/1/indexing-model#> .
+@prefix clr: <http://data.clairsienne.com/ontologies/2019/12/clr-patrimoine#> .
+@prefix mnx: <http://ns.mnemotix.com/ontologies/2019/8/generic-model/> .
+@prefix clrvoc: <http://data.clairsienne.com/data/2019/12/vocabulary/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix : <http://data.clairsienne.com/data/2019/12/clr-patrimoine/> .
+@base <http://data.clairsienne.com/data/2019/12/clr-patrimoine> .
+
+:IndexingDataNG {
+    [
+        a im:IndexingModel ;
+        im:indexingModelOf clr:Lot ;
+        im:prefix [
+                      rdfs:label "clr" ;
+                      im:value "http://data.clairsienne.com/ontologies/2019/12/clr-patrimoine#"
+                  ],
+                  [
+                      rdfs:label "mnx" ;
+                      im:value "http://ns.mnemotix.com/ontologies/2019/8/generic-model/"
+                  ] ;
+        im:field [
+                     a im:IndexingField ;
+                     rdfs:label "sha" ;
+                     im:fieldDatatype xsd:decimal ;
+                     im:dataPath "clr:SHA" ;
+                     im:multivalued "false"^^xsd:boolean ;
+                     im:analyzed "false"^^xsd:boolean ;
+                     im:optional "true"^^xsd:boolean
+                 ],
+                 [
+                     a im:IndexingField ;
+                     rdfs:label "su" ;
+                     im:fieldDatatype xsd:decimal ;
+                     im:dataPath "clr:SU" ;
+                     im:multivalued "false"^^xsd:boolean ;
+                     im:analyzed "false"^^xsd:boolean ;
+                     im:optional "true"^^xsd:boolean
+                 ],
+                 [
+                     a im:IndexingField ;
+                     rdfs:label "address" ;
+                     im:fieldDatatype xsd:anyURI ;
+                     im:dataPath "mnx:hasAddress" ;
+                     im:multivalued "false"^^xsd:boolean ;
+                     im:analyzed "false"^^xsd:boolean ;
+                     im:optional "true"^^xsd:boolean ;
+                     im:filterDeleted "true"^^xsd:boolean ;
+                     im:subfield [
+                                     a im:IndexingField ;
+                                     rdfs:label "deptCode" ;
+                                     im:fieldDatatype xsd:string ;
+                                     im:dataPath "clr:deptCode" ;
+                                     im:multivalued "false"^^xsd:boolean ;
+                                     im:analyzed "false"^^xsd:boolean ;
+                                     im:optional "true"^^xsd:boolean ;
+                                 ],
+                                 [
+                                     a im:IndexingField ;
+                                     rdfs:label "street1" ;
+                                     im:fieldDatatype xsd:string ;
+                                     im:dataPath "mnx:street1" ;
+                                     im:multivalued "false"^^xsd:boolean ;
+                                     im:analyzed "true"^^xsd:boolean ;
+                                     im:optional "true"^^xsd:boolean ;
+                                     im:analyzer "simple" ;
+                                     im:ignore_above 500
+                                 ],
+                                 [
+                                     a im:IndexingField ;
+                                     rdfs:label "street2" ;
+                                     im:fieldDatatype xsd:string ;
+                                     im:dataPath "mnx:street2" ;
+                                     im:multivalued "true"^^xsd:boolean ;
+                                     im:analyzed "true"^^xsd:boolean ;
+                                     im:optional "true"^^xsd:boolean ;
+                                     im:analyzer "standard" ;
+                                     im:ignore_above 500
+                                 ]
+                 ]
+    ]
+}

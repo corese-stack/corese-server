@@ -117,7 +117,7 @@ public class SPARQLResult implements ResultFormatDef, URLParam {
 
             if (format != null) {
                 // real content type of result, possibly different from @Produces
-                rb = rb.header("Content-Type", rf.getContentType());
+                rb = rb.header(HTTPHeaders.CONTENT_TYPE, rf.getContentType());
             }
             Response resp = rb.entity(res).build();
 

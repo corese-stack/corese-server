@@ -67,7 +67,7 @@ public class ElasticsearchConnexion {
         contentTypeHeader.add("application/json");
         headers.add(authorizationHeader);
         headers.add(contentTypeHeader);
-        logger.info("Sending JSON to Elasticsearch server [{}]: {} {}", elasticSearchUrl, headers, json.toString());
+        logger.info("Sending JSON to Elasticsearch server {}: {} {}", elasticSearchUrl, headers, json.toString());
         HttpURLConnection connexion = HTTPConnectionUtils.postConnection(elasticSearchUrl, headers, json.toString());
         int responseCode = connexion.getResponseCode();
         connexion.disconnect();

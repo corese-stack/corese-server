@@ -105,7 +105,11 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
         return null;
     }
 
-    QueryProcess getQueryProcess() {
+    /**
+     *
+     * @return a queryprocess to the main triplestore
+     */
+    public static QueryProcess getQueryProcess() {
         return getTripleStore().getQueryProcess();
     }
 
