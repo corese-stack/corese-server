@@ -154,13 +154,7 @@ public class Manager {
     }
 
     TripleStore createTripleStore(Profile p, Service s) throws LoadException, EngineException {
-        GraphStore g = GraphStore.create(); // GraphStore.create(s.isRDFSEntailment());
-        // if (s.getParam() != null) {
-        // IDatatype dt = s.getParam().get(SKOLEM);
-        // if (dt != null && dt.booleanValue()) {
-        // g.setSkolem(true);
-        // }
-        // }
+        GraphStore g = GraphStore.create();
         TripleStore store = new TripleStore(g, true);
 
         if (s.getStorage() != null && getDatasetManager() != null) {

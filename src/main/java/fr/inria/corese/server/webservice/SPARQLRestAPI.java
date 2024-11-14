@@ -246,19 +246,6 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
         return Response.status(200).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*").entity(output).build();
     }
 
-    @GET
-    @Path("/debug")
-    public Response setDebug(@QueryParam("value") String debug, @QueryParam("detail") String detail) {
-        if (debug != null) {
-            isDebug = debug.equals("true");
-        }
-        if (detail != null) {
-            isDetail = detail.equals("true");
-        }
-        return Response.status(200).header(HTTPHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*")
-                .entity("debug: " + isDebug + " ; " + "detail: " + isDetail).build();
-    }
-
     // ----------------------------------------------------
     // SPARQL QUERY - SELECT and ASK with HTTP GET
     // ----------------------------------------------------
@@ -406,7 +393,7 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
     }
 
     @GET
-    @Produces({ "text/plain" })
+    @Produces({ ResultFormat.TEXT })
     public Response getPlainTextForGet(@jakarta.ws.rs.core.Context HttpServletRequest request,
             @QueryParam("query") String query,
             @QueryParam("access") String access,

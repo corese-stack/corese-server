@@ -271,7 +271,6 @@ public class ServiceOnline {
             @QueryParam("default-graph-uri") List<String> defaultGraphUris,
             @QueryParam("named-graph-uri") List<String> namedGraphUris) {
 
-        //if (logger.isDebugEnabled())
         logger.info("GET. serv: " + serv + ", profile: " + profile + ", uri: " + resource + ", mode: " + mode
                 + ", param: " + param + ", arg: " + arg + ", query: " + query + ", name: " + name + ", value: " + value
                 + ", transform: " + transform + ", defaultGraphUris: " + defaultGraphUris + ", namedGraphUris: " + namedGraphUris);
@@ -299,7 +298,6 @@ public class ServiceOnline {
             @QueryParam("default-graph-uri") List<String> defaultGraphUris,
             @QueryParam("named-graph-uri") List<String> namedGraphUris) {
 
-        //if (logger.isDebugEnabled())
         logger.info("GET. serv: " + serv + ", profile: " + profile + ", uri: " + resource + ", mode: " + mode
                 + ", param: " + param + ", arg: " + arg + ", query: " + query + ", name: " + name + ", value: " + value
                 + ", transform: " + transform + ", defaultGraphUris: " + defaultGraphUris + ", namedGraphUris: " + namedGraphUris);

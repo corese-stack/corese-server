@@ -1,4 +1,4 @@
-package fr.inria.corese.server.webservice;
+package fr.inria.corese.server.elasticsearch;
 
 import java.io.File;
 import java.io.IOException;
@@ -87,30 +87,5 @@ public class HTTPConnectionUtils {
     public static HttpURLConnection headConnection(String url)
             throws IOException {
         return headConnection(url, new ArrayList<>());
-    }
-    
-    public static File findFileRecursively(Pattern filePattern, File directory) {
-        if (directory.isDirectory()) {
-            File[] files = directory.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    if (file.isFile() && matchesPattern(filePattern, file.getName())) {
-                        return file;
-                    }
-                    if (file.isDirectory()) {
-                        File foundFile = findFileRecursively(filePattern, file);
-                        if (foundFile != null) {
-                            return foundFile;
-                        }
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
-    private static boolean matchesPattern(Pattern filePattern, String fileName) {
-        Matcher matcher = filePattern.matcher(fileName);
-        return matcher.matches();
     }
 }

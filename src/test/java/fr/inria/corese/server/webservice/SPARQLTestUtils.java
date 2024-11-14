@@ -153,5 +153,17 @@ public class SPARQLTestUtils {
 
         return constructGraph;
     }
+
+    public static int sendSPARQLUpdate(String query) throws Exception {
+        List<List<String>> headers = new LinkedList<>();
+        List<String> contentTypeHeader = new LinkedList<>();
+        contentTypeHeader.add("Content-Type");
+        contentTypeHeader.add("application/sparql-update");
+        headers.add(contentTypeHeader);
+        HttpURLConnection con = HTTPConnectionUtils.postConnection(SPARQL_ENDPOINT_URL, headers, query);
+        int responseCode = con.getResponseCode();
+        con.disconnect();
+        return responseCode;
+    }
     
 }

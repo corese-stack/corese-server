@@ -1,56 +1,78 @@
 package fr.inria.corese.server.webservice;
 
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.HashMap;
-
-import fr.inria.corese.core.api.Loader;
-import org.slf4j.LoggerFactory;
-
 import fr.inria.corese.core.Graph;
 import fr.inria.corese.core.GraphStore;
+import fr.inria.corese.core.api.Loader;
+import fr.inria.corese.core.kgram.core.Mappings;
+import fr.inria.corese.core.kgram.core.Query;
 import fr.inria.corese.core.load.Load;
 import fr.inria.corese.core.load.LoadException;
 import fr.inria.corese.core.load.QueryLoad;
 import fr.inria.corese.core.query.QueryProcess;
 import fr.inria.corese.core.rule.RuleEngine;
 import fr.inria.corese.core.shacl.Shacl;
-import fr.inria.corese.core.storage.api.dataManager.DataManager;
-import fr.inria.corese.core.util.SPINProcess;
-import fr.inria.corese.core.kgram.core.Mappings;
-import fr.inria.corese.core.kgram.core.Query;
-import fr.inria.corese.server.webservice.message.TripleStoreLog;
 import fr.inria.corese.core.sparql.api.IDatatype;
 import fr.inria.corese.core.sparql.datatype.DatatypeMap;
 import fr.inria.corese.core.sparql.exceptions.EngineException;
-import fr.inria.corese.core.sparql.triple.parser.ASTQuery;
-import fr.inria.corese.core.sparql.triple.parser.Context;
-import fr.inria.corese.core.sparql.triple.parser.Dataset;
-import fr.inria.corese.core.sparql.triple.parser.Metadata;
-import fr.inria.corese.core.sparql.triple.parser.URLParam;
+import fr.inria.corese.core.sparql.triple.parser.*;
+import fr.inria.corese.core.storage.api.dataManager.DataManager;
+import fr.inria.corese.core.util.SPINProcess;
+import fr.inria.corese.server.elasticsearch.ElasticsearchListener;
+import fr.inria.corese.server.webservice.message.TripleStoreLog;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.LoggerFactory;
+
+import java.util.Date;
+import java.util.HashMap;
 
 /**
- *
  * @author Olivier Corby, Wimmics INRIA I3S, 2015
- *
  */
 public class TripleStore implements URLParam {
     private static final String LOG_DIR = "/log/";
 
     public static org.slf4j.Logger logger = LoggerFactory.getLogger(TripleStore.class);
     static HashMap<String, Integer> metaMap;
+
+    static {
+        init();
+    }
+
+    private static final boolean DEFAULT_RDFS = false;
+    private static final boolean DEFAULT_OWL = false;
+    private static final boolean DEFAULT_MATCH = false;
+
     GraphStore graph = GraphStore.create(false);
-    boolean rdfs = false;
-    boolean owl = false;
-    private boolean match = false;
+    boolean rdfs = DEFAULT_RDFS;
+    boolean owl = DEFAULT_OWL;
+    private boolean match = DEFAULT_MATCH;
     private boolean protect = false;
     private String name = Manager.DEFAULT;
     private DataManager dataManager;
 
-    static {
-        init();
+    TripleStore(GraphStore gs, boolean rdfs, boolean owl, boolean match) {
+        graph = gs;
+        this.rdfs = rdfs;
+        setMatch(match);
+        setOWL(owl);
+        this.graph.addEdgeChangeListener(new ElasticsearchListener());
+    }
+
+    TripleStore(GraphStore g, boolean rdfs) {
+        this(g, rdfs, DEFAULT_OWL, DEFAULT_MATCH);
+    }
+
+    TripleStore(GraphStore g) {
+        this(g, DEFAULT_RDFS, DEFAULT_OWL, DEFAULT_MATCH);
+    }
+
+    TripleStore(boolean rdfs, boolean owl, boolean match) {
+        this(GraphStore.create(rdfs), rdfs, owl, match);
+    }
+
+    TripleStore(boolean rdfs, boolean owl) {
+        this(rdfs, owl, true);
     }
 
     static void init() {
@@ -61,31 +83,6 @@ public class TripleStore implements URLParam {
         metaMap.put("index", Metadata.INDEX);
         metaMap.put("move", Metadata.MOVE);
         metaMap.put("count", Metadata.SERVER);
-    }
-
-    TripleStore(boolean rdfs, boolean owl) {
-        this(rdfs, owl, true);
-    }
-
-    TripleStore(boolean rdfs, boolean owl, boolean b) {
-        graph = GraphStore.create(rdfs);
-        init(graph);
-        setMatch(b);
-        this.owl = owl;
-    }
-
-    TripleStore(GraphStore g) {
-        graph = g;
-        init(g);
-        setMatch(false);
-    }
-
-    TripleStore(GraphStore g, boolean b) {
-        graph = g;
-        init(g);
-    }
-
-    void init(GraphStore g) {
     }
 
     void finish(boolean b) {
@@ -107,8 +104,7 @@ public class TripleStore implements URLParam {
     }
 
     QueryProcess getLocalQueryProcess() {
-        QueryProcess exec = QueryProcess.create(getGraph(), isMatch());
-        return exec;
+        return QueryProcess.create(getGraph(), isMatch());
     }
 
     GraphStore getGraph() {
@@ -140,9 +136,7 @@ public class TripleStore implements URLParam {
             RuleEngine re = RuleEngine.create(graph);
             re.setProfile(RuleEngine.OWL_RL);
             graph.addEngine(re);
-            if (owl) {
-                logger.info("Endpoint successfully reset with OWL RL entailments.");
-            }
+            logger.info("Endpoint successfully reset with OWL RL entailments.");
 
         }
 
@@ -156,7 +150,7 @@ public class TripleStore implements URLParam {
 
     /**
      * Extended SPARQL Endpoint
-     * 
+     * <p>
      * SPARQL endpoint: /sparql?query=
      * Federated endpoint: /federate?query=
      * Load and evaluate shape, execute query on shacl validation report
@@ -164,9 +158,6 @@ public class TripleStore implements URLParam {
      * sh:conforms ?b }
      */
     Mappings query(HttpServletRequest request, String query, Dataset ds) throws EngineException {
-        if (ds.getCreateContext().hasValue(TRACE)) {
-            trace(request);
-        }
         if (ds == null) {
             ds = new Dataset();
         }
@@ -189,7 +180,6 @@ public class TripleStore implements URLParam {
                     if (isCompile(c)) {
                         Query qq = exec.compile(federate(query, ds), ds);
                         map = Mappings.create(qq);
-                        // exec.getLog().share(qq.getAST().getLog());
                     } else {
                         map = exec.query(federate(query, ds), ds);
                     }
@@ -251,7 +241,6 @@ public class TripleStore implements URLParam {
             QueryLoad ql = QueryLoad.create();
             ql.setAccessRight(ds.getContext().getAccessRight());
             String str = ql.readWithAccess(dt.getLabel());
-            System.out.println("TS: before: " + str);
             Mappings map = exec.query(str, ds);
         }
         if (ds.getContext().hasValue(EXPLAIN)) {
@@ -266,7 +255,6 @@ public class TripleStore implements URLParam {
             QueryLoad ql = QueryLoad.create();
             ql.setAccessRight(ds.getContext().getAccessRight());
             String str = ql.readWithAccess(dt.getLabel());
-            System.out.println("TS: after: " + str);
             Mappings map = exec.query(str, ds);
         }
     }
@@ -315,7 +303,6 @@ public class TripleStore implements URLParam {
     boolean isFederate(Dataset ds) {
         Context c = ds.getContext();
         return c.hasValue(FEDERATE);
-        // && ds.getUriList() != null && !ds.getUriList().isEmpty();
     }
 
     Mappings spin(String query, Dataset ds) throws EngineException {
@@ -349,8 +336,7 @@ public class TripleStore implements URLParam {
         Graph res = sh.eval(shacl);
         QueryProcess exec = QueryProcess.create(res);
         exec.setDebug(ds.getContext().isDebug());
-        Mappings map = exec.query(query);
-        return map;
+        return exec.query(query);
     }
 
     Mappings construct(String query, Dataset ds) throws EngineException {
@@ -375,7 +361,7 @@ public class TripleStore implements URLParam {
     ASTQuery federate(String query, Dataset ds) throws EngineException {
         QueryProcess exec = getQueryProcess();
         ASTQuery ast = exec.parse(query, ds);
-        // ast.setAnnotation(metadata(ast, ds));
+
         ast.addMetadata(metadata(ast, ds));
         logger.info("metadata: " + ast.getMetadata());
         return ast;
@@ -418,24 +404,6 @@ public class TripleStore implements URLParam {
             }
         }
         return null;
-    }
-
-    void trace(HttpServletRequest request) {
-        System.out.println("Endpoint HTTP Request");
-        if (request.getCookies() != null) {
-            for (Cookie cook : request.getCookies()) {
-                System.out.println("cookie: " + cook.getName() + " " + cook.getValue()); // + " " + cook.getPath());
-            }
-        }
-        Enumeration<String> enh = request.getHeaderNames();
-        while (enh.hasMoreElements()) {
-            String name = enh.nextElement();
-            System.out.println("header: " + name + ": " + request.getHeader(name));
-        }
-        for (Object obj : request.getParameterMap().keySet()) {
-            String name = obj.toString();
-            System.out.println("param: " + name + "=" + request.getParameter(name));
-        }
     }
 
     Mappings query(HttpServletRequest request, String query) throws EngineException {
