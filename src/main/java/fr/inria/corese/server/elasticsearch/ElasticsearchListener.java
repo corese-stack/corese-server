@@ -7,6 +7,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
 
 public class ElasticsearchListener extends EdgeChangeListener {
@@ -31,6 +32,14 @@ public class ElasticsearchListener extends EdgeChangeListener {
     public void onBulkEdgeChange(List<Edge> delete, List<Edge> add) {
         JSONObject json = ElasticsearchJSONUtils.toJSONObject(delete, add);
         logger.info("Sending JSON to Elasticsearch: " + json.toString());
-        connexion.sendJSON(json);
+        try {
+            int jsonSentCode = connexion.sendJSON(json);
+            logger.info("JSON sent to Elasticsearch with status code: " + jsonSentCode);
+            if (jsonSentCode != 200) {
+                logger.error("Error while sending JSON to Elasticsearch: " + jsonSentCode);
+            }
+        } catch (IOException e) {
+            logger.error("Error while sending JSON to Elasticsearch", e);
+        }
     }
 }

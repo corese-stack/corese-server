@@ -19,9 +19,7 @@ import java.util.regex.Pattern;
 
 import static org.junit.Assert.*;
 
-public class ElasticsearchTest {
-
-    private static Process server;
+public class EdgeChangeListenerTest {
 
     private static class TestEdgeChangeListener extends EdgeChangeListener {
         public int nbTripleInserted = 0;
@@ -37,43 +35,6 @@ public class ElasticsearchTest {
             edgesInserted.addAll(insert);
             System.out.println("Bulk edge change: " + delete + " " + insert);
         }
-    }
-
-    /**
-     * Start the server before running the tests.
-     * Loads a part of the DBpedia dataset in the server.
-     */
-    @BeforeClass
-    public static void init() throws InterruptedException, IOException {
-        File turtleFile = new File("src/test/resources/data.ttl");
-        String turtleFileAbsolutePath = turtleFile.getAbsolutePath();
-
-        File trigFile = new File("src/test/resources/data.trig");
-        String trigFileAbsolutePath = trigFile.getAbsolutePath();
-
-        String startDirectory = "build";
-        Pattern pattern = Pattern.compile("corese-server-(\\d+)\\.(\\d+)\\.(\\d+)-SNAPSHOT-app\\.jar");
-        File jar_file = HTTPConnectionUtils.findFileRecursively(pattern, new File(startDirectory));
-
-        Pattern jacoco_pattern = Pattern.compile("jacocoagent\\.jar");
-        File jacoco_jar_file = HTTPConnectionUtils.findFileRecursively(jacoco_pattern, new File(startDirectory));
-        String jacocoAgentPath = jacoco_jar_file.getAbsolutePath();
-
-        System.out.println("starting in " + System.getProperty("user.dir"));
-        server = new ProcessBuilder().inheritIO().command(
-                "java",
-//                "-javaagent:" + jacocoAgentPath + "=destfile=" + startDirectory+"/jacoco/server_sparql_ep_query.exec,includes=fr.inria.corese.*",
-                "-jar", jar_file.getAbsolutePath(),
-                "-lh",
-                "-pp", "src/test/resources/emptyProfile.ttl",
-                "-l", turtleFileAbsolutePath,
-                "-l", trigFileAbsolutePath).start();
-        Thread.sleep(7000);
-    }
-
-    @AfterClass
-    public static void shutdown() {
-        server.destroy();
     }
 
     @Test

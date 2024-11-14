@@ -1,8 +1,11 @@
 package fr.inria.corese.server.elasticsearch;
 
+import fr.inria.corese.core.util.HTTPHeaders;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +18,8 @@ public class ElasticsearchConnexion {
     private static final Logger logger = org.slf4j.LoggerFactory.getLogger(ElasticsearchConnexion.class);
 
     private static final String DEFAULT_ELASTICSEARCH_URL = "http://localhost:9200";
+    private String elasticSearchUrl = DEFAULT_ELASTICSEARCH_URL;
+    private String elasticSearchKey = "";
 
     private ElasticsearchConnexion() {
     }
@@ -30,40 +35,43 @@ public class ElasticsearchConnexion {
         return connexion;
     }
 
-    private String elasticSearchUrl = DEFAULT_ELASTICSEARCH_URL;
-    private String elasticSearchKey = "";
+    public String getElasticSearchUrl() {
+        return elasticSearchUrl;
+    }
 
     public void setElasticSearchUrl(String url) {
         elasticSearchUrl = url;
-    }
-
-    public void setElasticSearchKey(String key) {
-        elasticSearchKey = key;
-    }
-
-    public String getElasticSearchUrl() {
-        return elasticSearchUrl;
     }
 
     public String getElasticSearchKey() {
         return elasticSearchKey;
     }
 
+    public void setElasticSearchKey(String key) {
+        elasticSearchKey = key;
+    }
+
     /**
      * Send a JSON object to the Elasticsearch server
+     *
+     * @return the HTTP status code of the request
      * @see ElasticsearchJSONUtils
      */
-    public void sendJSON(JSONObject json) {
+    public int sendJSON(JSONObject json) throws IOException {
         List<List<String>> headers = new ArrayList<>();
-        List<String> header = new ArrayList<>();
-        header.add("Authorization-Type");
-        header.add("ApiKey " + elasticSearchKey);
-        headers.add(header);
-        try {
-            logger.info("Sending JSON to Elasticsearch server [{}]: {} {}", elasticSearchUrl, headers, json.toString());
-            HTTPConnectionUtils.postConnection(elasticSearchUrl, headers, json.toString());
-        } catch (Exception e) {
-            logger.error("Error while sending {} to the server", json.toString(), e);
-        }
+        List<String> authorizationHeader = new ArrayList<>();
+        authorizationHeader.add(HTTPHeaders.AUTHORIZATION_TYPE);
+        authorizationHeader.add("ApiKey " + elasticSearchKey);
+        List<String> contentTypeHeader = new ArrayList<>();
+        contentTypeHeader.add(HTTPHeaders.CONTENT_TYPE);
+        contentTypeHeader.add("application/json");
+        headers.add(authorizationHeader);
+        headers.add(contentTypeHeader);
+        logger.info("Sending JSON to Elasticsearch server [{}]: {} {}", elasticSearchUrl, headers, json.toString());
+        HttpURLConnection connexion = HTTPConnectionUtils.postConnection(elasticSearchUrl, headers, json.toString());
+        int responseCode = connexion.getResponseCode();
+        connexion.disconnect();
+
+        return responseCode;
     }
 }

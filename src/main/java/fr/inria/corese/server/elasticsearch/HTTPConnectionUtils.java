@@ -1,5 +1,8 @@
 package fr.inria.corese.server.elasticsearch;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -14,6 +17,11 @@ import java.util.regex.Pattern;
 
 public class HTTPConnectionUtils {
 
+    private static final Logger logger = LoggerFactory.getLogger(HTTPConnectionUtils.class);
+
+    private HTTPConnectionUtils() {
+    }
+
     /**
      * Get a connection to a server.
      * 
@@ -26,6 +34,7 @@ public class HTTPConnectionUtils {
      */
     private static HttpURLConnection methodConnection(String method, String url, List<List<String>> headers)
     throws IOException {
+        logger.info("{} {} {}", method, url, headers);
         URL u = new URL(url);
         HttpURLConnection con = (HttpURLConnection) u.openConnection();
         con.setRequestMethod(method);
