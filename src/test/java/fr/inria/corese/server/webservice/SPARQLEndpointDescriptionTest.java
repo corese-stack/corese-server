@@ -3,30 +3,22 @@ package fr.inria.corese.server.webservice;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import fr.inria.corese.server.HTTPConnectionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import fr.inria.corese.core.Graph;
-import fr.inria.corese.core.load.Load;
 import static fr.inria.corese.core.print.ResultFormat.RDF_XML;
 import static fr.inria.corese.core.print.ResultFormat.TURTLE_TEXT;
-import static fr.inria.corese.core.api.Loader.format.RDFXML_FORMAT;
-import static fr.inria.corese.core.api.Loader.format.TURTLE_FORMAT;
 
 /**
  * Test of the behavior of the corese server against HTTP requests.

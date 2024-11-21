@@ -1,4 +1,4 @@
-package fr.inria.corese.server.webservice;
+package fr.inria.corese.server.elasticsearch;
 
 import fr.inria.corese.core.Graph;
 import fr.inria.corese.core.elasticsearch.EdgeChangeListener;
@@ -72,7 +72,7 @@ public class EdgeChangeListenerTest {
         TestEdgeChangeListener listener = new TestEdgeChangeListener();
         testGraph.addEdgeChangeListener(listener);
         Load fileLoader = Load.create(testGraph);
-        fileLoader.parse("src/test/resources/elasticsearch/data.ttl");
+        fileLoader.parse("src/test/resources/fr/inria/corese/server/elasticsearch/data.ttl");
 
         assertEquals(0, listener.nbTripleDeleted);
         assertEquals(2, listener.nbTripleInserted);
@@ -87,7 +87,7 @@ public class EdgeChangeListenerTest {
         testGraph.addEdgeChangeListener(listener);
 
         QueryProcess queryProc = QueryProcess.create(testGraph);
-        queryProc.query("LOAD <src/test/resources/elasticsearch/data.ttl>");
+        queryProc.query("LOAD <src/test/resources/fr/inria/corese/server/elasticsearch/data.ttl>");
 
         assertEquals(0, listener.nbTripleDeleted);
         assertEquals(2, listener.nbTripleInserted);

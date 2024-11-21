@@ -1,4 +1,4 @@
-package fr.inria.corese.server.webservice;
+package fr.inria.corese.server;
 
 import static fr.inria.corese.core.api.Loader.format.RDFXML_FORMAT;
 import static fr.inria.corese.core.print.ResultFormat.RDF_XML;

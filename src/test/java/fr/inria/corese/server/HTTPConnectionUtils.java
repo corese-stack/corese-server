@@ -1,4 +1,4 @@
-package fr.inria.corese.server.webservice;
+package fr.inria.corese.server;
 
 import java.io.File;
 import java.io.IOException;

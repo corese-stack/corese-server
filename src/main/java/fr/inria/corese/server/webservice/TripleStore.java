@@ -142,10 +142,19 @@ public class TripleStore implements URLParam {
 
     }
 
-    void load(String path, String src) throws LoadException {
+    /**
+     * Load a turtle RDF file
+     */
+    public void load(String path, String src) throws LoadException {
         Load ld = Load.create(getGraph());
         ld.setDataManager(getDataManager());
         ld.parse(path, src, Loader.format.TURTLE_FORMAT);
+    }
+
+    public void load(String path, String src, Loader.format format) throws LoadException {
+        Load ld = Load.create(getGraph());
+        ld.setDataManager(getDataManager());
+        ld.parse(path, src, format);
     }
 
     /**

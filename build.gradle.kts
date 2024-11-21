@@ -54,9 +54,10 @@ repositories {
 }
 
 dependencies {
-    api("fr.inria.corese:corese-core:5.0.0-SNAPSHOT")
+    api("fr.inria.corese:corese-core:4.6.1-SNAPSHOT")
     api("fr.inria.corese:corese-jena:5.0.0-SNAPSHOT")
     api("fr.inria.corese:corese-rdf4j:5.0.0-SNAPSHOT")
+
     api("javax.xml.bind:jaxb-api:2.3.1")
     api("com.sun.xml.bind:jaxb-core:2.3.0.1")
     api("com.sun.xml.bind:jaxb-impl:2.3.2")
@@ -90,10 +91,11 @@ dependencies {
     api("org.eclipse.jetty:jetty-util:${jetty_version}")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.wiremock:wiremock:3.9.2")
 }
 
 group = "fr.inria.corese"
-version = "5.0.0-SNAPSHOT"
+version = "4.6.1-SNAPSHOT"
 description = "corese-server"
 java.sourceCompatibility = JavaVersion.VERSION_11
 

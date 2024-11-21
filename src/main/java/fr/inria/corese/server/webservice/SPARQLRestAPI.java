@@ -113,13 +113,19 @@ public class SPARQLRestAPI implements ResultFormatDef, URLParam {
         return getTripleStore().getQueryProcess();
     }
 
-    // default sparql endpoint
-    static TripleStore getTripleStore() {
+    /**
+     * Default sparql endpoint
+     */
+    public static TripleStore getTripleStore() {
         return store;
     }
 
-    // Named sparql endpoint
-    static TripleStore getTripleStore(String name) {
+    /**
+     * Named sparql endpoint
+     * @param name
+     * @return
+     */
+    public static TripleStore getTripleStore(String name) {
         if (name == null) {
             return getTripleStore();
         }

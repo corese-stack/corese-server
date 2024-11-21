@@ -15,6 +15,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import fr.inria.corese.server.HTTPConnectionUtils;
+import fr.inria.corese.server.SPARQLTestUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
@@ -28,7 +30,6 @@ import fr.inria.corese.core.load.result.SPARQLResult;
 import fr.inria.corese.core.kgram.core.Mappings;
 
 import static fr.inria.corese.core.print.ResultFormat.JSON_LD;
-import static fr.inria.corese.core.print.ResultFormat.NT_TEXT;
 import static fr.inria.corese.core.print.ResultFormat.N_QUADS;
 import static fr.inria.corese.core.print.ResultFormat.N_TRIPLES;
 import static fr.inria.corese.core.print.ResultFormat.RDF_XML;
@@ -38,11 +39,9 @@ import static fr.inria.corese.core.print.ResultFormat.SPARQL_RESULTS_MD;
 import static fr.inria.corese.core.print.ResultFormat.SPARQL_RESULTS_TSV;
 import static fr.inria.corese.core.print.ResultFormat.SPARQL_RESULTS_XML;
 import static fr.inria.corese.core.print.ResultFormat.TRIG;
-import static fr.inria.corese.core.print.ResultFormat.TURTLE;
 import static fr.inria.corese.core.print.ResultFormat.TURTLE_TEXT;
 import static fr.inria.corese.core.api.Loader.format.JSONLD_FORMAT;
 import static fr.inria.corese.core.api.Loader.format.NQUADS_FORMAT;
-import static fr.inria.corese.core.api.Loader.format.NT_FORMAT;
 import static fr.inria.corese.core.api.Loader.format.RDFXML_FORMAT;
 import static fr.inria.corese.core.api.Loader.format.TRIG_FORMAT;
 import static fr.inria.corese.core.api.Loader.format.TURTLE_FORMAT;

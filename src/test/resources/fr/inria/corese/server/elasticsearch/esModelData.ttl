@@ -1,0 +1,55 @@
+@prefix im: <http://ns.mnemotix.com/ontologies/2019/1/indexing-model#> .
+@prefix mnx: <http://ns.mnemotix.com/ontologies/2019/8/generic-model/> .
+@prefix clrvoc: <http://data.clairsienne.com/data/2019/12/vocabulary/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix schema: <https://schema.org/> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix : <http://example.com/> .
+@base <http://example.com/> .
+
+:person1 a schema:Person ;
+    foaf:firstName "John" ;
+    foaf:lastName "Doe" ;
+    vcard:adr [
+        vcard:country-name "United States" ;
+        vcard:locality "New York" ;
+        vcard:postal-code "10001" ;
+        vcard:street-address "123 Main Street" ;
+        ] .
+
+:person2 a schema:Person ;
+    foaf:firstName "Jane" ;
+    foaf:lastName "Doe" ;
+    vcard:adr [
+        vcard:country-name "United States" ;
+        vcard:locality "New York" ;
+        vcard:postal-code "10001" ;
+        vcard:street-address "124 Main Street" ;
+        ] .
+
+:person3 a schema:Person ;
+    foaf:firstName "John" ;
+    foaf:lastName "Smith" ;
+    vcard:adr [
+        vcard:country-name "France" ;
+        vcard:locality "Paris" ;
+        vcard:postal-code "75001" ;
+        vcard:street-address "3, rue du pont" ;
+        ] .
+
+:article1 a schema:Article ;
+    schema:author :person1 ;
+    schema:abstract "Article 1" ;
+    schema:about "dog", "cute" .
+
+:article2 a schema:Article ;
+    schema:author :person2 ;
+    schema:abstract "Article 2" ;
+    schema:about "cat", "cute" .
+
+:article3 a schema:Article ;
+    schema:author :person1, :person3 ;
+    schema:abstract "Article 3" ;
+    schema:about "dog", "cat", "cute" .

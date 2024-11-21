@@ -1,0 +1,163 @@
+@prefix im: <http://ns.mnemotix.com/ontologies/2019/1/indexing-model#> .
+@prefix mnx: <http://ns.mnemotix.com/ontologies/2019/8/generic-model/> .
+@prefix clrvoc: <http://data.clairsienne.com/data/2019/12/vocabulary/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix schema: <https://schema.org/> .
+@prefix : <http://example.com/> .
+@base <http://example.com/> .
+
+[
+    a im:IndexingModel ;
+    im:indexingModelOf schema:Person ;
+    im:prefix [
+            rdfs:label "schema" ;
+            im:value "https://schema.org/"
+        ],
+        [
+            rdfs:label "foaf" ;
+            im:value "http://xmlns.com/foaf/0.1/"
+        ],
+        [
+            rdfs:label "vcard" ;
+            im:value "http://www.w3.org/2006/vcard/ns#"
+        ],
+        [
+            rdfs:label "mnx" ;
+            im:value "http://ns.mnemotix.com/ontologies/2019/8/generic-model/"
+        ] ;
+    im:field [
+        a im:IndexingField ;
+        rdfs:label "firstName" ;
+        im:fieldDatatype xsd:string ;
+        im:dataPath "foaf:firstName" ;
+        im:multivalued "false"^^xsd:boolean ;
+        im:analyzed "false"^^xsd:boolean ;
+        im:optional "false"^^xsd:boolean
+    ],
+    [
+        a im:IndexingField ;
+        rdfs:label "lastName" ;
+        im:fieldDatatype xsd:string ;
+        im:dataPath "foaf:lastName" ;
+        im:multivalued "false"^^xsd:boolean ;
+        im:analyzed "false"^^xsd:boolean ;
+        im:optional "false"^^xsd:boolean
+    ],
+    [
+        a im:IndexingField ;
+        rdfs:label "address" ;
+        im:fieldDatatype xsd:anyURI ;
+        im:dataPath "vcard:adr" ;
+        im:multivalued "true"^^xsd:boolean ;
+        im:analyzed "false"^^xsd:boolean ;
+        im:optional "true"^^xsd:boolean ;
+        im:filterDeleted "true"^^xsd:boolean ;
+        im:subfield [
+                        a im:IndexingField ;
+                        rdfs:label "country" ;
+                        im:fieldDatatype xsd:string ;
+                        im:dataPath "vcard:country-name" ;
+                        im:multivalued "false"^^xsd:boolean ;
+                        im:analyzed "false"^^xsd:boolean ;
+                        im:optional "false"^^xsd:boolean ;
+                    ],
+                    [
+                        a im:IndexingField ;
+                        rdfs:label "locality" ;
+                        im:fieldDatatype xsd:string ;
+                        im:dataPath "vcard:locality" ;
+                        im:multivalued "false"^^xsd:boolean ;
+                        im:analyzed "false"^^xsd:boolean ;
+                        im:optional "false"^^xsd:boolean ;
+                    ],
+                    [
+                        a im:IndexingField ;
+                        rdfs:label "postalCode" ;
+                        im:fieldDatatype xsd:string ;
+                        im:dataPath "vcard:postal-code" ;
+                        im:multivalued "false"^^xsd:boolean ;
+                        im:analyzed "false"^^xsd:boolean ;
+                        im:optional "false"^^xsd:boolean ;
+                    ],
+                    [
+                        a im:IndexingField ;
+                        rdfs:label "streetAddress" ;
+                        im:fieldDatatype xsd:string ;
+                        im:dataPath "vcard:street-address" ;
+                        im:multivalued "false"^^xsd:boolean ;
+                        im:analyzed "true"^^xsd:boolean ;
+                        im:optional "true"^^xsd:boolean ;
+                        im:analyzer "simple" ;
+                        im:ignore_above 500
+            ]
+    ]
+] .
+
+[
+    a im:IndexingModel ;
+    im:indexingModelOf schema:Article ;
+    im:prefix [
+                  rdfs:label "schema" ;
+                  im:value "https://schema.org/"
+              ],
+              [
+                  rdfs:label "foaf" ;
+                  im:value "http://xmlns.com/foaf/0.1/"
+              ],
+              [
+                  rdfs:label "vcard" ;
+                  im:value "http://www.w3.org/2006/vcard/ns#"
+              ],
+              [
+                  rdfs:label "mnx" ;
+                  im:value "http://ns.mnemotix.com/ontologies/2019/8/generic-model/"
+              ] ;
+    im:field [
+                 a im:IndexingField ;
+                 rdfs:label "abstract" ;
+                 im:fieldDatatype xsd:string ;
+                 im:dataPath "schema:abstract" ;
+                 im:multivalued "true"^^xsd:boolean ;
+                 im:analyzed "true"^^xsd:boolean ;
+                 im:analyzer "simple" ;
+                 im:optional "true"^^xsd:boolean
+             ],
+             [
+                 a im:IndexingField ;
+                 rdfs:label "about" ;
+                 im:fieldDatatype xsd:string ;
+                 im:dataPath "schema:about" ;
+                 im:multivalued "true"^^xsd:boolean ;
+                 im:analyzed "false"^^xsd:boolean ;
+                 im:optional "false"^^xsd:boolean
+             ],
+             [
+                 a im:IndexingField ;
+                 rdfs:label "author" ;
+                 im:fieldDatatype xsd:anyURI ;
+                 im:dataPath "schema:author" ;
+                 im:multivalued "true"^^xsd:boolean ;
+                 im:analyzed "false"^^xsd:boolean ;
+                 im:optional "false"^^xsd:boolean ;
+                 im:subfield [
+                                a im:IndexingField ;
+                                rdfs:label "firstName" ;
+                                im:fieldDatatype xsd:string ;
+                                im:dataPath "foaf:firstName" ;
+                                im:multivalued "false"^^xsd:boolean ;
+                                im:analyzed "false"^^xsd:boolean ;
+                                im:optional "false"^^xsd:boolean
+                            ],
+                            [
+                                a im:IndexingField ;
+                                rdfs:label "lastName" ;
+                                im:fieldDatatype xsd:string ;
+                                im:dataPath "foaf:lastName" ;
+                                im:multivalued "false"^^xsd:boolean ;
+                                im:analyzed "false"^^xsd:boolean ;
+                                im:optional "false"^^xsd:boolean
+                            ]
+             ]
+] .

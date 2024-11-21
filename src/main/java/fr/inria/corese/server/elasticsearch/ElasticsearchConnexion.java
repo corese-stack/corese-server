@@ -18,7 +18,7 @@ public class ElasticsearchConnexion {
     private static final Logger logger = org.slf4j.LoggerFactory.getLogger(ElasticsearchConnexion.class);
 
     private static final String DEFAULT_ELASTICSEARCH_URL = "http://localhost:9200";
-    private String elasticSearchUrl = DEFAULT_ELASTICSEARCH_URL;
+    private String elasticSearchUrl = null;
     private String elasticSearchKey = "";
 
     private ElasticsearchConnexion() {
@@ -29,10 +29,14 @@ public class ElasticsearchConnexion {
     }
 
     public static ElasticsearchConnexion create(String url, String key) {
-        ElasticsearchConnexion connexion = new ElasticsearchConnexion();
+        ElasticsearchConnexion connexion = ElasticsearchConnexion.create();
         connexion.setElasticSearchUrl(url);
         connexion.setElasticSearchKey(key);
         return connexion;
+    }
+
+    public static ElasticsearchConnexion create(String key) {
+        return ElasticsearchConnexion.create(DEFAULT_ELASTICSEARCH_URL, key);
     }
 
     public String getElasticSearchUrl() {
@@ -58,20 +62,24 @@ public class ElasticsearchConnexion {
      * @see ElasticsearchJSONUtils
      */
     public int sendJSON(JSONObject json) throws IOException {
-        List<List<String>> headers = new ArrayList<>();
-        List<String> authorizationHeader = new ArrayList<>();
-        authorizationHeader.add(HTTPHeaders.AUTHORIZATION_TYPE);
-        authorizationHeader.add("ApiKey " + elasticSearchKey);
-        List<String> contentTypeHeader = new ArrayList<>();
-        contentTypeHeader.add(HTTPHeaders.CONTENT_TYPE);
-        contentTypeHeader.add("application/json");
-        headers.add(authorizationHeader);
-        headers.add(contentTypeHeader);
-        logger.info("Sending JSON to Elasticsearch server {}: {} {}", elasticSearchUrl, headers, json.toString());
-        HttpURLConnection connexion = HTTPConnectionUtils.postConnection(elasticSearchUrl, headers, json.toString());
-        int responseCode = connexion.getResponseCode();
-        connexion.disconnect();
+        if(elasticSearchUrl != null) {
+            List<List<String>> headers = new ArrayList<>();
+            List<String> authorizationHeader = new ArrayList<>();
+            authorizationHeader.add(HTTPHeaders.AUTHORIZATION_TYPE);
+            authorizationHeader.add("ApiKey " + elasticSearchKey);
+            List<String> contentTypeHeader = new ArrayList<>();
+            contentTypeHeader.add(HTTPHeaders.CONTENT_TYPE);
+            contentTypeHeader.add("application/json");
+            headers.add(authorizationHeader);
+            headers.add(contentTypeHeader);
+            logger.info("Sending JSON to Elasticsearch server {}: {} {}", elasticSearchUrl, headers, json.toString());
+            HttpURLConnection connexion = HTTPConnectionUtils.postConnection(elasticSearchUrl, headers, json.toString());
+            int responseCode = connexion.getResponseCode();
+            connexion.disconnect();
 
-        return responseCode;
+            return responseCode;
+        } else {
+            return 0;
+        }
     }
 }

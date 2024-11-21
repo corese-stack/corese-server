@@ -8,9 +8,13 @@ import fr.inria.corese.server.webservice.SPARQLRestAPI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * In charge of managing the indexing models.
+ */
 public class IndexingManager {
     private static final Logger logger = LoggerFactory.getLogger(IndexingManager.class);
     private static IndexingManager instance = null;
@@ -32,33 +36,36 @@ public class IndexingManager {
         return models.get(classUri);
     }
 
+    /**
+     * Extracts models from the server into the class model map.
+     */
     public void extractModels() {
-        // Extract models from the server
-        String query = generateQuery();
+        // Extract model fields from the server
+        String query = generateBasicQuery();
+
         QueryProcess exec = SPARQLRestAPI.getQueryProcess();
         try {
             Mappings result = exec.query(query);
             for(Mapping mapping : result.getMappingList()) {
-                logger.info("Mapping: " + mapping);
                 String classUri = mapping.getValue("?class").stringValue();
+                logger.info("Mapping for class {}", classUri);
                 if(!models.containsKey(classUri)) {
                     models.put(classUri, new IndexingModel(classUri));
                 }
+
+                if(mapping.getValue("?prefixLabel") != null && mapping.getValue("?prefixUri") != null) {
+                    String prefixLabel = mapping.getValue("?prefixLabel").stringValue();
+                    String prefixUri = mapping.getValue("?prefixUri").stringValue();
+                    logger.info("Prefix {}: {}", prefixLabel, prefixUri);
+                    models.get(classUri).addPrefix(prefixLabel, prefixUri);
+                }
+
                 String fieldLabel = mapping.getValue("?fLabel").stringValue();
                 String fieldDatatype = mapping.getValue("?dt").stringValue();
                 String fieldPath = mapping.getValue("?path").stringValue();
 
- /*               if(mapping.getValue("?prefixes") != null) {
-                    String prefixes = mapping.getValue("?prefixes").stringValue();
-                    String[] prefixArray = prefixes.split(",");
-                    for(String prefix : prefixArray) {
-                        String[] parts = prefix.split(" : <");
-                        String prLabel = parts[0];
-                        String prVal = parts[1].substring(0, parts[1].length() - 1);
-                        models.get(classUri).addPrefix(prLabel, prVal);
-                    }
-                }
-*/
+                logger.info("Field: {} ({}): {}", fieldLabel, fieldDatatype, fieldPath);
+
                 if(! models.get(classUri).getFields().containsKey(fieldLabel)) {
                     IndexingField field = new IndexingField(fieldLabel, fieldDatatype, fieldPath);
                     models.get(classUri).addField(fieldLabel, field);
@@ -128,17 +135,41 @@ public class IndexingManager {
             }
 
         } catch (EngineException e) {
-            e.printStackTrace();
+            logger.error("Error while extracting indexing model fields: {}", query, e);
+        }
+
+        // Extract prefixes for each model
+        for(IndexingModel model : models.values()) {
+            query = generatePrefixQueryForClass(model.getClassUri());
+            try {
+                Mappings result = exec.query(query);
+                for(Mapping mapping : result.getMappingList()) {
+                    String prefixLabel = mapping.getValue("?prefixLabel").stringValue();
+                    String prefixUri = mapping.getValue("?prefixUri").stringValue();
+                    logger.info("Prefix {}: {}", prefixLabel, prefixUri);
+                    model.addPrefix(prefixLabel, prefixUri);
+                }
+            } catch (EngineException e) {
+                logger.error("Error while extracting prefixes for indexing model: {}", query, e);
+            }
         }
     }
 
-    private String generateQuery() {
+    /**
+     * Generates the query to extract the basic info to instantiate indexing models from the server.
+     * The basic info includes the class URI and field descriptions.
+     * @param classUri The class URI to extract the model for. If null, all models are extracted.
+     * @return The query to extract the basic info with a .
+     */
+    private String generateBasicQueryForClass(String classUri) {
         StringBuilder sb = new StringBuilder();
         sb.append("PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n");
         sb.append("PREFIX im: <http://ns.mnemotix.com/ontologies/2019/1/indexing-model#>\n");
         sb.append("PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n");
-        sb.append("SELECT ?im ?class\n");
- //       sb.append("(GROUP_CONCAT(CONCAT(?prLabel, \" : <\", ?prVal, \">\") ; SEPARATOR = \",\") AS ?prefixes)\n");
+        sb.append("SELECT DISTINCT ?im\n");
+        if(classUri == null) {
+            sb.append("       ?class\n");
+        }
         sb.append("        ?fLabel\n");
         sb.append("        ?dt\n");
         sb.append("        ?path\n");
@@ -158,12 +189,11 @@ public class IndexingManager {
         sb.append("        ?subfieldOptional\n");
         sb.append("        ?subfieldIgnore\n");
         sb.append("         WHERE {\n");
+        if(classUri != null) {
+            sb.append("    FILTER( ?class = <").append(classUri).append("> )\n");
+        }
         sb.append("    ?im a im:IndexingModel ; im:indexingModelOf ?class ; im:field ?field .\n");
         sb.append("    ?field rdfs:label ?fLabel ; im:fieldDatatype ?dt ; im:dataPath ?path .\n");
-        sb.append("    OPTIONAL {\n");
-        sb.append("        ?im im:prefix ?pref .\n");
-        sb.append("        ?pref rdfs:label ?prLabel ; im:value ?prVal .\n");
-        sb.append("    }\n");
         sb.append("    OPTIONAL {?field im:multivalued ?multi }\n");
         sb.append("    OPTIONAL {?field im:analyzed ?analyzed }\n");
         sb.append("    OPTIONAL {?field im:optional ?optional }\n");
@@ -182,8 +212,41 @@ public class IndexingManager {
         sb.append("}\n");
         sb.append("GROUP BY ?im ?class ?fLabel ?dt ?path ?multi ?analyzed ?optional ?analyzer ?ignore ?filterDeleted ?subfield ?subfieldLabel ?subfieldDatatype ?subfieldDataPath ?subfieldMulti ?subfieldAnalyzed ?subfieldAnalyzer ?subfieldOptional ?subfieldIgnore\n");
 
+        return sb.toString();
+    }
+
+    private String generateBasicQuery() {
+        return generateBasicQueryForClass(null);
+    }
+
+    private String generatePrefixQueryForClass(String classUri) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n");
+        sb.append("PREFIX im: <http://ns.mnemotix.com/ontologies/2019/1/indexing-model#>\n");
+        sb.append("PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n");
+        sb.append("SELECT DISTINCT ?im\n");
+        if(classUri == null) {
+            sb.append("       ?class\n");
+        }
+        sb.append("        ?prefixLabel\n");
+        sb.append("        ?prefixUri\n");
+        sb.append("         WHERE {\n");
+        if(classUri != null) {
+            sb.append("    FILTER( ?class = <").append(classUri).append("> )\n");
+        }
+        sb.append("    ?im a im:IndexingModel ; im:indexingModelOf ?class ; im:prefix ?pref .\n");
+        sb.append("    ?pref rdfs:label ?prefixLabel ; im:value ?prefixUri .\n");
+        sb.append("}\n");
+        sb.append("GROUP BY ?im ?class ?prefixLabel ?prefixUri\n");
 
         return sb.toString();
     }
 
+    private String generatePrefixQuery() {
+        return generatePrefixQueryForClass(null);
+    }
+
+    public Collection<IndexingModel> getModels() {
+        return this.models.values();
+    }
 }

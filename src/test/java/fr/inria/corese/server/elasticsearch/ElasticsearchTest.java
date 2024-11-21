@@ -1,4 +1,4 @@
-package fr.inria.corese.server.webservice;
+package fr.inria.corese.server.elasticsearch;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
@@ -157,7 +157,7 @@ public class ElasticsearchTest {
 
     @Test
     public void loadTest() throws LoadException, EngineException {
-        String query = "LOAD <src/test/resources/elasticsearch/data.ttl>";
+        String query = "LOAD <src/test/resources/fr/inria/corese/server/elasticsearch/data.ttl>";
 
         GraphStore graphStore = GraphStore.create();
 

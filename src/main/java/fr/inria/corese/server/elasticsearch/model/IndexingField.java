@@ -97,4 +97,36 @@ public class IndexingField {
     public IndexingField getSubfield(String subfieldLabel) {
         return subfields.get(subfieldLabel);
     }
+
+    public boolean hasSubfields() {
+        return !subfields.isEmpty();
+    }
+
+    public String getQueryStatement(String uri) {
+        StringBuilder sb = new StringBuilder();
+
+        if(isOptional()) {
+            sb.append("OPTIONAL {\n");
+        }
+
+        if(uri.startsWith("?")) {
+            sb.append("    ").append(uri).append(" ").append(getPath()).append(" ?").append(getLabel()).append(" .\n");
+        } else {
+            sb.append("    <").append(uri).append("> ").append(getPath()).append(" ?").append(getLabel()).append(" .\n");
+        }
+
+        for(String subfield : subfields.keySet()) {
+            sb.append("    ").append(subfields.get(subfield).getQueryStatement("?"+getLabel()));
+        }
+
+        if(isFilterDeleted()) {
+            sb.append("    FILTER NOT EXISTS { ?").append(getLabel()).append(" mnx:hasDeletion/rdf:type mnx:Deletion }\n");
+        }
+
+        if(isOptional()) {
+            sb.append("}\n");
+        }
+
+        return sb.toString();
+    }
 }

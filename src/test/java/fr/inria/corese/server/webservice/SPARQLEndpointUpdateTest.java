@@ -15,6 +15,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import fr.inria.corese.server.HTTPConnectionUtils;
+import fr.inria.corese.server.SPARQLTestUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
