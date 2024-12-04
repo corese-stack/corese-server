@@ -1,4 +1,4 @@
-package fr.inria.corese.server.webservice;
+package fr.inria.corese.server.webservice.endpoint;
 
 import static fr.inria.corese.server.webservice.Utility.toStringList;
 
@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import fr.inria.corese.core.util.HTTPHeaders;
+import fr.inria.corese.server.webservice.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -19,7 +20,6 @@ import fr.inria.corese.core.sparql.triple.parser.Access.Feature;
 import fr.inria.corese.core.sparql.triple.parser.Access.Level;
 import fr.inria.corese.core.sparql.triple.parser.Context;
 import fr.inria.corese.core.sparql.triple.parser.NSManager;
-import fr.inria.corese.core.sparql.triple.parser.URLParam;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.FormParam;
@@ -62,7 +62,7 @@ public class Transformer {
         contentType.put(fr.inria.corese.core.transform.Transformer.JSON, "application/ld+json; charset=utf-8");
     }
 
-    static TripleStore getTripleStore() {
+    public static TripleStore getTripleStore() {
         return SPARQLRestAPI.getTripleStore();
     }
 
@@ -188,7 +188,7 @@ public class Transformer {
         try {
 
             par = getProfile().complete(par);
-            par.setAjax(SPARQLRestAPI.isAjax);
+            par.setAjax(SPARQLEndpointCommons.getInstance().isAjax());
 
             TransformerEngine engine = new TransformerEngine(store.getGraph(), Profile.getProfile().getProfileGraph(),
                     par);

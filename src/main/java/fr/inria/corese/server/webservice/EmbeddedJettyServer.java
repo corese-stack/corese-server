@@ -10,6 +10,7 @@ import java.io.File;
 import java.net.URI;
 import java.net.URL;
 
+import fr.inria.corese.server.webservice.endpoint.*;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -114,7 +115,7 @@ public class EmbeddedJettyServer extends ResourceConfig {
         logger.info("Loading log4j configuration: " + log4jfile);
         logger.info("To override log4j configuration add JVM option: -Dlog4j.configurationFile=file:/home/.../your_log4j2.xml");
 
-        HOME_PAGE = SPARQLRestAPI.isAjax ? "demo_new.html" : "demo.html";
+        HOME_PAGE = SPARQLEndpointCommons.getInstance().isAjax() ? "demo_new.html" : "demo.html";
 
         // logger.debug("Started.");
         Options options = new Options();
@@ -249,7 +250,7 @@ public class EmbeddedJettyServer extends ResourceConfig {
             }
             if (cmd.hasOption("key")) {
                 String akey = cmd.getOptionValue("key");
-                SPARQLRestAPI.setKey(akey);
+                SPARQLEndpointCommons.getInstance().setKey(akey);
             }
             Access.setMode(Access.Mode.SERVER);
 
@@ -300,7 +301,6 @@ public class EmbeddedJettyServer extends ResourceConfig {
             logger.info("----------------------------------------------");
             logger.info("Corese/KGRAM endpoint started on http://localhost:" + port + "/sparql");
 
-            // Server server = JettyHttpContainerFactory.createServer(baseUri, false);
             Server server = new Server(port);
             ContextHandlerCollection root = new ContextHandlerCollection();
             server.setHandler(root);
@@ -408,7 +408,7 @@ public class EmbeddedJettyServer extends ResourceConfig {
     }
 
     static void protect() {
-        SPARQLRestAPI.isProtected = true;
+        SPARQLEndpointCommons.getInstance().setProtected(true);
         Access.protect();
     }
 

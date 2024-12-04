@@ -1,5 +1,6 @@
-package fr.inria.corese.server.webservice;
+package fr.inria.corese.server.webservice.endpoint;
 
+import fr.inria.corese.server.webservice.endpoint.SPARQLRestAPI;
 import jakarta.ws.rs.Path;
 
 /**

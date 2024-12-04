@@ -6,7 +6,7 @@ import fr.inria.corese.core.sparql.exceptions.EngineException;
 import fr.inria.corese.server.elasticsearch.model.ESMappingManager;
 import fr.inria.corese.server.elasticsearch.model.IndexingManager;
 import fr.inria.corese.server.elasticsearch.model.IndexingModel;
-import fr.inria.corese.server.webservice.SPARQLRestAPI;
+import fr.inria.corese.server.webservice.endpoint.SPARQLRestAPI;
 import org.json.JSONArray;
 import org.junit.Test;
 

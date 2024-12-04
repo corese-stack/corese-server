@@ -1,4 +1,4 @@
-package fr.inria.corese.server.webservice;
+package fr.inria.corese.server.webservice.endpoint;
 
 import fr.inria.corese.core.sparql.api.IDatatype;
 import fr.inria.corese.core.sparql.exceptions.EngineException;
@@ -14,6 +14,9 @@ import fr.inria.corese.core.print.TripleFormat;
 import java.io.IOException;
 
 import fr.inria.corese.core.util.HTTPHeaders;
+import fr.inria.corese.server.webservice.Manager;
+import fr.inria.corese.server.webservice.Param;
+import fr.inria.corese.server.webservice.Profile;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.GET;
@@ -160,8 +163,7 @@ public class LdpRequestAPI {
             Param par = new Param( Manager.DEFAULT );
             par.setServer( Manager.DEFAULT );
             Profile.getProfile().complete( par );
-            Context ctx = par.createContext();
-            return ctx;
+            return par.createContext();
         } catch (IOException ex)
         {
             logger.error(ex.getMessage());

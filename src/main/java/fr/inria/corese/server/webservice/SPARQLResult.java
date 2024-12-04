@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 import fr.inria.corese.core.util.HTTPHeaders;
+import fr.inria.corese.server.webservice.endpoint.SPARQLRestAPI;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -52,7 +53,7 @@ public class SPARQLResult implements ResultFormatDef, URLParam {
     SPARQLResult() {
     }
 
-    SPARQLResult(HttpServletRequest request) {
+    public SPARQLResult(HttpServletRequest request) {
         setRequest(request);
     }
 
@@ -173,7 +174,7 @@ public class SPARQLResult implements ResultFormatDef, URLParam {
      *
      * @return a dataset
      */
-    Dataset createDataset(HttpServletRequest request, List<String> defaut, List<String> named, String access) {
+    public Dataset createDataset(HttpServletRequest request, List<String> defaut, List<String> named, String access) {
         Dataset ds = null;
         if (((defaut != null) && (!defaut.isEmpty()))
                 || ((named != null) && (!named.isEmpty()))) {
@@ -181,7 +182,7 @@ public class SPARQLResult implements ResultFormatDef, URLParam {
         } else {
             ds = new Dataset();
         }
-        boolean b = SPARQLRestAPI.hasKey(request, access);
+        boolean b = SPARQLEndpointCommons.getInstance().hasKey(request, access);
 
         Level level = Access.getQueryAccessLevel(true, b);
         ds.getCreateContext().setLevel(level);
@@ -368,7 +369,7 @@ public class SPARQLResult implements ResultFormatDef, URLParam {
         return visitor;
     }
 
-    SPARQLResult setVisitor(QuerySolverVisitorServer vis) {
+    public SPARQLResult setVisitor(QuerySolverVisitorServer vis) {
         visitor = vis;
         return this;
     }

@@ -9,6 +9,8 @@ import fr.inria.corese.core.sparql.triple.parser.Context;
 import fr.inria.corese.core.sparql.triple.parser.NSManager;
 import fr.inria.corese.core.sparql.triple.parser.URLParam;
 import java.util.List;
+
+import fr.inria.corese.server.webservice.endpoint.SPARQLRestAPI;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
@@ -20,7 +22,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class Param {
     //static NSManager nsm;
-    private static Logger logger = LogManager.getLogger(Param.class);
+    private static final Logger logger = LogManager.getLogger(Param.class);
     
     private String service;
     private String server;
@@ -58,7 +60,7 @@ public class Param {
         service = s;
     }
    
-    Param(String s, String p, String t, String u, String n, String q){
+    public Param(String s, String p, String t, String u, String n, String q){
         service = s;
         profile = p;
         transform = t;
@@ -75,15 +77,7 @@ public class Param {
         return str;
     }
     
-//    String ns (String str){
-//        return nsm().toNamespace(str);                              
-//    }
-    
-//    NSManager nsm() {
-//        return nsm;
-//    }
-    
-    Context createContext() {
+    public Context createContext() {
         Context ctx = getContext();
         if (ctx == null){
             ctx = new Context();
@@ -153,9 +147,9 @@ public class Param {
         return ctx;
     }
     
-    Level getLevel() {
+    public Level getLevel() {
         // HTTP request may have access key that grants better access level
-        return  Access.getQueryAccessLevel(isUserQuery(), SPARQLRestAPI.hasKey(getKey()));
+        return  Access.getQueryAccessLevel(isUserQuery(), SPARQLEndpointCommons.getInstance().hasKey(getKey()));
     }
     
     String getValue(String str) {
@@ -296,11 +290,11 @@ public class Param {
         setNamed(named);
     }
 
-    void setProtect(boolean b) {
+    public void setProtect(boolean b) {
         protect = true;
     }
 
-    boolean isProtect() {
+    public boolean isProtect() {
         return protect;
     }
 

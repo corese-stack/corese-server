@@ -97,4 +97,9 @@ public class HTTPConnectionUtils {
             throws IOException {
         return headConnection(url, new ArrayList<>());
     }
+
+    public static HttpURLConnection putConnection(String url, List<List<String>> headers)
+            throws IOException {
+        return methodConnection("PUT", url, headers);
+    }
 }

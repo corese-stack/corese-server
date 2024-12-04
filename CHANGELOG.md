@@ -7,7 +7,9 @@
   - EdgeChangeListener implementation for Elasticsearch with associated tests
   - Model system created to transfer instances description according to models declared using the model defined by [Mnemotix](https://gitlab.com/mnemotix/synaptix/mnx-models/-/blob/aa8134f95b1db258b1678aab1030e70e6763925f/indexing-model/indexing-model.owl)
   - ElasticsearchControl class created to manually trigger elastic search indexing using call to `/elasticsearch`
+  - Usage of the official Elasticsearch Java client in its version 7.17
 - SPARQL endpoint settings centralized in the SPARQLEndpointCommons class
   
 ### Changed
 - Code cleaning in accordance with the SonarLint rules
+- Moving the endpoint declarations to their own dedicated package

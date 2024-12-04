@@ -51,7 +51,7 @@ import org.apache.logging.log4j.LogManager;
 public class Profile {
     static final String ACCESS = NSManager.STL+"access";
     static final String NS = NSManager.STL+"namespace";
-    private static Logger logger = LogManager.getLogger(Profile.class);
+    private static final Logger logger = LogManager.getLogger(Profile.class);
 
     static final String NL = System.getProperty("line.separator");
     
@@ -106,7 +106,7 @@ public class Profile {
         return server;
     }
     
-    String getQueryPath(String name){
+    public String getQueryPath(String name){
         return query + name;
     }  
     
@@ -119,7 +119,7 @@ public class Profile {
         this(false);
     }
 
-    Profile(boolean localhost) {
+    public Profile(boolean localhost) {
         initServerData(localhost);
         services = new HashMap();
         servers = new HashMap();
@@ -128,12 +128,12 @@ public class Profile {
     }
     
 
-    URI resolve(String uri) throws URISyntaxException{        
+    public URI resolve(String uri) throws URISyntaxException{
         return new URI(getServer()).resolve(uri);
     }
     
 
-    void setProtect(boolean b) {
+    public void setProtect(boolean b) {
         isProtected = b;
     }
 
@@ -145,7 +145,7 @@ public class Profile {
      * Complete service parameters according to a profile e.g. get
      * transformation from profile
      */
-    Param complete(Param par) throws IOException, LoadException {
+    public Param complete(Param par) throws IOException, LoadException {
         Context serverContext = null;
         if (par.getServer() != null){           
             Service serverComplete = getServer(par.getServer());
@@ -285,7 +285,7 @@ public class Profile {
         }
     }
 
-    void initServer(String name, String local) {
+    public void initServer(String name, String local) {
         init(getDataPath(name), local);
     }
     
@@ -300,7 +300,7 @@ public class Profile {
         return profileDatatype;
     }
     
-    GraphStore getProfileGraph(){
+    public GraphStore getProfileGraph(){
         return profileGraph;
     }
 
@@ -352,7 +352,7 @@ public class Profile {
         }
     }
 
-    GraphStore loadServer(String name) throws IOException, LoadException {
+    public GraphStore loadServer(String name) throws IOException, LoadException {
         return load(getDataPath(name));
     }
     
@@ -611,7 +611,7 @@ public class Profile {
      * 
      * Service that defines a transformation
      */
-    Service getService(String name) {
+    public Service getService(String name) {
         return services.get(name);
     }
     

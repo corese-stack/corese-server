@@ -29,4 +29,7 @@ module fr.inria.corese.corese_server {
 
     requires org.slf4j;
     requires commons.vfs;
+    requires org.apache.httpcomponents.httpcore;
+    requires elasticsearch.rest.client;
+    requires elasticsearch.java;
 }

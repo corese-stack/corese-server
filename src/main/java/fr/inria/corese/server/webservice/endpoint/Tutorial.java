@@ -1,9 +1,11 @@
-package fr.inria.corese.server.webservice;
+package fr.inria.corese.server.webservice.endpoint;
 
 import static fr.inria.corese.server.webservice.Utility.toStringList;
 
 import java.util.List;
 
+import fr.inria.corese.server.webservice.*;
+import fr.inria.corese.server.webservice.endpoint.Transformer;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.GET;

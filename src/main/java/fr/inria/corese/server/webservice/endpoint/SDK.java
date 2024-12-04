@@ -1,8 +1,12 @@
-package fr.inria.corese.server.webservice;
+package fr.inria.corese.server.webservice.endpoint;
 
 import fr.inria.corese.core.GraphStore;
 import fr.inria.corese.core.load.LoadException;
 import java.io.IOException;
+
+import fr.inria.corese.server.webservice.Param;
+import fr.inria.corese.server.webservice.Profile;
+import fr.inria.corese.server.webservice.TripleStore;
 import org.apache.logging.log4j.Level;
 
 import jakarta.ws.rs.Consumes;
@@ -26,21 +30,16 @@ public class SDK {
     
     
     @GET
-    @Produces("text/html")
+    @Produces(MediaType.TEXT_HTML)
     public Response sdk(
             @QueryParam("query") String query, // SPARQL query
             @QueryParam("name")  String name,  // SPARQL query name (in webapp/query or path or URL)
             @QueryParam("value") String value) // values clause that may complement query           
      {
-         //GraphStore g =  new Profile().getGraph("sdk.ttl");
          GraphStore g;
         try {
-            //g = new Profile().loadServer("sdk.ttl");
             g = Profile.getProfile().loadServer("sdk.ttl");
-        } catch (IOException ex) {
-            LogManager.getLogger(SDK.class.getName()).log(Level.ERROR, "", ex);
-            g = GraphStore.create();
-        } catch (LoadException ex) {
+        } catch (IOException | LoadException ex) {
             LogManager.getLogger(SDK.class.getName()).log(Level.ERROR, "", ex);
             g = GraphStore.create();
         }
@@ -52,7 +51,7 @@ public class SDK {
     }
     
     @POST
-    @Produces("text/html")
+    @Produces(MediaType.TEXT_HTML)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response sdkPostMD(
             @FormDataParam("query") String query, // SPARQL query

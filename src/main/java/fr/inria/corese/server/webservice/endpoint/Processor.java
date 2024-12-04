@@ -1,4 +1,4 @@
-package fr.inria.corese.server.webservice;
+package fr.inria.corese.server.webservice.endpoint;
 
 import fr.inria.corese.core.sparql.exceptions.EngineException;
 import fr.inria.corese.core.GraphStore;
@@ -10,6 +10,10 @@ import fr.inria.corese.core.util.SPINProcess;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+
+import fr.inria.corese.server.webservice.Param;
+import fr.inria.corese.server.webservice.Profile;
+import fr.inria.corese.server.webservice.TripleStore;
 import org.apache.logging.log4j.Level;
 
 import jakarta.ws.rs.Consumes;

@@ -1,4 +1,4 @@
-package fr.inria.corese.server.webservice;
+package fr.inria.corese.server.webservice.endpoint;
 
 import fr.inria.corese.core.query.QueryProcess;
 import fr.inria.corese.core.kgram.core.Eval;
@@ -9,6 +9,7 @@ import fr.inria.corese.core.sparql.exceptions.EngineException;
 import java.util.List;
 
 import fr.inria.corese.core.util.HTTPHeaders;
+import fr.inria.corese.server.webservice.*;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.GET;
@@ -387,7 +388,7 @@ public class ServiceOnline {
             arg = argList.get(0);
         }        
     	// Dataset URI of the service
-        String uri = getManager().getURI(serv);        
+        String uri = getManager().getURI(serv);
         Param par = new Param(SERVICE + serv, getProfile(uri, profile, transform), transform, resource, name, query);
         par.setValue(value);
         par.setServer(uri);

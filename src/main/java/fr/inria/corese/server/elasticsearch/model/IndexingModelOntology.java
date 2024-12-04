@@ -1,5 +1,11 @@
 package fr.inria.corese.server.elasticsearch.model;
 
+/**
+ * Based on the ontology of the indexing model in https://gitlab.com/mnemotix/synaptix/mnx-models/-/blob/aa8134f95b1db258b1678aab1030e70e6763925f/indexing-model/indexing-model.owl
+ *
+ * @author Pierre Maillot
+ * @since 2024-11-26
+ */
 public class IndexingModelOntology {
 
     public enum objectProperty implements Property {

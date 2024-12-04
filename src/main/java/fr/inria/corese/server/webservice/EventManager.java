@@ -6,9 +6,10 @@ import fr.inria.corese.core.sparql.datatype.DatatypeMap;
 import fr.inria.corese.core.sparql.triple.function.term.Binding;
 import fr.inria.corese.core.sparql.triple.parser.Context;
 import fr.inria.corese.core.sparql.triple.parser.NSManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Server Event Manager
@@ -18,7 +19,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class EventManager {
 
-    private static Logger logger = LogManager.getLogger(EventManager.class);
+    private static final Logger logger = LoggerFactory.getLogger(EventManager.class);
     static final String count = NSManager.STL+"count";
     static final String date  = NSManager.STL+"date";
     static final String host  = NSManager.STL+"host";

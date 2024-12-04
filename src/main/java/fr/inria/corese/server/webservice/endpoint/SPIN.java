@@ -1,4 +1,4 @@
-package fr.inria.corese.server.webservice;
+package fr.inria.corese.server.webservice.endpoint;
 
 import fr.inria.corese.core.api.Loader;
 import fr.inria.corese.core.sparql.exceptions.EngineException;
@@ -10,6 +10,8 @@ import fr.inria.corese.core.print.HTMLFormat;
 import fr.inria.corese.core.transform.Transformer;
 import fr.inria.corese.core.util.HTTPHeaders;
 import fr.inria.corese.core.util.SPINProcess;
+import fr.inria.corese.server.webservice.SPARQLEndpointCommons;
+import fr.inria.corese.server.webservice.endpoint.SPARQLRestAPI;
 import org.apache.logging.log4j.Level;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.FormParam;
@@ -76,7 +78,7 @@ public class SPIN {
     }
 
     Context complete(Context c) {
-        if (SPARQLRestAPI.isAjax) {
+        if (SPARQLEndpointCommons.getInstance().isAjax()) {
             c.setProtocol(Context.STL_AJAX);
         }
         return c;

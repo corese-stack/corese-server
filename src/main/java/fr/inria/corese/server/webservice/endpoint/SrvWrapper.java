@@ -1,4 +1,4 @@
-package fr.inria.corese.server.webservice;
+package fr.inria.corese.server.webservice.endpoint;
 
 import static fr.inria.corese.server.webservice.EmbeddedJettyServer.HOME_PAGE;
 
@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.util.List;
 
 import fr.inria.corese.core.util.HTTPHeaders;
+import fr.inria.corese.server.webservice.EmbeddedJettyServer;
+import fr.inria.corese.server.webservice.SPARQLEndpointCommons;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -200,7 +202,7 @@ public class SrvWrapper {
 	// Put the response text in the #content of home page
 	private String wrapper(Response rs) {
 		// if not using ajax, donot wrap
-		if (!SPARQLRestAPI.isAjax) {
+		if (!SPARQLEndpointCommons.getInstance().isAjax()) {
 			return rs.getEntity().toString();
 		} else {
 			String home = EmbeddedJettyServer.resourceURI.getPath() + "/" + HOME_PAGE;// get file path

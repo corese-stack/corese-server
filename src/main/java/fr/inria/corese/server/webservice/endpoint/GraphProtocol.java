@@ -1,4 +1,4 @@
-package fr.inria.corese.server.webservice;
+package fr.inria.corese.server.webservice.endpoint;
 
 import java.util.List;
 
@@ -39,7 +39,7 @@ public class GraphProtocol {
         if (name != null) {
             query = String.format(pattern, NSManager.nsm().toNamespace(graph));
         }
-        return new SPARQLRestAPI().getResultFormat(request, name, null, null, null, null, query, access, null, null,
+        return SPARQLRestAPI.getResultFormat(request, name, null, null, null, null, query, access, null, null,
                 format);
     }
 
@@ -50,7 +50,7 @@ public class GraphProtocol {
         } else {
             query = String.format(NAMED_GRAPH_INSERT, NSManager.nsm().toNamespace(graph), pattern);
         }
-        return new SPARQLRestAPI().getResultFormat(request, name, null, null, null, null, query, access, null, null, format);
+        return SPARQLRestAPI.getResultFormat(request, name, null, null, null, null, query, access, null, null, format);
     }
 
     String getQuery(String name) {

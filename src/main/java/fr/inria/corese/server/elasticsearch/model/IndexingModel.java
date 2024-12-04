@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class IndexingModel {
@@ -32,6 +31,15 @@ public class IndexingModel {
         return classUri;
     }
 
+    /**
+     * Returns the name of the index to use in Elasticsearch
+     * The index is supposed to be the same as the name of the class as given at the end of the class URI
+     * @return The end of the class URI
+     */
+    public String getIndexName() {
+        return classUri.substring(classUri.lastIndexOf("/") + 1).substring(classUri.lastIndexOf("#") + 1);
+    }
+
     public Map<String, String> getPrefixes() {
         return prefixes;
     }
@@ -46,7 +54,7 @@ public class IndexingModel {
      * @return a SPARQL SELECT query to retrieve the instance with the "?instance" variable
      */
     public String generateInstanceQuery(String instanceUri) {
-        logger.info("Generating instance query for class {} and instance {} with {} prefixes and {} fields", classUri, instanceUri, prefixes.size(), fields.size());
+        logger.debug("Generating instance query for class {} and instance {} with {} prefixes and {} fields", classUri, instanceUri, prefixes.size(), fields.size());
         StringBuilder sb = new StringBuilder();
 
         for(Map.Entry<String, String> prefixEntry : prefixes.entrySet()) {
@@ -78,13 +86,10 @@ public class IndexingModel {
         sb.append("SELECT ?instance\n");
         sb.append("WHERE {\n");
         sb.append("    ?instance a <").append(classUri).append("> .\n");
+        sb.append("    FILTER(IsIRI(?instance)) .\n");
         sb.append("}\n");
 
         return sb.toString();
-    }
-
-    public void refresh() {
-        // Refresh the model map according to the declaration in the server
     }
 
     public IndexingField getField(String fieldLabel) {

@@ -4,7 +4,7 @@ import fr.inria.corese.core.kgram.core.Mapping;
 import fr.inria.corese.core.kgram.core.Mappings;
 import fr.inria.corese.core.query.QueryProcess;
 import fr.inria.corese.core.sparql.exceptions.EngineException;
-import fr.inria.corese.server.webservice.SPARQLRestAPI;
+import fr.inria.corese.server.webservice.endpoint.SPARQLRestAPI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,24 +36,28 @@ public class IndexingManager {
         return models.get(classUri);
     }
 
+    public void extractModels() {
+        extractModels(null);
+    }
+
     /**
      * Extracts models from the server into the class model map.
      */
-    public void extractModels() {
+    public void extractModels(String targetClassUri) {
         // Extract model fields from the server
-        String query = generateBasicQuery();
+        String query = generateBasicQuery(targetClassUri);
 
         QueryProcess exec = SPARQLRestAPI.getQueryProcess();
         try {
             Mappings result = exec.query(query);
-            for(Mapping mapping : result.getMappingList()) {
+            for (Mapping mapping : result.getMappingList()) {
                 String classUri = mapping.getValue("?class").stringValue();
-                logger.info("Mapping for class {}", classUri);
-                if(!models.containsKey(classUri)) {
+                logger.debug("Mapping for class {}", classUri);
+                if (!models.containsKey(classUri)) {
                     models.put(classUri, new IndexingModel(classUri));
                 }
 
-                if(mapping.getValue("?prefixLabel") != null && mapping.getValue("?prefixUri") != null) {
+                if (mapping.getValue("?prefixLabel") != null && mapping.getValue("?prefixUri") != null) {
                     String prefixLabel = mapping.getValue("?prefixLabel").stringValue();
                     String prefixUri = mapping.getValue("?prefixUri").stringValue();
                     logger.info("Prefix {}: {}", prefixLabel, prefixUri);
@@ -64,70 +68,70 @@ public class IndexingManager {
                 String fieldDatatype = mapping.getValue("?dt").stringValue();
                 String fieldPath = mapping.getValue("?path").stringValue();
 
-                logger.info("Field: {} ({}): {}", fieldLabel, fieldDatatype, fieldPath);
+                logger.debug("Field: {} ({}): {}", fieldLabel, fieldDatatype, fieldPath);
 
-                if(! models.get(classUri).getFields().containsKey(fieldLabel)) {
+                if (!models.get(classUri).getFields().containsKey(fieldLabel)) {
                     IndexingField field = new IndexingField(fieldLabel, fieldDatatype, fieldPath);
                     models.get(classUri).addField(fieldLabel, field);
                 }
 
-                if(mapping.getValue("?multi") != null) {
+                if (mapping.getValue("?multi") != null) {
                     boolean multivalued = mapping.getValue("?multi").stringValue().equals("true");
                     models.get(classUri).getField(fieldLabel).setMultivalued(multivalued);
                 }
 
-                if(mapping.getValue("?analyzed") != null) {
+                if (mapping.getValue("?analyzed") != null) {
                     boolean analyzed = mapping.getValue("?analyzed").stringValue().equals("true");
                     models.get(classUri).getField(fieldLabel).setAnalyzed(analyzed);
                 }
 
-                if(mapping.getValue("?optional") != null) {
+                if (mapping.getValue("?optional") != null) {
                     boolean optional = mapping.getValue("?optional").stringValue().equals("true");
                     models.get(classUri).getField(fieldLabel).setOptional(optional);
                 }
 
-                if(mapping.getValue("?analyzer") != null) {
+                if (mapping.getValue("?analyzer") != null) {
                     String analyzer = mapping.getValue("?analyzer").stringValue();
                     models.get(classUri).getField(fieldLabel).setAnalyzer(analyzer);
                 }
 
-                if(mapping.getValue("?ignore") != null) {
+                if (mapping.getValue("?ignore") != null) {
                     Integer ignore = Integer.parseInt(mapping.getValue("?ignore").stringValue());
                     models.get(classUri).getField(fieldLabel).setIgnoreAbove(ignore);
                 }
 
-                if(mapping.getValue("?filterDeleted") != null) {
+                if (mapping.getValue("?filterDeleted") != null) {
                     boolean filter = mapping.getValue("?filterDeleted").stringValue().equals("true");
                     models.get(classUri).getField(fieldLabel).setFilterDeleted(filter);
                 }
 
-                if(mapping.getValue("?subfield") != null) {
+                if (mapping.getValue("?subfield") != null) {
                     String subfieldLabel = mapping.getValue("?subfieldLabel").stringValue();
                     String subfieldDatatype = mapping.getValue("?subfieldDatatype").stringValue();
                     String subfieldDataPath = mapping.getValue("?subfieldDataPath").stringValue();
                     models.get(classUri).getField(fieldLabel).addSubfield(subfieldLabel, new IndexingField(subfieldLabel, subfieldDatatype, subfieldDataPath));
 
-                    if(mapping.getValue("?subfieldMulti") != null) {
+                    if (mapping.getValue("?subfieldMulti") != null) {
                         boolean subfieldMultivalued = mapping.getValue("?subfieldMulti").stringValue().equals("true");
                         models.get(classUri).getField(fieldLabel).getSubfield(subfieldLabel).setMultivalued(subfieldMultivalued);
                     }
 
-                    if(mapping.getValue("?subfieldAnalyzed") != null) {
+                    if (mapping.getValue("?subfieldAnalyzed") != null) {
                         boolean subfieldAnalyzed = mapping.getValue("?subfieldAnalyzed").stringValue().equals("true");
                         models.get(classUri).getField(fieldLabel).getSubfield(subfieldLabel).setAnalyzed(subfieldAnalyzed);
                     }
 
-                    if(mapping.getValue("?subfieldOptional") != null) {
+                    if (mapping.getValue("?subfieldOptional") != null) {
                         boolean subfieldOptional = mapping.getValue("?subfieldOptional").stringValue().equals("true");
                         models.get(classUri).getField(fieldLabel).getSubfield(subfieldLabel).setOptional(subfieldOptional);
                     }
 
-                    if(mapping.getValue("?subfieldAnalyzer") != null) {
+                    if (mapping.getValue("?subfieldAnalyzer") != null) {
                         String subfieldAnalyzer = mapping.getValue("?subfieldAnalyzer").stringValue();
                         models.get(classUri).getField(fieldLabel).getSubfield(subfieldLabel).setAnalyzer(subfieldAnalyzer);
                     }
 
-                    if(mapping.getValue("?subfieldIgnore") != null) {
+                    if (mapping.getValue("?subfieldIgnore") != null) {
                         Integer subfieldIgnore = Integer.parseInt(mapping.getValue("?subfieldIgnore").stringValue());
                         models.get(classUri).getField(fieldLabel).getSubfield(subfieldLabel).setIgnoreAbove(subfieldIgnore);
                     }
@@ -139,14 +143,14 @@ public class IndexingManager {
         }
 
         // Extract prefixes for each model
-        for(IndexingModel model : models.values()) {
+        for (IndexingModel model : models.values()) {
             query = generatePrefixQueryForClass(model.getClassUri());
             try {
                 Mappings result = exec.query(query);
-                for(Mapping mapping : result.getMappingList()) {
+                for (Mapping mapping : result.getMappingList()) {
                     String prefixLabel = mapping.getValue("?prefixLabel").stringValue();
                     String prefixUri = mapping.getValue("?prefixUri").stringValue();
-                    logger.info("Prefix {}: {}", prefixLabel, prefixUri);
+                    logger.debug("Prefix {}: {}", prefixLabel, prefixUri);
                     model.addPrefix(prefixLabel, prefixUri);
                 }
             } catch (EngineException e) {
@@ -158,16 +162,17 @@ public class IndexingManager {
     /**
      * Generates the query to extract the basic info to instantiate indexing models from the server.
      * The basic info includes the class URI and field descriptions.
+     *
      * @param classUri The class URI to extract the model for. If null, all models are extracted.
      * @return The query to extract the basic info with a .
      */
-    private String generateBasicQueryForClass(String classUri) {
+    private String generateBasicQuery(String classUri) {
         StringBuilder sb = new StringBuilder();
         sb.append("PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n");
         sb.append("PREFIX im: <http://ns.mnemotix.com/ontologies/2019/1/indexing-model#>\n");
         sb.append("PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n");
         sb.append("SELECT DISTINCT ?im\n");
-        if(classUri == null) {
+        if (classUri == null) {
             sb.append("       ?class\n");
         }
         sb.append("        ?fLabel\n");
@@ -189,7 +194,7 @@ public class IndexingManager {
         sb.append("        ?subfieldOptional\n");
         sb.append("        ?subfieldIgnore\n");
         sb.append("         WHERE {\n");
-        if(classUri != null) {
+        if (classUri != null) {
             sb.append("    FILTER( ?class = <").append(classUri).append("> )\n");
         }
         sb.append("    ?im a im:IndexingModel ; im:indexingModelOf ?class ; im:field ?field .\n");
@@ -216,7 +221,7 @@ public class IndexingManager {
     }
 
     private String generateBasicQuery() {
-        return generateBasicQueryForClass(null);
+        return generateBasicQuery(null);
     }
 
     private String generatePrefixQueryForClass(String classUri) {
@@ -225,13 +230,13 @@ public class IndexingManager {
         sb.append("PREFIX im: <http://ns.mnemotix.com/ontologies/2019/1/indexing-model#>\n");
         sb.append("PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n");
         sb.append("SELECT DISTINCT ?im\n");
-        if(classUri == null) {
+        if (classUri == null) {
             sb.append("       ?class\n");
         }
         sb.append("        ?prefixLabel\n");
         sb.append("        ?prefixUri\n");
         sb.append("         WHERE {\n");
-        if(classUri != null) {
+        if (classUri != null) {
             sb.append("    FILTER( ?class = <").append(classUri).append("> )\n");
         }
         sb.append("    ?im a im:IndexingModel ; im:indexingModelOf ?class ; im:prefix ?pref .\n");

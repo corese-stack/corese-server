@@ -84,6 +84,10 @@ dependencies {
     api("org.jsoup:jsoup:1.15.3")
     api("org.json:json:20240303")
 
+    implementation("co.elastic.clients:elasticsearch-java:7.17.25")
+    implementation("org.elasticsearch.client:elasticsearch-rest-client:7.17.25")
+
+
     val jetty_version = "11.0.24"
     api("org.eclipse.jetty:jetty-server:${jetty_version}")
     api("org.eclipse.jetty:jetty-servlets:${jetty_version}")
@@ -126,4 +130,6 @@ extraJavaModuleInfo {
     automaticModule("org.glassfish.jersey.containers:jersey-container-servlet-core", "jersey.container.servlet.core")
     automaticModule("org.glassfish.jersey.core:jersey-server", "jersey.server")
     automaticModule("org.glassfish.jersey.core:jersey-common", "jersey.common")
+    automaticModule("org.elasticsearch.client:elasticsearch-rest-client", "elasticsearch.rest.client")
+    automaticModule("co.elastic.clients:elasticsearch-java", "elasticsearch.java")
 }

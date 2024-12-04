@@ -8,8 +8,6 @@ import fr.inria.corese.core.load.LoadException;
 import fr.inria.corese.core.query.QueryProcess;
 import fr.inria.corese.core.sparql.exceptions.EngineException;
 import fr.inria.corese.core.util.HTTPHeaders;
-import fr.inria.corese.server.elasticsearch.ElasticsearchConnexion;
-import fr.inria.corese.server.elasticsearch.ElasticsearchListener;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -48,15 +46,14 @@ public class ElasticsearchTest {
             }
         }
         ElasticsearchConnexion connexion = ElasticsearchConnexion.create();
-        connexion.setElasticSearchKey("test");
-        connexion.setElasticSearchUrl(elasticsearchService.baseUrl());
+        connexion.setElasticsearchUrl(elasticsearchService.baseUrl());
 
         EdgeChangeListenerTest edgeChangeListenerTest = new EdgeChangeListenerTest(connexion);
         graphStore.addEdgeChangeListener(edgeChangeListenerTest);
 
         // Stub the elasticsearch service that accepts calls with the right key and content type
         elasticsearchService.stubFor(post("/")
-                .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticSearchKey()))
+                .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticsearchAPIKey()))
                 .withHeader(HTTPHeaders.CONTENT_TYPE, containing("application/json"))
                 .willReturn(ok())
         );
@@ -79,15 +76,15 @@ public class ElasticsearchTest {
         GraphStore graphStore = GraphStore.create();
 
         ElasticsearchConnexion connexion = ElasticsearchConnexion.create();
-        connexion.setElasticSearchKey("test");
-        connexion.setElasticSearchUrl(elasticsearchService.baseUrl());
+        connexion.setElasticsearchAPIKey("test");
+        connexion.setElasticsearchUrl(elasticsearchService.baseUrl());
 
         ElasticsearchListener edgeChangeListenerTest = new ElasticsearchListener(connexion);
         graphStore.addEdgeChangeListener(edgeChangeListenerTest);
 
         // Stub the elasticsearch service that accepts calls with the right key and content type
         elasticsearchService.stubFor(post("/")
-                .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticSearchKey()))
+                .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticsearchAPIKey()))
                 .withHeader(HTTPHeaders.CONTENT_TYPE, containing("application/json"))
                 .willReturn(ok())
         );
@@ -121,15 +118,15 @@ public class ElasticsearchTest {
         GraphStore graphStore = GraphStore.create();
 
         ElasticsearchConnexion connexion = ElasticsearchConnexion.create();
-        connexion.setElasticSearchKey("test");
-        connexion.setElasticSearchUrl(elasticsearchService.baseUrl());
+        connexion.setElasticsearchAPIKey("test");
+        connexion.setElasticsearchUrl(elasticsearchService.baseUrl());
 
         ElasticsearchListener edgeChangeListenerTest = new ElasticsearchListener(connexion);
         graphStore.addEdgeChangeListener(edgeChangeListenerTest);
 
         // Stub the elasticsearch service that accepts calls with the right key and content type
         elasticsearchService.stubFor(post("/")
-                .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticSearchKey()))
+                .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticsearchAPIKey()))
                 .withHeader(HTTPHeaders.CONTENT_TYPE, containing("application/json"))
                 .willReturn(ok())
         );
@@ -162,15 +159,15 @@ public class ElasticsearchTest {
         GraphStore graphStore = GraphStore.create();
 
         ElasticsearchConnexion connexion = ElasticsearchConnexion.create();
-        connexion.setElasticSearchKey("test");
-        connexion.setElasticSearchUrl(elasticsearchService.baseUrl());
+        connexion.setElasticsearchAPIKey("test");
+        connexion.setElasticsearchUrl(elasticsearchService.baseUrl());
 
         ElasticsearchListener edgeChangeListenerTest = new ElasticsearchListener(connexion);
         graphStore.addEdgeChangeListener(edgeChangeListenerTest);
 
         // Stub the elasticsearch service that accepts calls with the right key and content type
         elasticsearchService.stubFor(post("/")
-                .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticSearchKey()))
+                .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticsearchAPIKey()))
                 .withHeader(HTTPHeaders.CONTENT_TYPE, containing("application/json"))
                 .willReturn(ok())
         );

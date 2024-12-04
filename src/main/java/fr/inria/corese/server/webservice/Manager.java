@@ -2,6 +2,7 @@ package fr.inria.corese.server.webservice;
 
 import java.util.HashMap;
 
+import fr.inria.corese.server.webservice.endpoint.Transformer;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,16 +30,16 @@ import fr.inria.corese.core.sparql.triple.parser.NSManager;
  *
  */
 public class Manager {
-    private final static Logger logger = LogManager.getLogger(Manager.class);
-    static final String STCONTEXT = Context.STL_CONTEXT;
-    static String SYSTEM = NSManager.STL + "system";
-    static String DEFAULT = NSManager.STL + "default";
-    static String USER = NSManager.STL + "user";
-    private static String CONTENT = NSManager.STL + "content";
-    private static String CONTENT_SHARE = NSManager.STL + "shareContent";
-    private static String SCHEMA = NSManager.STL + "schema";
-    private static String NAME = NSManager.SWL + "name";
-    static final String SKOLEM = NSManager.STL + "skolem";
+    private static final Logger logger = LogManager.getLogger(Manager.class);
+    public static final String STCONTEXT = Context.STL_CONTEXT;
+    public static final String SYSTEM = NSManager.STL + "system";
+    public static final String DEFAULT = NSManager.STL + "default";
+    public static final String USER = NSManager.STL + "user";
+    private static final String CONTENT = NSManager.STL + "content";
+    private static final String CONTENT_SHARE = NSManager.STL + "shareContent";
+    private static final String SCHEMA = NSManager.STL + "schema";
+    private static final String NAME = NSManager.SWL + "name";
+    public static final String SKOLEM = NSManager.STL + "skolem";
     static HashMap<String, TripleStore>
     // by dataset URI; e.g. st:cdn
     mapURI,
@@ -58,7 +59,7 @@ public class Manager {
         manager = new Manager();
     }
 
-    static Manager getManager() {
+    public static Manager getManager() {
         return manager;
     }
 
@@ -66,7 +67,7 @@ public class Manager {
      * Create a TripleStore for each server definition from profile and load its
      * content
      */
-    void init() {
+    public void init() {
         if (isInitDone()) {
         } else {
             setInitDone(true);
@@ -107,7 +108,7 @@ public class Manager {
     }
 
     // URI or name serv
-    static TripleStore getEndpoint(String serv) {
+    public static TripleStore getEndpoint(String serv) {
         getManager().init();
         TripleStore ts = getManager().getTripleStore(getURIOrName(serv));
         if (ts == null) {
@@ -128,7 +129,7 @@ public class Manager {
         return mapURI.get(name);
     }
 
-    TripleStore getTripleStoreByService(String name) {
+    public TripleStore getTripleStoreByService(String name) {
         String uri = getURI(name);
         if (uri == null) {
             return null;
@@ -136,7 +137,7 @@ public class Manager {
         return getTripleStore(uri);
     }
 
-    static String getURI(String name) {
+    public static String getURI(String name) {
         return mapService.get(name);
     }
 
@@ -231,7 +232,7 @@ public class Manager {
         return res.getGraph();
     }
 
-    void init(TripleStore ts) {
+    public void init(TripleStore ts) {
         Service s = getProfile().getServer(USER);
         if (s == null) {
             s = getProfile().getServer(DEFAULT);

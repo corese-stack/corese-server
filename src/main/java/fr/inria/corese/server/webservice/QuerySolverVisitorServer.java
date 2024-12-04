@@ -12,6 +12,8 @@ import fr.inria.corese.core.sparql.datatype.extension.CoreseMap;
 import fr.inria.corese.core.sparql.triple.parser.NSManager;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Enumeration;
+
+import fr.inria.corese.server.webservice.endpoint.SPARQLRestAPI;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.ServletContext;
 import jakarta.ws.rs.core.Response;
@@ -26,7 +28,7 @@ import org.apache.logging.log4j.Logger;
  * @author Olivier Corby, Wimmics INRIA I3S, 2020
  */
 public class QuerySolverVisitorServer extends QuerySolverVisitor {
-    static private final Logger logger = LogManager.getLogger(QuerySolverVisitorServer.class);
+    private static final Logger logger = LogManager.getLogger(QuerySolverVisitorServer.class);
     
     static final String MESSAGE = "@message";
     static final String MESSAGE_FUN = NSManager.USER + "messenger";

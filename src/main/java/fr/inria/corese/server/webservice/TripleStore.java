@@ -63,7 +63,7 @@ public class TripleStore implements URLParam {
         this(g, rdfs, DEFAULT_OWL, DEFAULT_MATCH);
     }
 
-    TripleStore(GraphStore g) {
+    public TripleStore(GraphStore g) {
         this(g, DEFAULT_RDFS, DEFAULT_OWL, DEFAULT_MATCH);
     }
 
@@ -71,7 +71,7 @@ public class TripleStore implements URLParam {
         this(GraphStore.create(rdfs), rdfs, owl, match);
     }
 
-    TripleStore(boolean rdfs, boolean owl) {
+    public TripleStore(boolean rdfs, boolean owl) {
         this(rdfs, owl, true);
     }
 
@@ -95,7 +95,7 @@ public class TripleStore implements URLParam {
         return graph.toString();
     }
 
-    QueryProcess getQueryProcess() {
+    public QueryProcess getQueryProcess() {
         if (getDataManager() != null) {
             logger.info("QueryProcess DataManager: " + getDataManager());
             return QueryProcess.create(getGraph(), getDataManager());
@@ -107,7 +107,7 @@ public class TripleStore implements URLParam {
         return QueryProcess.create(getGraph(), isMatch());
     }
 
-    GraphStore getGraph() {
+    public GraphStore getGraph() {
         return graph;
     }
 
@@ -125,7 +125,7 @@ public class TripleStore implements URLParam {
         owl = b;
     }
 
-    void init(boolean b) {
+    public void init(boolean b) {
         setProtect(b);
 
         if (rdfs) {
@@ -166,7 +166,7 @@ public class TripleStore implements URLParam {
      * SHACL endpoint: /sparql?mode=shacl&uri=shape&query=select * where { ?sh
      * sh:conforms ?b }
      */
-    Mappings query(HttpServletRequest request, String query, Dataset ds) throws EngineException {
+    public Mappings query(HttpServletRequest request, String query, Dataset ds) throws EngineException {
         if (ds == null) {
             ds = new Dataset();
         }
@@ -415,7 +415,7 @@ public class TripleStore implements URLParam {
         return null;
     }
 
-    Mappings query(HttpServletRequest request, String query) throws EngineException {
+    public Mappings query(HttpServletRequest request, String query) throws EngineException {
         return query(request, query, new Dataset());
     }
 

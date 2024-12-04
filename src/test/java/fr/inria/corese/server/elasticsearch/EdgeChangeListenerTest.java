@@ -19,6 +19,10 @@ import java.util.regex.Pattern;
 
 import static org.junit.Assert.*;
 
+/**
+ * Tests for the {@link EdgeChangeListener} class.
+ * Mostly tests that the insertion and deletions are properly detected.
+ */
 public class EdgeChangeListenerTest {
 
     private static class TestEdgeChangeListener extends EdgeChangeListener {

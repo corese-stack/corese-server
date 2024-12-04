@@ -2,6 +2,7 @@ package fr.inria.corese.server.webservice;
 
 import java.util.List;
 
+import fr.inria.corese.server.webservice.endpoint.Transformer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -30,7 +31,7 @@ import fr.inria.corese.core.sparql.triple.parser.URLParam;
  */
 public class TransformerEngine {
 
-    private static Logger logger = LogManager.getLogger(Transformer.class);
+    private static final Logger logger = LogManager.getLogger(Transformer.class);
     private static final String PARAM = "$param";
     private static final String MODE = "$mode";
 
