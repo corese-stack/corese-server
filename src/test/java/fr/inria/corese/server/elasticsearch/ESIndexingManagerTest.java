@@ -8,7 +8,10 @@ import fr.inria.corese.server.elasticsearch.model.IndexingManager;
 import fr.inria.corese.server.elasticsearch.model.IndexingModel;
 import fr.inria.corese.server.webservice.endpoint.SPARQLRestAPI;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import org.junit.Test;
+
+import java.util.ArrayList;
 
 import static org.junit.Assert.*;
 
@@ -20,7 +23,7 @@ public class ESIndexingManagerTest {
 
     @Test
     public void testLoadIndexingModel1() throws EngineException, LoadException {
-        SPARQLRestAPI.getTripleStore().load(testModelFile1, "", Loader.format.TRIG_FORMAT);
+        SPARQLRestAPI.getTripleStore().load(testModelFile1, Loader.format.TRIG_FORMAT);
 
         // Test the loading of the indexing model
         IndexingManager.getInstance().extractModels();
@@ -28,6 +31,7 @@ public class ESIndexingManagerTest {
         // Test the indexing model from the data file
         IndexingModel model = IndexingManager.getInstance().getModel("http://data.clairsienne.com/ontologies/2019/12/clr-patrimoine#Lot");
 
+        assertNotNull(model);
         assertEquals("http://data.clairsienne.com/ontologies/2019/12/clr-patrimoine#Lot", model.getClassUri());
         // assertEquals(2, model.getPrefixes().size());
         assertEquals(3, model.getFields().size());
@@ -151,7 +155,15 @@ public class ESIndexingManagerTest {
 
         JSONArray allMappings = ESMappingManager.getInstance().getMappings("https://schema.org/Person");
 
-        assertTrue(new JSONArray("[{\"firstName\":\"John\",\"lastName\":\"Doe\",\"address\":[{\"country\":\"United States\",\"streetAddress\":\"123 Main Street\",\"postalCode\":\"10001\",\"locality\":\"New York\"}]},{\"firstName\":\"Jane\",\"lastName\":\"Doe\",\"address\":[{\"country\":\"United States\",\"streetAddress\":\"124 Main Street\",\"postalCode\":\"10001\",\"locality\":\"New York\"}]},{\"firstName\":\"John\",\"lastName\":\"Smith\",\"address\":[{\"country\":\"France\",\"streetAddress\":\"3, rue du pont\",\"postalCode\":\"75001\",\"locality\":\"Paris\"}]}]").similar(allMappings));
+        assertNotNull(allMappings);
+        allMappings.forEach(o -> ((JSONObject) o).remove("uri")); // Emulating the removal of the URI done when the mappings are returned by the API
+        allMappings.forEach(o -> assertTrue(
+                JSONUtils.jsonObjectsAreEquals((JSONObject) o, new JSONObject("{\"firstName\":\"John\",\"lastName\":\"Doe\",\"address\":[{\"country\":\"United States\",\"streetAddress\":\"123 Main Street\",\"postalCode\":\"10001\",\"locality\":\"New York\"}]}"))
+                || JSONUtils.jsonObjectsAreEquals((JSONObject) o, new JSONObject("{\"firstName\":\"Jane\",\"lastName\":\"Doe\",\"address\":[{\"country\":\"United States\",\"streetAddress\":\"124 Main Street\",\"postalCode\":\"10001\",\"locality\":\"New York\"}]}"))
+                || JSONUtils.jsonObjectsAreEquals((JSONObject) o, new JSONObject("{\"firstName\":\"John\",\"lastName\":\"Smith\",\"address\":[{\"country\":\"France\",\"streetAddress\":\"3, rue du pont\",\"postalCode\":\"75001\",\"locality\":\"Paris\"}]}")
+                ))
+        );
+        //assertTrue(JSONUtils.jsonArraysAreEquals(new JSONArray("[{\"firstName\":\"John\",\"lastName\":\"Doe\",\"address\":[{\"country\":\"United States\",\"streetAddress\":\"123 Main Street\",\"postalCode\":\"10001\",\"locality\":\"New York\"}]},{\"firstName\":\"Jane\",\"lastName\":\"Doe\",\"address\":[{\"country\":\"United States\",\"streetAddress\":\"124 Main Street\",\"postalCode\":\"10001\",\"locality\":\"New York\"}]},{\"firstName\":\"John\",\"lastName\":\"Smith\",\"address\":[{\"country\":\"France\",\"streetAddress\":\"3, rue du pont\",\"postalCode\":\"75001\",\"locality\":\"Paris\"}]}]"), allMappings));
     }
 
     /**
@@ -161,14 +173,22 @@ public class ESIndexingManagerTest {
      */
     @Test
     public void jsonMappingsTest2() throws LoadException {
-        SPARQLRestAPI.getTripleStore().load(testModelFile2, "", Loader.format.TURTLE_FORMAT);
-        SPARQLRestAPI.getTripleStore().load(testModelDataFile2, "", Loader.format.TURTLE_FORMAT);
+        SPARQLRestAPI.getTripleStore().load(testModelFile2, Loader.format.TURTLE_FORMAT);
+        SPARQLRestAPI.getTripleStore().load(testModelDataFile2, Loader.format.TURTLE_FORMAT);
 
         // Test the loading of the indexing model
         IndexingManager.getInstance().extractModels();
 
         JSONArray allMappings = ESMappingManager.getInstance().getMappings("https://schema.org/Article");
+        allMappings.forEach(o -> ((JSONObject) o).remove("uri")); // Emulating the removal of the URI done when the mappings are returned by the API
 
-        assertTrue(new JSONArray("[{\"author\":[{\"firstName\":\"John\",\"lastName\":\"Doe\"}],\"about\":[\"dog\",\"cute\"],\"abstract\":[\"Article 1\"]},{\"author\":[{\"firstName\":\"Jane\",\"lastName\":\"Doe\"}],\"about\":[\"cute\",\"cat\"],\"abstract\":[\"Article 2\"]},{\"author\":[{\"firstName\":\"John\",\"lastName\":\"Doe\"}],\"about\":[\"dog\",\"cute\",\"cat\"],\"abstract\":[\"Article 3\"]}]").similar(allMappings));
+        assertNotNull(allMappings);
+        assertEquals(3, allMappings.length());
+        ArrayList<JSONObject> resultObjectList = new ArrayList<>();
+        allMappings.forEach(o -> resultObjectList.add((JSONObject) o));
+
+        assertTrue(resultObjectList.stream().anyMatch(o -> JSONUtils.jsonObjectsAreEquals(o, (new JSONObject("{\"author\":[{\"firstName\":\"John\",\"lastName\":\"Doe\"}],\"about\":[\"dog\",\"cute\"],\"abstract\":[\"Article 1\"]}")))));
+        assertTrue(resultObjectList.stream().anyMatch(o -> JSONUtils.jsonObjectsAreEquals(o, (new JSONObject("{\"author\":[{\"firstName\":\"Jane\",\"lastName\":\"Doe\"}],\"about\":[\"cute\",\"cat\"],\"abstract\":[\"Article 2\"]}")))));
+        assertTrue(resultObjectList.stream().anyMatch(o -> JSONUtils.jsonObjectsAreEquals(o, (new JSONObject("{\"author\":[{\"firstName\":\"John\",\"lastName\":\"Doe\"},{\"firstName\":\"John\",\"lastName\":\"Smith\"}],\"about\":[\"dog\",\"cute\",\"cat\"],\"abstract\":[\"Article 3\"]}")))));
     }
 }

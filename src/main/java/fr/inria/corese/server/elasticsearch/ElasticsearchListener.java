@@ -47,18 +47,20 @@ public class ElasticsearchListener extends EdgeChangeListener {
 
     @Override
     public void onBulkEdgeChange(List<Edge> delete, List<Edge> add) {
+        logger.info("Bulk edge change {} {}", delete, add);
         HashSet<String> modifiedClassUris = new HashSet<>();
         HashSet<String> modifiedInstancesUris = new HashSet<>();
         // If edge modifies models, then we refresh the model objects and send their instances to Elasticsearch
-        if(delete.isEmpty() && add.isEmpty()) {
+        if (delete.isEmpty() && add.isEmpty()) {
             logger.debug("Bulk edge change with no edge to delete or add");
             return;
         }
         // Any edge modifies a model ?
-        if(delete.stream().anyMatch(edge -> IndexingModelOntology.isDatatypeProperty(edge.getPropertyNode().getLabel()) || IndexingModelOntology.isObjectProperty(edge.getPropertyNode().getLabel()) )) {
+        if ((delete.stream().anyMatch(edge -> IndexingModelOntology.isDatatypeProperty(edge.getPropertyNode().getLabel()) || IndexingModelOntology.isObjectProperty(edge.getPropertyNode().getLabel())))
+                || (add.stream().anyMatch(edge -> IndexingModelOntology.isDatatypeProperty(edge.getPropertyNode().getLabel()) || IndexingModelOntology.isObjectProperty(edge.getPropertyNode().getLabel())))) {
             HashSet<Node> instances = new HashSet<>();
-            for(Edge edge : delete) {
-                if(IndexingModelOntology.isDatatypeProperty(edge.getPropertyNode().getLabel())
+            for (Edge edge : delete) {
+                if (IndexingModelOntology.isDatatypeProperty(edge.getPropertyNode().getLabel())
                         || IndexingModelOntology.isObjectProperty(edge.getPropertyNode().getLabel())) {
                     modifiedInstancesUris.add(edge.getSubjectNode().getLabel());
                     instances.add(edge.getSubjectNode());
@@ -66,11 +68,11 @@ public class ElasticsearchListener extends EdgeChangeListener {
             }
 
             // What are the classes of the model modified ?
-            for(Node instance : instances) {
+            for (Node instance : instances) {
                 String instanceModelType = "PREFIX im: <http://ns.mnemotix.com/ontologies/indexing-model/> SELECT ?class WHERE { <" + instance.getLabel() + "> a im:IndexingModel ; im:indexingModelOf ?class . }";
                 try {
                     Mappings results = SPARQLRestAPI.getQueryProcess().query(instanceModelType);
-                    for(Mapping map : results) {
+                    for (Mapping map : results) {
                         Node classNode = map.getNode("?class");
                         modifiedClassUris.add(classNode.getLabel());
                     }
@@ -82,17 +84,23 @@ public class ElasticsearchListener extends EdgeChangeListener {
 
         // If it modifies an instance of a model, we sent the description of the instance to Elasticsearch
         HashSet<String> candidateInstanceUri = new HashSet<>();
-        for(Edge edge : add) {
-            candidateInstanceUri.add(edge.getSubjectNode().getLabel());
+        for (Edge edge : add) {
+            if(! edge.getSubjectNode().isBlank()) {
+                candidateInstanceUri.add(edge.getSubjectNode().getLabel());
+            }
         }
-        for(Edge edge : delete) {
-            candidateInstanceUri.add(edge.getSubjectNode().getLabel());
+        for (Edge edge : delete) {
+            if(! edge.getSubjectNode().isBlank()) {
+                candidateInstanceUri.add(edge.getSubjectNode().getLabel());
+            }
         }
-        for(String instanceUri : candidateInstanceUri) {
-            String instanceTypeQuery = "PREFIX im: <http://ns.mnemotix.com/ontologies/indexing-model/> SELECT ?class WHERE { <" + instanceUri + "> a ?class . ?model a im:IndexingModel ; im:indexingModelOf ?class . }";
+
+        for (String instanceUri : candidateInstanceUri) {
+            String instanceTypeQuery = "PREFIX im: <http://ns.mnemotix.com/ontologies/indexing-model/> SELECT ?class WHERE { { <" + instanceUri + "> a ?class } UNION { GRAPH ?graphData { <" + instanceUri + "> a ?class . } . { ?model a im:IndexingModel ; im:indexingModelOf ?class . } UNION {  GRAPH ?modelGraph { ?model a im:IndexingModel ; im:indexingModelOf ?class . } } } }";
             try {
                 Mappings result = SPARQLRestAPI.getQueryProcess().query(instanceTypeQuery);
-                if(result.size() > 0) {
+
+                if (result.size() > 0) {
                     modifiedInstancesUris.add(instanceUri);
                 }
             } catch (EngineException e) {
@@ -102,29 +110,31 @@ public class ElasticsearchListener extends EdgeChangeListener {
 
         // Prepare the JSON to send to Elasticsearch
         // Update the models
-        for(String classUri : modifiedClassUris) {
+        for (String classUri : modifiedClassUris) {
             IndexingManager.getInstance().extractModels(classUri);
         }
-        JSONArray json = new JSONArray();
-        for(String instanceUri : modifiedInstancesUris) {
-            Map<String, JSONObject> modifiedInstanceMappings = ESMappingManager.getInstance().retrieveIndividualMapping(instanceUri);
 
-            logger.debug("Sending JSON to Elasticsearch: " + json.toString());
-            if(connexion.getElasticsearchUrl() != null) {
+
+        for (String instanceUri : modifiedInstancesUris) {
+            Map<String, JSONArray> modifiedInstanceMappings = ESMappingManager.getInstance().retrieveIndividualMapping(instanceUri);
                 try {
-                    for(Map.Entry<String, JSONObject> instanceMapping : modifiedInstanceMappings.entrySet()) {
-                        IndexResponse response = connexion.sendJSON(instanceMapping.getKey(), instanceMapping.getValue());
+                    for (Map.Entry<String, JSONArray> instanceMappings : modifiedInstanceMappings.entrySet()) {
+                        for(int i = 0; i < instanceMappings.getValue().length(); i++) {
+                            JSONObject instanceMapping = instanceMappings.getValue().getJSONObject(i);
+                            IndexResponse response = connexion.sendJSON(instanceMappings.getKey(), instanceMapping);
 
-                        if(response != null && (response.result() == Result.Created || response.result() == Result.Updated)) {
-                            logger.debug("JSON sent to Elasticsearch with status code: {}", response.toString());
-                        } else {
-                            logger.error("Error while sending JSON to Elasticsearch: {}", response.toString());
+                            if (response != null) {
+                                if (response.result() == Result.Created || response.result() == Result.Updated) {
+                                    logger.debug("JSON sent to Elasticsearch index {} with response: {}", instanceMappings.getKey(), response.toString());
+                                } else {
+                                    logger.error("Error while sending JSON to Elasticsearch index {}: {}", instanceMappings.getKey(), response.toString());
+                                }
+                            }
                         }
                     }
                 } catch (IOException e) {
                     logger.error("Error while sending JSON to Elasticsearch", e);
                 }
-            }
         }
     }
 }

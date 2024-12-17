@@ -3,13 +3,16 @@ package fr.inria.corese.server.elasticsearch.model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.Normalizer;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class IndexingModel {
     private static final Logger logger = LoggerFactory.getLogger(IndexingModel.class);
 
     private String classUri;
+    private String classLabel;
     private Map<String, String> prefixes;
     private Map<String, IndexingField> fields;
 
@@ -31,13 +34,30 @@ public class IndexingModel {
         return classUri;
     }
 
+    public String getClassLabel() {
+        return classLabel;
+    }
+
+    public void setClassLabel(String classLabel) {
+        this.classLabel = classLabel;
+    }
+
     /**
      * Returns the name of the index to use in Elasticsearch
-     * The index is supposed to be the same as the name of the class as given at the end of the class URI
+     * The index is supposed to be a normalized version in lowercase and with all forbidden characters removed of the class label
      * @return The end of the class URI
      */
     public String getIndexName() {
-        return classUri.substring(classUri.lastIndexOf("/") + 1).substring(classUri.lastIndexOf("#") + 1);
+        String indexName = Normalizer.normalize(getClassLabel(), Normalizer.Form.NFKD)
+                .toLowerCase()
+                .strip()
+                .replaceAll("[\\\\\\/\\*\\?\\\"\\<\\>\\| \\#']", "") // Cannot include \, /, *, ?, ", <, >, |, ` ` (space character), ,, #
+                .replaceAll("^[\\-_\\+]+", ""); // Cannot start with -, _, +
+        if(indexName.compareTo(".") == 0 || indexName.compareTo("..") == 0) { // Cannot be . or ..
+            logger.error("The index name \".\" or \"..\" are illegal for class URI " + classUri);
+            throw new IllegalArgumentException("The index name \".\" or \"..\" are illegal for class URI " + classUri);
+        }
+        return indexName;
     }
 
     public Map<String, String> getPrefixes() {
@@ -53,15 +73,14 @@ public class IndexingModel {
      * @param instanceUri the uri of the instance to retrieve
      * @return a SPARQL SELECT query to retrieve the instance with the "?instance" variable
      */
-    public String generateInstanceQuery(String instanceUri) {
-        logger.debug("Generating instance query for class {} and instance {} with {} prefixes and {} fields", classUri, instanceUri, prefixes.size(), fields.size());
+    public String generateInstanceDescriptionQuery(String instanceUri) {
         StringBuilder sb = new StringBuilder();
 
         for(Map.Entry<String, String> prefixEntry : prefixes.entrySet()) {
             sb.append("PREFIX ").append(prefixEntry.getKey()).append(": <").append(prefixEntry.getValue()).append(">\n");
         }
 
-        sb.append("SELECT * WHERE {\n");
+        sb.append("SELECT DISTINCT * WHERE {\n");
         sb.append("    FILTER(?instance = <").append(instanceUri).append(">)\n");
         sb.append("    ?instance a <").append(classUri).append("> .\n");
         for(IndexingField field : fields.values()) {
@@ -74,7 +93,6 @@ public class IndexingModel {
     }
 
     /**
-     *
      * @return a SPARQL SELECT query to retrieve all instances of the class with the "?instance" variable
      */
     public String generateInstanceListQuery() {

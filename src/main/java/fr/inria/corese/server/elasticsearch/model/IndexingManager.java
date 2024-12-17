@@ -38,6 +38,7 @@ public class IndexingManager {
 
     public void extractModels() {
         extractModels(null);
+        logger.info("{} extracted models: {}", models.size(), models.keySet());
     }
 
     /**
@@ -52,23 +53,24 @@ public class IndexingManager {
             Mappings result = exec.query(query);
             for (Mapping mapping : result.getMappingList()) {
                 String classUri = mapping.getValue("?class").stringValue();
-                logger.debug("Mapping for class {}", classUri);
+
                 if (!models.containsKey(classUri)) {
                     models.put(classUri, new IndexingModel(classUri));
                 }
 
+                String classLabel = mapping.getValue("?classLabel").stringValue();
+                models.get(classUri).setClassLabel(classLabel);
+
                 if (mapping.getValue("?prefixLabel") != null && mapping.getValue("?prefixUri") != null) {
                     String prefixLabel = mapping.getValue("?prefixLabel").stringValue();
                     String prefixUri = mapping.getValue("?prefixUri").stringValue();
-                    logger.info("Prefix {}: {}", prefixLabel, prefixUri);
+
                     models.get(classUri).addPrefix(prefixLabel, prefixUri);
                 }
 
                 String fieldLabel = mapping.getValue("?fLabel").stringValue();
                 String fieldDatatype = mapping.getValue("?dt").stringValue();
                 String fieldPath = mapping.getValue("?path").stringValue();
-
-                logger.debug("Field: {} ({}): {}", fieldLabel, fieldDatatype, fieldPath);
 
                 if (!models.get(classUri).getFields().containsKey(fieldLabel)) {
                     IndexingField field = new IndexingField(fieldLabel, fieldDatatype, fieldPath);
@@ -150,7 +152,6 @@ public class IndexingManager {
                 for (Mapping mapping : result.getMappingList()) {
                     String prefixLabel = mapping.getValue("?prefixLabel").stringValue();
                     String prefixUri = mapping.getValue("?prefixUri").stringValue();
-                    logger.debug("Prefix {}: {}", prefixLabel, prefixUri);
                     model.addPrefix(prefixLabel, prefixUri);
                 }
             } catch (EngineException e) {
@@ -172,9 +173,8 @@ public class IndexingManager {
         sb.append("PREFIX im: <http://ns.mnemotix.com/ontologies/2019/1/indexing-model#>\n");
         sb.append("PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n");
         sb.append("SELECT DISTINCT ?im\n");
-        if (classUri == null) {
-            sb.append("       ?class\n");
-        }
+        sb.append("        ?class\n");
+        sb.append("        ?classLabel\n");
         sb.append("        ?fLabel\n");
         sb.append("        ?dt\n");
         sb.append("        ?path\n");
@@ -199,6 +199,7 @@ public class IndexingManager {
         }
         sb.append("    ?im a im:IndexingModel ; im:indexingModelOf ?class ; im:field ?field .\n");
         sb.append("    ?field rdfs:label ?fLabel ; im:fieldDatatype ?dt ; im:dataPath ?path .\n");
+        sb.append("    ?class rdfs:label ?classLabel .\n");
         sb.append("    OPTIONAL {?field im:multivalued ?multi }\n");
         sb.append("    OPTIONAL {?field im:analyzed ?analyzed }\n");
         sb.append("    OPTIONAL {?field im:optional ?optional }\n");
@@ -215,7 +216,7 @@ public class IndexingManager {
         sb.append("        OPTIONAL { ?subfield im:ignore_above ?subfieldIgnore }\n");
         sb.append("    }\n");
         sb.append("}\n");
-        sb.append("GROUP BY ?im ?class ?fLabel ?dt ?path ?multi ?analyzed ?optional ?analyzer ?ignore ?filterDeleted ?subfield ?subfieldLabel ?subfieldDatatype ?subfieldDataPath ?subfieldMulti ?subfieldAnalyzed ?subfieldAnalyzer ?subfieldOptional ?subfieldIgnore\n");
+        sb.append("GROUP BY ?im ?class ?classLabel ?fLabel ?dt ?path ?multi ?analyzed ?optional ?analyzer ?ignore ?filterDeleted ?subfield ?subfieldLabel ?subfieldDatatype ?subfieldDataPath ?subfieldMulti ?subfieldAnalyzed ?subfieldAnalyzer ?subfieldOptional ?subfieldIgnore\n");
 
         return sb.toString();
     }

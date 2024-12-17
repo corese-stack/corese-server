@@ -56,7 +56,6 @@ public class TripleStore implements URLParam {
         this.rdfs = rdfs;
         setMatch(match);
         setOWL(owl);
-        this.graph.addEdgeChangeListener(new ElasticsearchListener());
     }
 
     TripleStore(GraphStore g, boolean rdfs) {
@@ -144,17 +143,45 @@ public class TripleStore implements URLParam {
 
     /**
      * Load a turtle RDF file
+     * @param path File path
+     * @param graphURI Graph URI. Can be given as a file path relative to the file
      */
-    public void load(String path, String src) throws LoadException {
+    public void load(String path, String graphURI) throws LoadException {
         Load ld = Load.create(getGraph());
         ld.setDataManager(getDataManager());
-        ld.parse(path, src, Loader.format.TURTLE_FORMAT);
+        ld.parse(path, graphURI, Loader.format.TURTLE_FORMAT);
     }
 
-    public void load(String path, String src, Loader.format format) throws LoadException {
+    /**
+     * Load a turtle RDF file to the default graph
+     */
+    public void load(String path) throws LoadException {
         Load ld = Load.create(getGraph());
         ld.setDataManager(getDataManager());
-        ld.parse(path, src, format);
+        ld.parse(path, Loader.format.TURTLE_FORMAT);
+    }
+
+    /**
+     * Load an RDF file
+     * @param path File path
+     * @param graphURI Graph URI. Can be given as a file path relative to the file
+     * @param format RDF format
+     */
+    public void load(String path, String graphURI, Loader.format format) throws LoadException {
+        Load ld = Load.create(getGraph());
+        ld.setDataManager(getDataManager());
+        ld.parse(path, graphURI, format);
+    }
+
+    /**
+     * Load an RDF file to the default graph
+     * @param path File path
+     * @param format RDF format
+     */
+    public void load(String path, Loader.format format) throws LoadException {
+        Load ld = Load.create(getGraph());
+        ld.setDataManager(getDataManager());
+        ld.parse(path, format);
     }
 
     /**

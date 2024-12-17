@@ -8,6 +8,8 @@
 @prefix : <http://data.clairsienne.com/data/2019/12/clr-patrimoine/> .
 @base <http://data.clairsienne.com/data/2019/12/clr-patrimoine> .
 
+clr:Lot rdfs:label "Lot" .
+
 :IndexingDataNG {
     [
         a im:IndexingModel ;

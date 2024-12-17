@@ -8,6 +8,10 @@
 @prefix : <http://example.com/> .
 @base <http://example.com/> .
 
+schema:Person rdfs:label "Person" .
+
+schema:Article rdfs:label "Article" .
+
 [
     a im:IndexingModel ;
     im:indexingModelOf schema:Person ;

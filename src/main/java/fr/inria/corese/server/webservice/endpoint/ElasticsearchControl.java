@@ -13,17 +13,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.Map;
 
 @Path("elasticsearch")
 public class ElasticsearchControl {
     private static final Logger logger = LoggerFactory.getLogger(ElasticsearchControl.class);
 
-    ElasticsearchConnexion connexion = ElasticsearchConnexion.create();
-
     @GET
     @Path("dump")
-    public Response refresh() {
+    public Response refresh() throws MalformedURLException {
+
+        ElasticsearchConnexion connexion = ElasticsearchConnexion.create();
+
         IndexingManager.getInstance().extractModels();
         Map<String, JSONArray> allMappings = ESMappingManager.getInstance().getAllMappings();
         for(Map.Entry<String, JSONArray> modelMappingsEntry : allMappings.entrySet()) {

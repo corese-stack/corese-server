@@ -1,10 +1,7 @@
 package fr.inria.corese.server.elasticsearch;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch.core.BulkRequest;
-import co.elastic.clients.elasticsearch.core.BulkResponse;
-import co.elastic.clients.elasticsearch.core.IndexRequest;
-import co.elastic.clients.elasticsearch.core.IndexResponse;
+import co.elastic.clients.elasticsearch.core.*;
 import co.elastic.clients.json.JsonData;
 import fr.inria.corese.core.util.HTTPHeaders;
 import fr.inria.corese.core.util.Property;
@@ -45,7 +42,7 @@ public class ElasticsearchConnexion {
     }
 
     public static ElasticsearchConnexion create(String elasticSearchUrl, String key) throws MalformedURLException {
-        ElasticsearchConnexion connexion = ElasticsearchConnexion.create();
+        ElasticsearchConnexion connexion = new ElasticsearchConnexion();
         connexion.setElasticsearchUrl(elasticSearchUrl);
         connexion.setElasticsearchAPIKey(key);
         URL url = new URL(elasticSearchUrl);
@@ -64,8 +61,29 @@ public class ElasticsearchConnexion {
         return ElasticsearchConnexion.create(DEFAULT_ELASTICSEARCH_URL, key);
     }
 
-    public static ElasticsearchConnexion create() {
-        return new ElasticsearchConnexion();
+    public static ElasticsearchConnexion create() throws IllegalStateException {
+        ElasticsearchConnexion connexion = new ElasticsearchConnexion();
+        if(connexion.getElasticsearchAPIKey() == null) {
+            throw new IllegalStateException("Elasticsearch API key is not set");
+        }
+        if(connexion.getElasticsearchUrl() == null) {
+            throw new IllegalStateException("Elasticsearch URL is not set");
+        }
+        URL url = null;
+        try {
+            url = new URL(connexion.getElasticsearchUrl());
+        } catch (MalformedURLException e) {
+            logger.error("Error while creating ElasticsearchConnexion {}", url, e);
+        }
+        logger.debug("Connecting to Elasticsearch server at {}, host: {}, port:{}, protocol: {}", url, url.getHost(), url.getPort(), url.getProtocol());
+
+        RestClient restClient = RestClient.builder(
+                new org.apache.http.HttpHost(url.getHost(), url.getPort(), url.getProtocol())).setDefaultHeaders(new Header[] {
+                new BasicHeader(HTTPHeaders.AUTHORIZATION_TYPE, "ApiKey " + connexion.getElasticsearchAPIKey())
+        }).build();
+        ElasticsearchTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper());
+        connexion.esClient = new ElasticsearchClient(transport);
+        return connexion;
     }
 
     public String getElasticsearchUrl() {
@@ -92,11 +110,15 @@ public class ElasticsearchConnexion {
      */
     public IndexResponse sendJSON(String index, JSONObject json) throws IOException {
         if((elasticSearchUrl != null) && (elasticSearchAPIKey != null)) {
+            logger.info("Sending to Elasticsearch server {} {}", elasticSearchUrl, json);
+            json.remove("uri"); // remove the uri field (it is used as the id in the index
             Reader input = new StringReader(json.toString());
             IndexRequest<JsonData> request = IndexRequest.of(i -> i
                     .index(index)
+                    .id(json.getString("uri"))
                     .withJson(input)
             );
+            logger.debug("Sending to Elasticsearch server {}", request);
 
             return esClient.index(request);
         } else {
@@ -106,21 +128,38 @@ public class ElasticsearchConnexion {
 
     public BulkResponse sendBulkJSON(String index, JSONArray json) throws IOException {
         if((elasticSearchUrl != null) && (elasticSearchAPIKey != null)) {
-
+            logger.info("Sending to Elasticsearch server {} {}", elasticSearchUrl, json);
             BulkRequest.Builder br = new BulkRequest.Builder();
 
             for(int i = 0; i < json.length(); i++) {
                 JSONObject obj = json.getJSONObject(i);
+                obj.remove("uri"); // remove the uri field (it is used as the id in the index
                 Reader input = new StringReader(obj.toString());
 
                 br.operations(op -> op
                         .index(idx -> idx
                             .index(index)
+                            .id(obj.getString("uri"))
                             .withJson(input)
                         ));
             }
 
             return esClient.bulk(br.build());
+        } else {
+            return null;
+        }
+    }
+
+    public UpdateResponse<JsonData> sendUpdateJSON(String index, String id, JSONObject json) throws IOException {
+        if((elasticSearchUrl != null) && (elasticSearchAPIKey != null)) {
+            Reader input = new StringReader(json.toString());
+            UpdateRequest<JsonData, JsonData> request = (new UpdateRequest.Builder<JsonData, JsonData>()
+                    .id(id)
+                    .index(index)
+                    .withJson(input))
+                    .build();
+
+            return esClient.update(request, JsonData.class);
         } else {
             return null;
         }
