@@ -22,6 +22,7 @@ import java.net.MalformedURLException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Listens to changes in the graph and sends the modifications to Elasticsearch.
@@ -56,64 +57,18 @@ public class ElasticsearchListener extends EdgeChangeListener {
             return;
         }
         // Any edge modifies a model ?
-        if ((delete.stream().anyMatch(edge -> IndexingModelOntology.isDatatypeProperty(edge.getPropertyNode().getLabel()) || IndexingModelOntology.isObjectProperty(edge.getPropertyNode().getLabel())))
-                || (add.stream().anyMatch(edge -> IndexingModelOntology.isDatatypeProperty(edge.getPropertyNode().getLabel()) || IndexingModelOntology.isObjectProperty(edge.getPropertyNode().getLabel())))) {
-            HashSet<Node> instances = new HashSet<>();
-            for (Edge edge : delete) {
-                if (IndexingModelOntology.isDatatypeProperty(edge.getPropertyNode().getLabel())
-                        || IndexingModelOntology.isObjectProperty(edge.getPropertyNode().getLabel())) {
-                    modifiedInstancesUris.add(edge.getSubjectNode().getLabel());
-                    instances.add(edge.getSubjectNode());
-                }
-            }
-
-            // What are the classes of the model modified ?
-            for (Node instance : instances) {
-                String instanceModelType = "PREFIX im: <http://ns.mnemotix.com/ontologies/indexing-model/> SELECT ?class WHERE { <" + instance.getLabel() + "> a im:IndexingModel ; im:indexingModelOf ?class . }";
-                try {
-                    Mappings results = SPARQLRestAPI.getQueryProcess().query(instanceModelType);
-                    for (Mapping map : results) {
-                        Node classNode = map.getNode("?class");
-                        modifiedClassUris.add(classNode.getLabel());
-                    }
-                } catch (EngineException e) {
-                    logger.error("Could not determine the type of the instance " + instance.getLabel(), e);
-                }
-            }
-        }
+        modifiedClassUris.addAll(extractModifiedClassesUris(add));
+        modifiedClassUris.addAll(extractModifiedClassesUris(delete));
 
         // If it modifies an instance of a model, we sent the description of the instance to Elasticsearch
-        HashSet<String> candidateInstanceUri = new HashSet<>();
-        for (Edge edge : add) {
-            if(! edge.getSubjectNode().isBlank()) {
-                candidateInstanceUri.add(edge.getSubjectNode().getLabel());
-            }
-        }
-        for (Edge edge : delete) {
-            if(! edge.getSubjectNode().isBlank()) {
-                candidateInstanceUri.add(edge.getSubjectNode().getLabel());
-            }
-        }
-
-        for (String instanceUri : candidateInstanceUri) {
-            String instanceTypeQuery = "PREFIX im: <http://ns.mnemotix.com/ontologies/indexing-model/> SELECT ?class WHERE { { <" + instanceUri + "> a ?class } UNION { GRAPH ?graphData { <" + instanceUri + "> a ?class . } . { ?model a im:IndexingModel ; im:indexingModelOf ?class . } UNION {  GRAPH ?modelGraph { ?model a im:IndexingModel ; im:indexingModelOf ?class . } } } }";
-            try {
-                Mappings result = SPARQLRestAPI.getQueryProcess().query(instanceTypeQuery);
-
-                if (result.size() > 0) {
-                    modifiedInstancesUris.add(instanceUri);
-                }
-            } catch (EngineException e) {
-                logger.error("Could not determine the type of the instance " + instanceUri, e);
-            }
-        }
+        modifiedInstancesUris.addAll(extractModifiedInstanceUris(add));
+        modifiedInstancesUris.addAll(extractModifiedInstanceUris(delete));
 
         // Prepare the JSON to send to Elasticsearch
-        // Update the models
+        // refresh the models that have been modified in the indexing manager
         for (String classUri : modifiedClassUris) {
             IndexingManager.getInstance().extractModels(classUri);
         }
-
 
         for (String instanceUri : modifiedInstancesUris) {
             Map<String, JSONArray> modifiedInstanceMappings = ESMappingManager.getInstance().retrieveIndividualMapping(instanceUri);
@@ -136,5 +91,68 @@ public class ElasticsearchListener extends EdgeChangeListener {
                     logger.error("Error while sending JSON to Elasticsearch", e);
                 }
         }
+    }
+
+    private Set<String> extractModifiedClassesUris(List<Edge> edges) {
+        Set<String> modifiedClassUris = new HashSet<>();
+        if(edges.stream().anyMatch(edge -> IndexingModelOntology.isDatatypeProperty(edge.getPropertyNode().getLabel()) || IndexingModelOntology.isObjectProperty(edge.getPropertyNode().getLabel()))) {
+            // What are the instances of the modified models ?
+            HashSet<Node> instances = new HashSet<>();
+            for (Edge edge : edges) {
+                if (IndexingModelOntology.isDatatypeProperty(edge.getPropertyNode().getLabel())
+                        || IndexingModelOntology.isObjectProperty(edge.getPropertyNode().getLabel())) {
+                    instances.add(edge.getSubjectNode());
+                }
+            }
+
+            // What are the classes of the modified models ?
+            for (Node instance : instances) {
+                String instanceModelType = "PREFIX im: <http://ns.mnemotix.com/ontologies/indexing-model/> SELECT ?class WHERE { <" + instance.getLabel() + "> a im:IndexingModel ; im:indexingModelOf ?class . }";
+                try {
+                    Mappings results = SPARQLRestAPI.getQueryProcess().query(instanceModelType);
+                    for (Mapping map : results) {
+                        Node classNode = map.getNode("?class");
+                        modifiedClassUris.add(classNode.getLabel());
+                    }
+                } catch (EngineException e) {
+                    logger.error("Could not determine the type of the instance " + instance.getLabel(), e);
+                }
+            }
+        }
+        return modifiedClassUris;
+    }
+
+    private Set<String> extractModifiedInstanceUris(List<Edge> edges) {
+        Set<String> modifiedInstanceUris = new HashSet<>();
+        if(edges.stream().anyMatch(edge -> ! IndexingModelOntology.isDatatypeProperty(edge.getPropertyNode().getLabel()) && ! IndexingModelOntology.isObjectProperty(edge.getPropertyNode().getLabel()))){
+
+            HashSet<String> candidateInstanceUri = new HashSet<>();
+            for (Edge edge : edges) {
+                if(! IndexingModelOntology.isDatatypeProperty(edge.getPropertyNode().getLabel())
+                        && ! IndexingModelOntology.isObjectProperty(edge.getPropertyNode().getLabel())) {
+                    if(! edge.getSubjectNode().isBlank()) {
+                        candidateInstanceUri.add(edge.getSubjectNode().getLabel());
+                    }
+                    if(! edge.getObjectNode().isBlank()) {
+                        candidateInstanceUri.add(edge.getObjectNode().getLabel());
+                    }
+
+                }
+            }
+
+            for (String instanceUri : candidateInstanceUri) {
+                String instanceTypeQuery = "PREFIX im: <http://ns.mnemotix.com/ontologies/indexing-model/> SELECT ?class WHERE { { <" + instanceUri + "> a ?class } UNION { GRAPH ?graphData { <" + instanceUri + "> a ?class . } . { ?model a im:IndexingModel ; im:indexingModelOf ?class . } UNION {  GRAPH ?modelGraph { ?model a im:IndexingModel ; im:indexingModelOf ?class . } } } }";
+                try {
+                    Mappings result = SPARQLRestAPI.getQueryProcess().query(instanceTypeQuery);
+
+                    if (result.size() > 0) {
+                        modifiedInstanceUris.add(instanceUri);
+                    }
+                } catch (EngineException e) {
+                    logger.error("Could not determine the type of the instance " + instanceUri, e);
+                }
+            }
+        }
+        return modifiedInstanceUris;
     }
 }

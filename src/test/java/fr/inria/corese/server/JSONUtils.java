@@ -1,9 +1,12 @@
-package fr.inria.corese.server.elasticsearch;
+package fr.inria.corese.server;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/**
+ * Utilities to make the comparison of org.json objects easier.
+ */
 public class JSONUtils {
 
     public static boolean jsonObjectsAreEquals(JSONObject obj1, JSONObject obj2) {

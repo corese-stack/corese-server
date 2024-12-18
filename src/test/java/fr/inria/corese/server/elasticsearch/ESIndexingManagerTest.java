@@ -3,6 +3,7 @@ package fr.inria.corese.server.elasticsearch;
 import fr.inria.corese.core.api.Loader;
 import fr.inria.corese.core.load.LoadException;
 import fr.inria.corese.core.sparql.exceptions.EngineException;
+import fr.inria.corese.server.JSONUtils;
 import fr.inria.corese.server.elasticsearch.model.ESMappingManager;
 import fr.inria.corese.server.elasticsearch.model.IndexingManager;
 import fr.inria.corese.server.elasticsearch.model.IndexingModel;

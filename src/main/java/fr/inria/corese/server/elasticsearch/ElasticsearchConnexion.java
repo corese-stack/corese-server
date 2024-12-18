@@ -111,11 +111,12 @@ public class ElasticsearchConnexion {
     public IndexResponse sendJSON(String index, JSONObject json) throws IOException {
         if((elasticSearchUrl != null) && (elasticSearchAPIKey != null)) {
             logger.info("Sending to Elasticsearch server {} {}", elasticSearchUrl, json);
+            String docuri = json.getString("uri");
             json.remove("uri"); // remove the uri field (it is used as the id in the index
             Reader input = new StringReader(json.toString());
             IndexRequest<JsonData> request = IndexRequest.of(i -> i
                     .index(index)
-                    .id(json.getString("uri"))
+                    .id(docuri)
                     .withJson(input)
             );
             logger.debug("Sending to Elasticsearch server {}", request);
@@ -133,13 +134,14 @@ public class ElasticsearchConnexion {
 
             for(int i = 0; i < json.length(); i++) {
                 JSONObject obj = json.getJSONObject(i);
+                String docuri = obj.getString("uri");
                 obj.remove("uri"); // remove the uri field (it is used as the id in the index
                 Reader input = new StringReader(obj.toString());
 
                 br.operations(op -> op
                         .index(idx -> idx
                             .index(index)
-                            .id(obj.getString("uri"))
+                            .id(docuri)
                             .withJson(input)
                         ));
             }

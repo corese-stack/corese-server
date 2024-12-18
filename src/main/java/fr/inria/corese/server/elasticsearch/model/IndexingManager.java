@@ -255,4 +255,8 @@ public class IndexingManager {
     public Collection<IndexingModel> getModels() {
         return this.models.values();
     }
+
+    public Collection<String> getClassUris() {
+        return this.models.keySet();
+    }
 }
