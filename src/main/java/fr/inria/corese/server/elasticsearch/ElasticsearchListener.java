@@ -133,7 +133,7 @@ public class ElasticsearchListener extends EdgeChangeListener {
                     if(! edge.getSubjectNode().isBlank()) {
                         candidateInstanceUri.add(edge.getSubjectNode().getLabel());
                     }
-                    if(! edge.getObjectNode().isBlank()) {
+                    if(! edge.getObjectNode().isBlank() && ! edge.getObjectNode().isConstant()) {
                         candidateInstanceUri.add(edge.getObjectNode().getLabel());
                     }
 
