@@ -110,6 +110,28 @@ public class IndexingModel {
         return sb.toString();
     }
 
+    /**
+     * Generate an ASK query that checks in the non-optional fields of an instance are present.
+     */
+    public String generateCheckInstanceIsComplete() {
+        StringBuilder sb = new StringBuilder();
+
+        for(Map.Entry<String, String> prefixEntry : prefixes.entrySet()) {
+            sb.append("PREFIX ").append(prefixEntry.getKey()).append(": <").append(prefixEntry.getValue()).append(">\n");
+        }
+
+        sb.append("ASK {\n");
+        sb.append("    ?instance a <").append(classUri).append("> .\n");
+        for(IndexingField field : fields.values()) {
+            if(!field.isOptional()) {
+                sb.append(field.getQueryStatement("?instance")).append("\n");
+            }
+        }
+        sb.append("}\n");
+
+        return sb.toString();
+    }
+
     public IndexingField getField(String fieldLabel) {
         return fields.get(fieldLabel);
     }

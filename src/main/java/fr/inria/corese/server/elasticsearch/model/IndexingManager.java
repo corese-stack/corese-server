@@ -8,9 +8,7 @@ import fr.inria.corese.server.webservice.endpoint.SPARQLRestAPI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * In charge of managing the indexing models.
@@ -144,8 +142,8 @@ public class IndexingManager {
             logger.error("Error while extracting indexing model fields: {}", query, e);
         }
 
-        // Extract prefixes for each model
         for (IndexingModel model : models.values()) {
+            // Extract prefixes for each model
             query = generatePrefixQueryForClass(model.getClassUri());
             try {
                 Mappings result = exec.query(query);
@@ -156,6 +154,18 @@ public class IndexingManager {
                 }
             } catch (EngineException e) {
                 logger.error("Error while extracting prefixes for indexing model: {}", query, e);
+            }
+
+            // Extract the instances of each model
+            query = model.generateInstanceListQuery();
+            try {
+                Mappings result = exec.query(query);
+                for (Mapping mapping : result.getMappingList()) {
+                    String instanceUri = mapping.getValue("?instance").stringValue();
+                    ESMappingManager.getInstance().addClassInstanceUri(model.getClassUri(), instanceUri);
+                }
+            } catch (EngineException e) {
+                logger.error("Error while extracting instances for indexing model: {}", query, e);
             }
         }
     }

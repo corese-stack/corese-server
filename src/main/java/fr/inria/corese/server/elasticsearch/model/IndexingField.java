@@ -115,8 +115,8 @@ public class IndexingField {
             sb.append("    <").append(uri).append("> ").append(getPath()).append(" ?").append(getLabel()).append(" .\n");
         }
 
-        for(String subfield : subfields.keySet()) {
-            sb.append("    ").append(subfields.get(subfield).getQueryStatement("?"+getLabel()));
+        for(Map.Entry<String, IndexingField> subfieldEntry : subfields.entrySet()) {
+            sb.append("    ").append(subfieldEntry.getValue().getQueryStatement("?"+getLabel()));
         }
 
         if(isFilterDeleted()) {

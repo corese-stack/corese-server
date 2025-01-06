@@ -23,8 +23,10 @@ public class ESMappingManager {
     private static final Logger logger = LoggerFactory.getLogger(ESMappingManager.class);
 
     private static ESMappingManager instance = null;
+    private Map<String, Set<String>> classInstancesURIs;
 
     private ESMappingManager() {
+        classInstancesURIs = new HashMap<>();
     }
 
     public static ESMappingManager getInstance() {
@@ -32,6 +34,17 @@ public class ESMappingManager {
             instance = new ESMappingManager();
         }
         return instance;
+    }
+
+    public void addClassInstanceUri(String classUri, String instanceUri) {
+        if (!classInstancesURIs.containsKey(classUri)) {
+            classInstancesURIs.put(classUri, new HashSet<>());
+        }
+        classInstancesURIs.get(classUri).add(instanceUri);
+    }
+
+    public Set<String> getClassInstancesUris(String classUri) {
+        return classInstancesURIs.get(classUri);
     }
 
     /**
@@ -131,20 +144,17 @@ public class ESMappingManager {
 
     /**
      * Retrieves the mappings for a given individual.
-     * Will return an empty object if there are no model for this individual
+     * Will return an empty map if there are no model for this individual
      *
      * @param individualUri The URI of the individual to retrieve the mapping for.
-     * @return The mappings in a JSON array, if several models correspond to the individual, a mapping for each model is generated.
+     * @return The mappings for each model in a JSON array, if several models correspond to the individual
      */
     public Map<String, JSONArray> retrieveIndividualMapping(String individualUri) {
-        logger.info("Retrieving mappings for individual {}", individualUri);
         Collection<IndexingModel> models = getModelsOfInstance(individualUri);
-        logger.info("Found {} models for individual {}", models.size(), individualUri);
         HashMap<String, JSONArray> instanceMappings = new HashMap<>();
         for (IndexingModel model : models) {
             instanceMappings.put(model.getIndexName(), retrieveIndividualMapping(individualUri, model));
         }
-        logger.debug("Mappings for instance {} : {}", individualUri, instanceMappings);
         return instanceMappings;
     }
 
@@ -166,7 +176,7 @@ public class ESMappingManager {
         } catch (EngineException | UnsupportedEncodingException e) {
             logger.error("Error while retrieving instance {} for mapping using {}", individualUri, instanceQuery, e);
         }
-        logger.debug("Mappings for instance {} : {}", individualUri, instanceMappings.length());
+        addClassInstanceUri(model.getClassUri(), individualUri);
         return instanceMappings;
     }
 
@@ -254,8 +264,6 @@ public class ESMappingManager {
             }
         }
 
-        logger.debug("Hashset values {}", jsonObjectValues);
-        logger.debug("String values {}", stringValues);
         ArrayList<JSONObject> jsonObjects = new ArrayList<>();
         jsonObjectValues.forEach(str -> jsonObjects.add(new JSONObject(str))); // We convert the set of JSON strings to a set of JSON objects because HashSet  allows duplicates JSONObjects
         json.putAll(jsonObjects);

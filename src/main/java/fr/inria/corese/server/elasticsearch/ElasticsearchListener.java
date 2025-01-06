@@ -48,7 +48,6 @@ public class ElasticsearchListener extends EdgeChangeListener {
 
     @Override
     public void onBulkEdgeChange(List<Edge> delete, List<Edge> add) {
-        logger.info("Bulk edge change {} {}", delete, add);
         HashSet<String> modifiedClassUris = new HashSet<>();
         HashSet<String> modifiedInstancesUris = new HashSet<>();
         // If edge modifies models, then we refresh the model objects and send their instances to Elasticsearch

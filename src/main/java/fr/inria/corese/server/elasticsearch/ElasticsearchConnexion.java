@@ -3,10 +3,14 @@ package fr.inria.corese.server.elasticsearch;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.*;
 import co.elastic.clients.json.JsonData;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.transport.ElasticsearchTransport;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
 import fr.inria.corese.core.util.HTTPHeaders;
 import fr.inria.corese.core.util.Property;
 import org.apache.http.Header;
 import org.apache.http.message.BasicHeader;
+import org.elasticsearch.client.RestClient;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -14,16 +18,8 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.elasticsearch.client.RestClient;
-import co.elastic.clients.transport.ElasticsearchTransport;
-import co.elastic.clients.transport.rest_client.RestClientTransport;
-import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 
 /**
  * Handles the HTTP calls to an Elasticsearch server.
@@ -135,7 +131,7 @@ public class ElasticsearchConnexion {
             for(int i = 0; i < json.length(); i++) {
                 JSONObject obj = json.getJSONObject(i);
                 String docuri = obj.getString("uri");
-                obj.remove("uri"); // remove the uri field (it is used as the id in the index
+                obj.remove("uri"); // remove the uri field (it is used as the id in the index)
                 Reader input = new StringReader(obj.toString());
 
                 br.operations(op -> op
