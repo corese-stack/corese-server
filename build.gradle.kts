@@ -71,8 +71,8 @@ dependencies {
 
     api("org.glassfish.metro:webservices-rt:4.0.4")
 
-    val lo4j_version = "2.18.0"
-    api("org.apache.logging.log4j:log4j-slf4j18-impl:${lo4j_version}")
+    val lo4j_version = "2.24.3"
+    api("org.apache.logging.log4j:log4j-slf4j2-impl:${lo4j_version}")
     api("org.apache.logging.log4j:log4j-api:${lo4j_version}")
     api("org.apache.logging.log4j:log4j-core:${lo4j_version}")
 
