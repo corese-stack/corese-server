@@ -7,6 +7,10 @@ import fr.inria.corese.core.kgram.api.core.Edge;
 import fr.inria.corese.core.kgram.api.core.Node;
 import fr.inria.corese.core.kgram.core.Mapping;
 import fr.inria.corese.core.kgram.core.Mappings;
+import fr.inria.corese.core.sparql.datatype.CoreseDatatype;
+import fr.inria.corese.core.sparql.datatype.CoreseLiteral;
+import fr.inria.corese.core.sparql.datatype.CoreseResource;
+import fr.inria.corese.core.sparql.datatype.CoreseStringLiteral;
 import fr.inria.corese.core.sparql.exceptions.EngineException;
 import fr.inria.corese.server.elasticsearch.model.ESMappingManager;
 import fr.inria.corese.server.elasticsearch.model.IndexingManager;
@@ -48,53 +52,64 @@ public class ElasticsearchListener extends EdgeChangeListener {
 
     @Override
     public void onBulkEdgeChange(List<Edge> delete, List<Edge> add) {
-        HashSet<String> modifiedClassUris = new HashSet<>();
-        HashSet<String> modifiedInstancesUris = new HashSet<>();
-        // If edge modifies models, then we refresh the model objects and send their instances to Elasticsearch
-        if (delete.isEmpty() && add.isEmpty()) {
-            logger.debug("Bulk edge change with no edge to delete or add");
-            return;
-        }
-        // Any edge modifies a model ?
-        modifiedClassUris.addAll(extractModifiedClassesUris(add));
-        modifiedClassUris.addAll(extractModifiedClassesUris(delete));
+        if(IndexingManager.getInstance().hasModels()) {
+            HashSet<Node> modifiedClassUris = new HashSet<>();
+            HashSet<Node> modifiedInstancesUris = new HashSet<>();
+            // If edge modifies models, then we refresh the model objects and send their instances to Elasticsearch
+            if (delete.isEmpty() && add.isEmpty()) {
+                logger.debug("Bulk edge change with no edge to delete or add");
+                return;
+            }
+            // Any edge modifies a model ?
+            modifiedClassUris.addAll(extractModifiedClassesNodes(add));
+            modifiedClassUris.addAll(extractModifiedClassesNodes(delete));
 
-        // If it modifies an instance of a model, we sent the description of the instance to Elasticsearch
-        modifiedInstancesUris.addAll(extractModifiedInstanceUris(add));
-        modifiedInstancesUris.addAll(extractModifiedInstanceUris(delete));
+            // If it modifies an instance of a model, we sent the description of the instance to Elasticsearch
+            modifiedInstancesUris.addAll(extractModifiedInstanceNodes(add));
+            modifiedInstancesUris.addAll(extractModifiedInstanceNodes(delete));
 
-        // Prepare the JSON to send to Elasticsearch
-        // refresh the models that have been modified in the indexing manager
-        for (String classUri : modifiedClassUris) {
-            IndexingManager.getInstance().extractModels(classUri);
-        }
+            // Prepare the JSON to send to Elasticsearch
+            // refresh the models that have been modified in the indexing manager
+            for (Node classNode : modifiedClassUris) {
+                if (classNode.isConstant()) {
+                    String classUri = classNode.getLabel();
+                    IndexingManager.getInstance().extractModels(classUri);
+                }
+            }
 
-        for (String instanceUri : modifiedInstancesUris) {
-            Map<String, JSONArray> modifiedInstanceMappings = ESMappingManager.getInstance().retrieveIndividualMapping(instanceUri);
-                try {
-                    for (Map.Entry<String, JSONArray> instanceMappings : modifiedInstanceMappings.entrySet()) {
-                        for(int i = 0; i < instanceMappings.getValue().length(); i++) {
-                            JSONObject instanceMapping = instanceMappings.getValue().getJSONObject(i);
-                            IndexResponse response = connexion.sendJSON(instanceMappings.getKey(), instanceMapping);
+            for (Node instanceNode : modifiedInstancesUris) {
+                logger.debug("Instance node: {}", instanceNode);
+                if (instanceNode.getDatatypeValue().isURI() || instanceNode.getDatatypeValue().isBlank()) {
+                    String instanceUri = instanceNode.getLabel();
+                    Map<String, JSONArray> modifiedInstanceMappings = ESMappingManager.getInstance().retrieveIndividualMapping(instanceUri);
+                    try {
+                        for (Map.Entry<String, JSONArray> instanceMappings : modifiedInstanceMappings.entrySet()) {
+                            for (int i = 0; i < instanceMappings.getValue().length(); i++) {
+                                JSONObject instanceMapping = instanceMappings.getValue().getJSONObject(i);
+                                IndexResponse response = connexion.sendJSON(instanceMappings.getKey(), instanceMapping);
 
-                            if (response != null) {
-                                if (response.result() == Result.Created || response.result() == Result.Updated) {
-                                    logger.debug("JSON sent to Elasticsearch index {} with response: {}", instanceMappings.getKey(), response.toString());
-                                } else {
-                                    logger.error("Error while sending JSON to Elasticsearch index {}: {}", instanceMappings.getKey(), response.toString());
+                                if (response != null) {
+                                    if (response.result() == Result.Created || response.result() == Result.Updated) {
+                                        logger.debug("JSON sent to Elasticsearch index {} with response: {}", instanceMappings.getKey(), response);
+                                    } else {
+                                        logger.error("Error while sending JSON to Elasticsearch index {}: {}", instanceMappings.getKey(), response);
+                                    }
                                 }
                             }
                         }
+                    } catch (IOException e) {
+                        logger.error("Error while sending JSON to Elasticsearch", e);
                     }
-                } catch (IOException e) {
-                    logger.error("Error while sending JSON to Elasticsearch", e);
                 }
+            }
         }
     }
 
-    private Set<String> extractModifiedClassesUris(List<Edge> edges) {
-        Set<String> modifiedClassUris = new HashSet<>();
-        if(edges.stream().anyMatch(edge -> IndexingModelOntology.isDatatypeProperty(edge.getPropertyNode().getLabel()) || IndexingModelOntology.isObjectProperty(edge.getPropertyNode().getLabel()))) {
+    private Set<Node> extractModifiedClassesNodes(List<Edge> edges) {
+        Set<Node> modifiedClassUris = new HashSet<>();
+        if (edges.stream().anyMatch(edge ->
+                IndexingModelOntology.isDatatypeProperty(edge.getPropertyNode().getLabel())
+                        || IndexingModelOntology.isObjectProperty(edge.getPropertyNode().getLabel()))) {
             // What are the instances of the modified models ?
             HashSet<Node> instances = new HashSet<>();
             for (Edge edge : edges) {
@@ -111,7 +126,7 @@ public class ElasticsearchListener extends EdgeChangeListener {
                     Mappings results = SPARQLRestAPI.getQueryProcess().query(instanceModelType);
                     for (Mapping map : results) {
                         Node classNode = map.getNode("?class");
-                        modifiedClassUris.add(classNode.getLabel());
+                        modifiedClassUris.add(classNode);
                     }
                 } catch (EngineException e) {
                     logger.error("Could not determine the type of the instance " + instance.getLabel(), e);
@@ -121,34 +136,42 @@ public class ElasticsearchListener extends EdgeChangeListener {
         return modifiedClassUris;
     }
 
-    private Set<String> extractModifiedInstanceUris(List<Edge> edges) {
-        Set<String> modifiedInstanceUris = new HashSet<>();
-        if(edges.stream().anyMatch(edge -> ! IndexingModelOntology.isDatatypeProperty(edge.getPropertyNode().getLabel()) && ! IndexingModelOntology.isObjectProperty(edge.getPropertyNode().getLabel()))){
+    private Set<Node> extractModifiedInstanceNodes(List<Edge> edges) {
+        Set<Node> modifiedInstanceUris = new HashSet<>();
+        if (edges.stream().anyMatch(edge ->
+                !IndexingModelOntology.isDatatypeProperty(edge.getPropertyNode().getLabel())
+                        && !IndexingModelOntology.isObjectProperty(edge.getPropertyNode().getLabel()))) {
 
-            HashSet<String> candidateInstanceUri = new HashSet<>();
+            HashSet<Node> candidateInstanceNodes = new HashSet<>();
             for (Edge edge : edges) {
-                if(! IndexingModelOntology.isDatatypeProperty(edge.getPropertyNode().getLabel())
-                        && ! IndexingModelOntology.isObjectProperty(edge.getPropertyNode().getLabel())) {
-                    if(! edge.getSubjectNode().isBlank()) {
-                        candidateInstanceUri.add(edge.getSubjectNode().getLabel());
+                if (!IndexingModelOntology.isDatatypeProperty(edge.getPropertyNode().getLabel())
+                        && !IndexingModelOntology.isObjectProperty(edge.getPropertyNode().getLabel())) {
+                    if (!edge.getSubjectNode().isBlank()) {
+                        candidateInstanceNodes.add(edge.getSubjectNode());
                     }
-                    if(! edge.getObjectNode().isBlank() && ! edge.getObjectNode().isConstant()) {
-                        candidateInstanceUri.add(edge.getObjectNode().getLabel());
+                    if (!edge.getObjectNode().isBlank()) {
+                        candidateInstanceNodes.add(edge.getObjectNode());
                     }
 
                 }
             }
 
-            for (String instanceUri : candidateInstanceUri) {
-                String instanceTypeQuery = "PREFIX im: <http://ns.mnemotix.com/ontologies/indexing-model/> SELECT ?class WHERE { { <" + instanceUri + "> a ?class } UNION { GRAPH ?graphData { <" + instanceUri + "> a ?class . } . { ?model a im:IndexingModel ; im:indexingModelOf ?class . } UNION {  GRAPH ?modelGraph { ?model a im:IndexingModel ; im:indexingModelOf ?class . } } } }";
-                try {
-                    Mappings result = SPARQLRestAPI.getQueryProcess().query(instanceTypeQuery);
+            for (Node instanceNode : candidateInstanceNodes) {
+                if (instanceNode.getDatatypeValue().isURI()) {
+                    String instanceUri = instanceNode.getLabel();
+                    String instanceTypeQuery = "PREFIX im: <http://ns.mnemotix.com/ontologies/indexing-model/> SELECT ?class WHERE { { <" + instanceUri + "> a ?class } UNION { GRAPH ?graphData { <" + instanceUri + "> a ?class . } . { ?model a im:IndexingModel ; im:indexingModelOf ?class . } UNION {  GRAPH ?modelGraph { ?model a im:IndexingModel ; im:indexingModelOf ?class . } } } }";
+                    try {
+                        Mappings result = SPARQLRestAPI.getQueryProcess().query(instanceTypeQuery);
 
-                    if (result.size() > 0) {
-                        modifiedInstanceUris.add(instanceUri);
+                        if (result.size() > 0) {
+                            modifiedInstanceUris.add(instanceNode);
+                        }
+                    } catch (EngineException e) {
+                        logger.error("Could not determine the type of the instance " + instanceUri, e);
                     }
-                } catch (EngineException e) {
-                    logger.error("Could not determine the type of the instance " + instanceUri, e);
+                }
+                if(ESMappingManager.getInstance().hasInverseDependencies(instanceNode)) {
+                    modifiedInstanceUris.addAll(ESMappingManager.getInstance().getInverseDependencies(instanceNode));
                 }
             }
         }

@@ -1,5 +1,6 @@
 package fr.inria.corese.server.elasticsearch.model;
 
+import fr.inria.corese.core.kgram.api.core.Node;
 import fr.inria.corese.core.kgram.core.Mapping;
 import fr.inria.corese.core.kgram.core.Mappings;
 import fr.inria.corese.core.sparql.exceptions.EngineException;
@@ -14,7 +15,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * In charge of managing the mapping of instances of Model to Elasticsearch JSON objects.
@@ -25,8 +25,15 @@ public class ESMappingManager {
     private static ESMappingManager instance = null;
     private Map<String, Set<String>> classInstancesURIs;
 
+    /**
+     * Inverse dependency of mapped instances to sub-resources because of a subfield, i.e a document is linked to its author to get their first and last name
+     * The key is the sub-resource and the value is the set of resources that depend on it.
+     */
+    private Map<Node, Set<Node>> inverseInstanceDependencies;
+
     private ESMappingManager() {
         classInstancesURIs = new HashMap<>();
+        inverseInstanceDependencies = new HashMap<>();
     }
 
     public static ESMappingManager getInstance() {
@@ -45,6 +52,50 @@ public class ESMappingManager {
 
     public Set<String> getClassInstancesUris(String classUri) {
         return classInstancesURIs.get(classUri);
+    }
+
+    public void addInverseDependency(Node subResource, Node resource) {
+        if (inverseInstanceDependencies == null) {
+            inverseInstanceDependencies = new HashMap<>();
+        }
+        if (!inverseInstanceDependencies.containsKey(subResource)) {
+            inverseInstanceDependencies.put(subResource, new HashSet<>());
+        }
+        inverseInstanceDependencies.get(subResource).add(resource);
+    }
+
+    public void addInverseDependencies(Node subResource, Set<Node> resources) {
+        if (inverseInstanceDependencies == null) {
+            inverseInstanceDependencies = new HashMap<>();
+        }
+        if (!inverseInstanceDependencies.containsKey(subResource)) {
+            inverseInstanceDependencies.put(subResource, new HashSet<>());
+        }
+        inverseInstanceDependencies.get(subResource).addAll(resources);
+    }
+
+    public Set<Node> getInverseDependencies(Node subResource) {
+        return inverseInstanceDependencies.get(subResource);
+    }
+
+    public void removeInverseDependencies(Node subResource) {
+        inverseInstanceDependencies.remove(subResource);
+    }
+
+    public void removeInverseDependency(Node subResource, Node resource) {
+        if (inverseInstanceDependencies.containsKey(subResource)) {
+            inverseInstanceDependencies.get(subResource).remove(resource);
+        }
+    }
+
+    public void removeInverseDependency(Node subResource, Set<Node> resources) {
+        if (inverseInstanceDependencies.containsKey(subResource)) {
+            inverseInstanceDependencies.get(subResource).removeAll(resources);
+        }
+    }
+
+    public boolean hasInverseDependencies(Node subResource) {
+        return inverseInstanceDependencies.containsKey(subResource);
     }
 
     /**
@@ -228,6 +279,9 @@ public class ESMappingManager {
         if (!instanceMappings.isEmpty()
                 && instanceMappings.get(0).getValue("?" + field.getLabel()) != null) {
             if (field.hasSubfields()) {
+                Node subfieldNode = instanceMappings.get(0).getNode("?" + field.getLabel());
+                Node instanceNode = instanceMappings.get(0).getNode("?instance");
+                addInverseDependency(subfieldNode, instanceNode);
                 return jsonFromFieldList(field.getSubfields().values(), instanceMappings).toString();
             } else {
                 return instanceMappings.get(0).getValue("?" + field.getLabel()).stringValue();

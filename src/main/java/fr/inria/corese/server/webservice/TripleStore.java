@@ -147,18 +147,14 @@ public class TripleStore implements URLParam {
      * @param graphURI Graph URI. Can be given as a file path relative to the file
      */
     public void load(String path, String graphURI) throws LoadException {
-        Load ld = Load.create(getGraph());
-        ld.setDataManager(getDataManager());
-        ld.parse(path, graphURI, Loader.format.TURTLE_FORMAT);
+        load(path, graphURI, Loader.format.TURTLE_FORMAT);
     }
 
     /**
      * Load a turtle RDF file to the default graph
      */
     public void load(String path) throws LoadException {
-        Load ld = Load.create(getGraph());
-        ld.setDataManager(getDataManager());
-        ld.parse(path, Loader.format.TURTLE_FORMAT);
+        load(path, null, Loader.format.TURTLE_FORMAT);
     }
 
     /**
@@ -179,9 +175,7 @@ public class TripleStore implements URLParam {
      * @param format RDF format
      */
     public void load(String path, Loader.format format) throws LoadException {
-        Load ld = Load.create(getGraph());
-        ld.setDataManager(getDataManager());
-        ld.parse(path, format);
+        load(path, null, format);
     }
 
     /**
