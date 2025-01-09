@@ -23,7 +23,7 @@ public class ESMappingManager {
     private static final Logger logger = LoggerFactory.getLogger(ESMappingManager.class);
 
     private static ESMappingManager instance = null;
-    private Map<String, Set<String>> classInstancesURIs;
+    private Map<String, Set<Node>> classInstances;
 
     /**
      * Inverse dependency of mapped instances to sub-resources because of a subfield, i.e a document is linked to its author to get their first and last name
@@ -32,7 +32,7 @@ public class ESMappingManager {
     private Map<Node, Set<Node>> inverseInstanceDependencies;
 
     private ESMappingManager() {
-        classInstancesURIs = new HashMap<>();
+        classInstances = new HashMap<>();
         inverseInstanceDependencies = new HashMap<>();
     }
 
@@ -43,15 +43,65 @@ public class ESMappingManager {
         return instance;
     }
 
-    public void addClassInstanceUri(String classUri, String instanceUri) {
-        if (!classInstancesURIs.containsKey(classUri)) {
-            classInstancesURIs.put(classUri, new HashSet<>());
-        }
-        classInstancesURIs.get(classUri).add(instanceUri);
+    /**
+     * generates a SPARQL query to retrieve the types of an instance
+     *
+     * @param instanceNode must be an IRI
+     * @return the SPARQL query with a "?type" variable
+     */
+    private static String generateInstanceTypeQuery(Node instanceNode) {
+        return "SELECT ?type WHERE { " + instanceNode.getDatatypeValue().toSparql() + " a ?type . FILTER(IsIRI(?type)) }";
     }
 
-    public Set<String> getClassInstancesUris(String classUri) {
-        return classInstancesURIs.get(classUri);
+    /**
+     * Retrieves the models corresponding to the types of an instance
+     *
+     * @param instanceNode The URI of the instance to retrieve the models for, must be an IRI.
+     * @return The models of the instance.
+     */
+    private static Collection<IndexingModel> getModelsOfInstance(Node instanceNode) {
+        HashSet<IndexingModel> models = new HashSet<>();
+        try {
+            Mappings typeMappings = SPARQLRestAPI.getQueryProcess().query(generateInstanceTypeQuery(instanceNode));
+            if (!typeMappings.isEmpty()) {
+                for (Mapping m : typeMappings) {
+                    IndexingModel model = IndexingManager.getInstance().getModel(m.getValue("?type").stringValue());
+                    if (model != null) {
+                        models.add(model);
+                    }
+                }
+            }
+        } catch (EngineException e) {
+            logger.error("Error while retrieving type of instance {}", instanceNode, e);
+        }
+        return models;
+    }
+
+    /**
+     * Replace all special characters in a URI to generate a valid Elasticsearch document ID.
+     */
+    private static String generateDocIdFromUri(String uri) throws UnsupportedEncodingException {
+        String replacedURI = uri.replaceAll("<", "").replaceAll(">", "").replaceAll(":", "").replaceAll("/", "").replaceAll("#", "").replaceAll("\\.", "").replaceAll("\\?", "").replaceAll("&", "").replaceAll("=", "").replaceAll(";", "").replaceAll(",", "").replaceAll("\\+", "").replaceAll("\\*", "").replaceAll("\\(", "").replaceAll("\\)", "").replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\\{", "").replaceAll("\\}", "").replaceAll("\\|", "").replaceAll("\"", "").replaceAll("'", "").replaceAll("`", "").replaceAll(" ", "_");
+        return URLEncoder.encode(replacedURI, StandardCharsets.UTF_8.toString());
+    }
+
+    public void addClassInstanceUri(String classUri, Node instance) {
+        if (!classInstances.containsKey(classUri)) {
+            classInstances.put(classUri, new HashSet<>());
+        }
+        classInstances.get(classUri).add(instance);
+    }
+
+    public Set<Node> getClassInstancesUris(String classUri) {
+        return classInstances.get(classUri);
+    }
+
+    public boolean isInstanceOfModelClass(IndexingModel model, Node node) {
+        return classInstances.containsKey(model.getClassUri()) && classInstances.get(model.getClassUri()).contains(node);
+    }
+
+    public boolean isInstanceOfAModelClass(Node node) {
+        return classInstances.values().stream().anyMatch(s -> s.contains(node));
     }
 
     public void addInverseDependency(Node subResource, Node resource) {
@@ -61,7 +111,14 @@ public class ESMappingManager {
         if (!inverseInstanceDependencies.containsKey(subResource)) {
             inverseInstanceDependencies.put(subResource, new HashSet<>());
         }
-        inverseInstanceDependencies.get(subResource).add(resource);
+        if (
+                (subResource.getDatatypeValue().isBlank()
+                        || subResource.getDatatypeValue().isURI())
+                        && (resource.getDatatypeValue().isBlank()
+                        || resource.getDatatypeValue().isURI())) {
+            logger.debug("Adding inverse dependency from {} to {}", subResource.getDatatypeValue().toSparql(), resource.getDatatypeValue().toSparql());
+            inverseInstanceDependencies.get(subResource).add(resource);
+        }
     }
 
     public void addInverseDependencies(Node subResource, Set<Node> resources) {
@@ -98,46 +155,12 @@ public class ESMappingManager {
         return inverseInstanceDependencies.containsKey(subResource);
     }
 
-    /**
-     * generates a SPARQL query to retrieve the types of an instance
-     *
-     * @param instanceUri must be an IRI
-     * @return the SPARQL query with a "?type" variable
-     */
-    private static String generateInstanceTypeQuery(String instanceUri) {
-        return "SELECT ?type WHERE { <" + instanceUri + "> a ?type . FILTER(IsIRI(?type)) }";
+    public void clearInverseDependencies() {
+        inverseInstanceDependencies.clear();
     }
 
-    /**
-     * Retrieves the models corresponding to the types of an instance
-     *
-     * @param instanceUri The URI of the instance to retrieve the models for, must be an IRI.
-     * @return The models of the instance.
-     */
-    private static Collection<IndexingModel> getModelsOfInstance(String instanceUri) {
-        HashSet<IndexingModel> models = new HashSet<>();
-        try {
-            Mappings typeMappings = SPARQLRestAPI.getQueryProcess().query(generateInstanceTypeQuery(instanceUri));
-            if (!typeMappings.isEmpty()) {
-                for (Mapping m : typeMappings) {
-                    IndexingModel model = IndexingManager.getInstance().getModel(m.getValue("?type").stringValue());
-                    if (model != null) {
-                        models.add(model);
-                    }
-                }
-            }
-        } catch (EngineException e) {
-            logger.error("Error while retrieving type of instance {}", instanceUri, e);
-        }
-        return models;
-    }
-
-    /**
-     * Replace all special characters in a URI to generate a valid Elasticsearch document ID.
-     */
-    private static String generateDocIdFromUri(String uri) throws UnsupportedEncodingException {
-        String replacedURI = uri.replaceAll(":", "").replaceAll("/", "").replaceAll("#", "").replaceAll("\\.", "").replaceAll("\\?", "").replaceAll("&", "").replaceAll("=", "").replaceAll(";", "").replaceAll(",", "").replaceAll("\\+", "").replaceAll("\\*", "").replaceAll("\\(", "").replaceAll("\\)", "").replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\\{", "").replaceAll("\\}", "").replaceAll("\\|", "").replaceAll("\"", "").replaceAll("'", "").replaceAll("`", "").replaceAll(" ", "_");
-        return URLEncoder.encode(replacedURI, StandardCharsets.UTF_8.toString());
+    public void clearClassInstancesURIs() {
+        classInstances.clear();
     }
 
     /**
@@ -167,24 +190,24 @@ public class ESMappingManager {
     /**
      * Retrieve the mappings of the instances corresponding to a given model
      *
-     * @param model
      * @return
      */
     private JSONArray retrieveModelMappings(IndexingModel model) {
         JSONArray mappings = new JSONArray();
 
-        ArrayList<String> instanceList = new ArrayList<>();
+        ArrayList<Node> instanceList = new ArrayList<>();
         try {
             Mappings instancesMappings = SPARQLRestAPI.getQueryProcess().query(model.generateInstanceListQuery());
             for (Mapping m : instancesMappings) {
-                instanceList.add(m.getValue("?instance").stringValue());
+                instanceList.add(m.getValue("?instance"));
+                addClassInstanceUri(model.getClassUri(), m.getValue("?instance"));
             }
         } catch (EngineException e) {
             logger.error("Error while retrieving instances of class {} for mapping", model.getClassUri(), e);
         }
 
-        for (String instanceUri : instanceList) {
-            JSONArray instanceMappings = retrieveIndividualMapping(instanceUri, model);
+        for (Node instanceNode : instanceList) {
+            JSONArray instanceMappings = retrieveIndividualMapping(instanceNode, model);
             if (instanceMappings.length() > 0) {
                 mappings.putAll(instanceMappings);
             }
@@ -197,14 +220,15 @@ public class ESMappingManager {
      * Retrieves the mappings for a given individual.
      * Will return an empty map if there are no model for this individual
      *
-     * @param individualUri The URI of the individual to retrieve the mapping for.
+     * @param individualNode The URI of the individual to retrieve the mapping for.
      * @return The mappings for each model in a JSON array, if several models correspond to the individual
      */
-    public Map<String, JSONArray> retrieveIndividualMapping(String individualUri) {
-        Collection<IndexingModel> models = getModelsOfInstance(individualUri);
+    public Map<String, JSONArray> retrieveIndividualMapping(Node individualNode) {
+        logger.debug("Retrieving mappings for individual {}", individualNode.getDatatypeValue().toSparql());
+        Collection<IndexingModel> models = getModelsOfInstance(individualNode);
         HashMap<String, JSONArray> instanceMappings = new HashMap<>();
         for (IndexingModel model : models) {
-            instanceMappings.put(model.getIndexName(), retrieveIndividualMapping(individualUri, model));
+            instanceMappings.put(model.getIndexName(), retrieveIndividualMapping(individualNode, model));
         }
         return instanceMappings;
     }
@@ -212,23 +236,54 @@ public class ESMappingManager {
     /**
      * Retrieves the mappings for an individual for a given model.
      *
-     * @param individualUri The URI of the individual to retrieve the mapping for.
+     * @param individualNode The URI of the individual to retrieve the mapping for.
      * @return The mappings in a JSON array.
      */
-    public JSONArray retrieveIndividualMapping(String individualUri, IndexingModel model) {
+    public JSONArray retrieveIndividualMapping(Node individualNode, IndexingModel model) {
+        // Building dependencies graph
+        try {
+            Mappings dependenciesMappings = SPARQLRestAPI.getQueryProcess().query(generateDependenciesQuery(individualNode, model));
+            for (Mapping m : dependenciesMappings) {
+                addInverseDependency(m.getNode("?subResource"), m.getNode("?resource"));
+            }
+        } catch (EngineException e) {
+            logger.error("Error while retrieving dependencies for individual {} for mapping", individualNode, e);
+        }
+
+        // retrieving individual mappings
         JSONArray instanceMappings = new JSONArray();
-        String instanceQuery = model.generateInstanceDescriptionQuery(individualUri);
+        String instanceQuery = model.generateInstanceDescriptionQuery(individualNode);
         try {
             Mappings instanceFieldQueryMappings = SPARQLRestAPI.getQueryProcess().query(instanceQuery);
-            logger.debug("Mappings for instance {} : {}", individualUri, instanceFieldQueryMappings.size());
+            logger.debug("Mappings for instance {} : {}", individualNode, instanceFieldQueryMappings.size());
             JSONObject instanceJSON = jsonFromFieldList(model.getFields().values(), instanceFieldQueryMappings);
-            instanceJSON.put("uri", generateDocIdFromUri(individualUri));
+            instanceJSON.put("uri", generateDocIdFromUri(individualNode.getDatatypeValue().toSparql()));
             instanceMappings.put(instanceJSON);
         } catch (EngineException | UnsupportedEncodingException e) {
-            logger.error("Error while retrieving instance {} for mapping using {}", individualUri, instanceQuery, e);
+            logger.error("Error while retrieving instance {} for mapping using {}", individualNode, instanceQuery, e);
         }
-        addClassInstanceUri(model.getClassUri(), individualUri);
+        addClassInstanceUri(model.getClassUri(), individualNode);
         return instanceMappings;
+    }
+
+    private String generateDependenciesQuery(Node individualNode, IndexingModel model) {
+        StringBuilder sb = new StringBuilder();
+
+        model.getPrefixes().forEach((prefix, uri) -> sb.append("PREFIX ").append(prefix).append(": <").append(uri).append(">\n"));
+        sb.append("SELECT DISTINCT ?subResource ?resource WHERE {\n");
+        sb.append("    ?resource ?p ?subResource .\n");
+        sb.append("    VALUES ?p { ");
+        for (IndexingField field : model.getFields().values()) {
+            sb.append(" ").append(field.getPath()).append(" ");
+        }
+        sb.append("    }\n");
+        sb.append("FILTER(?resource = ").append(individualNode.getDatatypeValue().toSparql()).append(")\n");
+        sb.append("    FILTER(isIRI(?subResource) || isBlank(?subResource))\n");
+
+        sb.append("}\n");
+
+
+        return sb.toString();
     }
 
     private JSONObject jsonFromFieldList(Collection<IndexingField> fieldList, Mappings instanceMappings) {
@@ -263,6 +318,9 @@ public class ESMappingManager {
         JSONObject json = new JSONObject();
 
         for (IndexingField field : fieldList) {
+            Node subfieldNode = instanceMapping.getNode("?" + field.getLabel());
+            Node instanceNode = instanceMapping.getNode("?instance");
+            addInverseDependency(subfieldNode, instanceNode);
             String retrievedValue = jsonFieldValueFromFieldMapping(field, instanceMapping);
             if (retrievedValue != null) {
                 json.put(field.getLabel(), retrievedValue);
@@ -279,9 +337,11 @@ public class ESMappingManager {
         if (!instanceMappings.isEmpty()
                 && instanceMappings.get(0).getValue("?" + field.getLabel()) != null) {
             if (field.hasSubfields()) {
-                Node subfieldNode = instanceMappings.get(0).getNode("?" + field.getLabel());
-                Node instanceNode = instanceMappings.get(0).getNode("?instance");
-                addInverseDependency(subfieldNode, instanceNode);
+                instanceMappings.forEach(mapping -> {
+                    Node subfieldNode = mapping.getNode("?" + field.getLabel());
+                    Node instanceNode = mapping.getNode("?instance");
+                    addInverseDependency(subfieldNode, instanceNode);
+                });
                 return jsonFromFieldList(field.getSubfields().values(), instanceMappings).toString();
             } else {
                 return instanceMappings.get(0).getValue("?" + field.getLabel()).stringValue();

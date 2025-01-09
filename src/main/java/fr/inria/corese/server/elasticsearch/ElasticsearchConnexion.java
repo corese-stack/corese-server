@@ -42,7 +42,6 @@ public class ElasticsearchConnexion {
         connexion.setElasticsearchUrl(elasticSearchUrl);
         connexion.setElasticsearchAPIKey(key);
         URL url = new URL(elasticSearchUrl);
-        logger.debug("Connecting to Elasticsearch server at {}, host: {}, port:{}, protocol: {}", url, url.getHost(), url.getPort(), url.getProtocol());
 
         RestClient restClient = RestClient.builder(
                 new org.apache.http.HttpHost(url.getHost(), url.getPort(), url.getProtocol())).setDefaultHeaders(new Header[] {
@@ -71,7 +70,6 @@ public class ElasticsearchConnexion {
         } catch (MalformedURLException e) {
             logger.error("Error while creating ElasticsearchConnexion {}", url, e);
         }
-        logger.debug("Connecting to Elasticsearch server at {}, host: {}, port:{}, protocol: {}", url, url.getHost(), url.getPort(), url.getProtocol());
 
         RestClient restClient = RestClient.builder(
                 new org.apache.http.HttpHost(url.getHost(), url.getPort(), url.getProtocol())).setDefaultHeaders(new Header[] {

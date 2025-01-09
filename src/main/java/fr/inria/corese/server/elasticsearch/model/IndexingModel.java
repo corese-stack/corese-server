@@ -1,17 +1,17 @@
 package fr.inria.corese.server.elasticsearch.model;
 
+import fr.inria.corese.core.kgram.api.core.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.Normalizer;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 public class IndexingModel {
     private static final Logger logger = LoggerFactory.getLogger(IndexingModel.class);
 
-    private String classUri;
+    private final String classUri;
     private String classLabel;
     private Map<String, String> prefixes;
     private Map<String, IndexingField> fields;
@@ -70,21 +70,23 @@ public class IndexingModel {
 
     /**
      * Contains the instance uri in the variable "?instance" along with all the fields of the instance
-     * @param instanceUri the uri of the instance to retrieve
+     * @param instanceNode the node of the instance to retrieve
      * @return a SPARQL SELECT query to retrieve the instance with the "?instance" variable
      */
-    public String generateInstanceDescriptionQuery(String instanceUri) {
+    public String generateInstanceDescriptionQuery(Node instanceNode) {
         StringBuilder sb = new StringBuilder();
+
+        String instanceString = instanceNode.getDatatypeValue().toSparql();
 
         for(Map.Entry<String, String> prefixEntry : prefixes.entrySet()) {
             sb.append("PREFIX ").append(prefixEntry.getKey()).append(": <").append(prefixEntry.getValue()).append(">\n");
         }
 
         sb.append("SELECT DISTINCT * WHERE {\n");
-        sb.append("    FILTER(?instance = <").append(instanceUri).append(">)\n");
+        sb.append("    FILTER(?instance = ").append(instanceString).append(")\n");
         sb.append("    ?instance a <").append(classUri).append("> .\n");
         for(IndexingField field : fields.values()) {
-            sb.append(field.getQueryStatement(instanceUri)).append("\n");
+            sb.append(field.getQueryStatement(instanceString)).append("\n");
         }
 
         sb.append("}\n");

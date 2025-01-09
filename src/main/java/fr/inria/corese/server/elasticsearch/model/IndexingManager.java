@@ -1,5 +1,6 @@
 package fr.inria.corese.server.elasticsearch.model;
 
+import fr.inria.corese.core.kgram.api.core.Node;
 import fr.inria.corese.core.kgram.core.Mapping;
 import fr.inria.corese.core.kgram.core.Mappings;
 import fr.inria.corese.core.query.QueryProcess;
@@ -168,9 +169,11 @@ public class IndexingManager {
             try {
                 Mappings result = exec.query(query);
                 for (Mapping mapping : result.getMappingList()) {
-                    String instanceUri = mapping.getValue("?instance").stringValue();
-                    ESMappingManager.getInstance().addClassInstanceUri(model.getClassUri(), instanceUri);
+                    Node instanceNode = mapping.getValue("?instance");
+                    ESMappingManager.getInstance().addClassInstanceUri(model.getClassUri(), instanceNode);
+                    logger.debug("Adding instance {} to class {}", instanceNode, model.getClassUri());
                 }
+                ESMappingManager.getInstance().getMappings(model.getClassUri());
             } catch (EngineException e) {
                 logger.error("Error while extracting instances for indexing model: {}", query, e);
             }
@@ -275,5 +278,9 @@ public class IndexingManager {
 
     public Collection<String> getClassUris() {
         return this.models.keySet();
+    }
+
+    public void clearModels() {
+        this.models.clear();
     }
 }

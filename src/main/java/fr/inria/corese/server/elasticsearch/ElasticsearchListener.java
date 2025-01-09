@@ -80,8 +80,7 @@ public class ElasticsearchListener extends EdgeChangeListener {
             for (Node instanceNode : modifiedInstancesUris) {
                 logger.debug("Instance node: {}", instanceNode);
                 if (instanceNode.getDatatypeValue().isURI() || instanceNode.getDatatypeValue().isBlank()) {
-                    String instanceUri = instanceNode.getLabel();
-                    Map<String, JSONArray> modifiedInstanceMappings = ESMappingManager.getInstance().retrieveIndividualMapping(instanceUri);
+                    Map<String, JSONArray> modifiedInstanceMappings = ESMappingManager.getInstance().retrieveIndividualMapping(instanceNode);
                     try {
                         for (Map.Entry<String, JSONArray> instanceMappings : modifiedInstanceMappings.entrySet()) {
                             for (int i = 0; i < instanceMappings.getValue().length(); i++) {
@@ -146,10 +145,10 @@ public class ElasticsearchListener extends EdgeChangeListener {
             for (Edge edge : edges) {
                 if (!IndexingModelOntology.isDatatypeProperty(edge.getPropertyNode().getLabel())
                         && !IndexingModelOntology.isObjectProperty(edge.getPropertyNode().getLabel())) {
-                    if (!edge.getSubjectNode().isBlank()) {
+                    if (! edge.getSubjectNode().getDatatypeValue().isLiteral()) {
                         candidateInstanceNodes.add(edge.getSubjectNode());
                     }
-                    if (!edge.getObjectNode().isBlank()) {
+                    if (! edge.getObjectNode().getDatatypeValue().isLiteral()) {
                         candidateInstanceNodes.add(edge.getObjectNode());
                     }
 
@@ -157,9 +156,9 @@ public class ElasticsearchListener extends EdgeChangeListener {
             }
 
             for (Node instanceNode : candidateInstanceNodes) {
+                logger.debug("Candidate instance node: {}", instanceNode);
                 if (instanceNode.getDatatypeValue().isURI()) {
-                    String instanceUri = instanceNode.getLabel();
-                    String instanceTypeQuery = "PREFIX im: <http://ns.mnemotix.com/ontologies/indexing-model/> SELECT ?class WHERE { { <" + instanceUri + "> a ?class } UNION { GRAPH ?graphData { <" + instanceUri + "> a ?class . } . { ?model a im:IndexingModel ; im:indexingModelOf ?class . } UNION {  GRAPH ?modelGraph { ?model a im:IndexingModel ; im:indexingModelOf ?class . } } } }";
+                    String instanceTypeQuery = "PREFIX im: <http://ns.mnemotix.com/ontologies/indexing-model/> SELECT ?class WHERE { { " + instanceNode.getDatatypeValue().toSparql() + " a ?class } UNION { GRAPH ?graphData { " + instanceNode.getDatatypeValue().toSparql() + " a ?class . } . { ?model a im:IndexingModel ; im:indexingModelOf ?class . } UNION {  GRAPH ?modelGraph { ?model a im:IndexingModel ; im:indexingModelOf ?class . } } } }";
                     try {
                         Mappings result = SPARQLRestAPI.getQueryProcess().query(instanceTypeQuery);
 
@@ -167,7 +166,7 @@ public class ElasticsearchListener extends EdgeChangeListener {
                             modifiedInstanceUris.add(instanceNode);
                         }
                     } catch (EngineException e) {
-                        logger.error("Could not determine the type of the instance " + instanceUri, e);
+                        logger.error("Could not determine the type of the instance " + instanceNode.getDatatypeValue().toSparql(), e);
                     }
                 }
                 if(ESMappingManager.getInstance().hasInverseDependencies(instanceNode)) {

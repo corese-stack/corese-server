@@ -112,7 +112,7 @@ public class IndexingField {
         if(uri.startsWith("?")) {
             sb.append("    ").append(uri).append(" ").append(getPath()).append(" ?").append(getLabel()).append(" .\n");
         } else {
-            sb.append("    <").append(uri).append("> ").append(getPath()).append(" ?").append(getLabel()).append(" .\n");
+            sb.append("    ").append(uri).append(" ").append(getPath()).append(" ?").append(getLabel()).append(" .\n");
         }
 
         for(Map.Entry<String, IndexingField> subfieldEntry : subfields.entrySet()) {
