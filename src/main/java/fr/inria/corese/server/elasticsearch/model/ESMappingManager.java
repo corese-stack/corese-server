@@ -62,19 +62,11 @@ public class ESMappingManager {
      */
     public Collection<IndexingModel> getModelsOfInstance(Node instanceNode) {
         HashSet<IndexingModel> models = new HashSet<>();
-        try {
-            Mappings typeMappings = SPARQLRestAPI.getQueryProcess().query(generateInstanceTypeQuery(instanceNode));
-            if (!typeMappings.isEmpty()) {
-                for (Mapping m : typeMappings) {
-                    IndexingModel model = IndexingModelManager.getInstance().getModel(m.getValue("?type").stringValue());
-                    if (model != null) {
-                        models.add(model);
-                    }
-                }
+        this.classInstances.forEach((classUri, instances) -> {
+            if (instances.contains(instanceNode)) {
+                models.add(IndexingModelManager.getInstance().getModel(classUri));
             }
-        } catch (EngineException e) {
-            logger.error("Error while retrieving type of instance {}", instanceNode, e);
-        }
+        });
         return models;
     }
 

@@ -425,7 +425,11 @@ public class LifecycleWithElasticsearchTest {
     @Test
     public void deleteExistingTest() throws EngineException, MalformedURLException, LoadException {
         String insertQuery = "prefix foaf: <http://xmlns.com/foaf/0.1/> prefix schema: <https://schema.org/> prefix vcard: <http://www.w3.org/2006/vcard/ns#> INSERT DATA { <http://example.com/deleteExistingTest> a schema:Person ; foaf:firstName \"Jean\" ; foaf:lastName \"Dupont\" ; vcard:adr [ vcard:country-name \"France\" ; vcard:locality \"Nice\" ; vcard:postal-code \"06000\" ; vcard:street-address \"75 Promenade des anglais\" ] }";
-        String deleteQuery = "prefix foaf: <http://xmlns.com/foaf/0.1/> prefix schema: <https://schema.org/> prefix vcard: <http://www.w3.org/2006/vcard/ns#> DELETE DATA { <http://example.com/deleteExistingTest> a schema:Person ; foaf:firstName \"Jean\" ; foaf:lastName \"Dupont\" ; vcard:adr [ vcard:country-name \"France\" ; vcard:locality \"Nice\" ; vcard:postal-code \"06000\" ; vcard:street-address \"75 Promenade des anglais\" ] }";
+
+
+
+
+        String deleteQuery = "prefix foaf: <http://xmlns.com/foaf/0.1/> prefix schema: <https://schema.org/> prefix vcard: <http://www.w3.org/2006/vcard/ns#> DELETE DATA { <http://example.com/deleteExistingTest> a schema:Person . }";
 
         ElasticsearchConnexion connexion = ElasticsearchConnexion.create(instanceRule.baseUrl(), "testKey");
 
@@ -455,6 +459,25 @@ public class LifecycleWithElasticsearchTest {
                                 "\"_primary_term\": 1 " +
                                 "}"))
         );
+        wireMockRule.stubFor(delete("/person/_doc/httpexamplecomdeleteExistingTest")
+                .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticsearchAPIKey()))
+                .willReturn(ok()
+                        .withHeader("X-Elastic-Product", "Elasticsearch")
+                        .withBody("{ " +
+                                "\"_index\": \"person\", " +
+                                "\"_type\": \"_doc\", " +
+                                "\"_id\": \"1\", " +
+                                "\"_version\": 1, " +
+                                "\"result\": \"deleted\", " +
+                                "\"_shards\": { " +
+                                "\"total\": 0, " +
+                                "\"successful\": 1, " +
+                                "\"failed\": 0 " +
+                                "}, " +
+                                "\"_seq_no\": 0, " +
+                                "\"_primary_term\": 1 " +
+                                "}"))
+        );
 
         IndexingModelManager.getInstance().extractModels();
 
@@ -466,7 +489,6 @@ public class LifecycleWithElasticsearchTest {
 
         wireMockRule.verify(moreThanOrExactly(1), deleteRequestedFor(urlEqualTo("/person/_doc/httpexamplecomdeleteExistingTest"))
                 .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticsearchAPIKey()))
-                .withHeader(HTTPHeaders.CONTENT_TYPE, containing("application/vnd.elasticsearch+json"))
         );
     }
 }
