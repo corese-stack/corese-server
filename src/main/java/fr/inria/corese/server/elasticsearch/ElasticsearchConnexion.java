@@ -113,7 +113,6 @@ public class ElasticsearchConnexion {
                     .id(docuri)
                     .withJson(input)
             );
-            logger.debug("Sending to Elasticsearch server {}", request);
 
             return esClient.index(request);
         } else {
@@ -123,7 +122,6 @@ public class ElasticsearchConnexion {
 
     public BulkResponse sendBulkJSON(String index, JSONArray json) throws IOException {
         if((elasticSearchUrl != null) && (elasticSearchAPIKey != null)) {
-            logger.info("Sending to Elasticsearch server {} {}", elasticSearchUrl, json);
             BulkRequest.Builder br = new BulkRequest.Builder();
 
             for(int i = 0; i < json.length(); i++) {
@@ -156,6 +154,19 @@ public class ElasticsearchConnexion {
                     .build();
 
             return esClient.update(request, JsonData.class);
+        } else {
+            return null;
+        }
+    }
+
+    public DeleteResponse sendDelete(String index, String id) throws IOException {
+        if((elasticSearchUrl != null) && (elasticSearchAPIKey != null)) {
+            DeleteRequest request = new DeleteRequest.Builder()
+                    .index(index)
+                    .id(id)
+                    .build();
+
+            return esClient.delete(request);
         } else {
             return null;
         }

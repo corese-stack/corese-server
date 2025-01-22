@@ -3,12 +3,11 @@ package fr.inria.corese.server.webservice.endpoint;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import fr.inria.corese.server.elasticsearch.ElasticsearchConnexion;
 import fr.inria.corese.server.elasticsearch.model.ESMappingManager;
-import fr.inria.corese.server.elasticsearch.model.IndexingManager;
+import fr.inria.corese.server.elasticsearch.model.IndexingModelManager;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Response;
 import org.json.JSONArray;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +25,7 @@ public class ElasticsearchControl {
 
         ElasticsearchConnexion connexion = ElasticsearchConnexion.create();
 
-        IndexingManager.getInstance().extractModels();
+        IndexingModelManager.getInstance().extractModels();
         Map<String, JSONArray> allMappings = ESMappingManager.getInstance().getAllMappings();
         for(Map.Entry<String, JSONArray> modelMappingsEntry : allMappings.entrySet()) {
             try {

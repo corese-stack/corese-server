@@ -1,16 +1,11 @@
 package fr.inria.corese.server.elasticsearch;
 
-import com.github.tomakehurst.wiremock.admin.model.GetServeEventsResult;
 import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
-import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
-import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
-import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import fr.inria.corese.core.load.LoadException;
 import fr.inria.corese.core.sparql.exceptions.EngineException;
 import fr.inria.corese.core.util.HTTPHeaders;
 import fr.inria.corese.server.elasticsearch.model.ESMappingManager;
-import fr.inria.corese.server.elasticsearch.model.IndexingManager;
+import fr.inria.corese.server.elasticsearch.model.IndexingModelManager;
 import fr.inria.corese.server.webservice.endpoint.SPARQLRestAPI;
 import org.junit.*;
 
@@ -18,7 +13,7 @@ import java.net.MalformedURLException;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
-public class ElasticsearchTest {
+public class LifecycleWithElasticsearchTest {
 
     private static final String testModelFile = "src/test/resources/fr/inria/corese/server/elasticsearch/esModel.ttl";
     private static final String testModelDataFile = "src/test/resources/fr/inria/corese/server/elasticsearch/esModelData.ttl";
@@ -32,7 +27,7 @@ public class ElasticsearchTest {
     @Before
     @After
     public void clear() throws EngineException {
-        IndexingManager.getInstance().clearModels();
+        IndexingModelManager.getInstance().clearModels();
         ESMappingManager.getInstance().clearInverseDependencies();
         ESMappingManager.getInstance().clearClassInstancesURIs();
         SPARQLRestAPI.getTripleStore().getQueryProcess().query("CLEAR ALL");
@@ -49,7 +44,7 @@ public class ElasticsearchTest {
         SPARQLRestAPI.getTripleStore().getGraph().addEdgeChangeListener(new ElasticsearchListener(connexion));
         SPARQLRestAPI.getTripleStore().load(testModelFile); // Model declaration
 
-        IndexingManager.getInstance().extractModels(); // Instantiation of model for mapping creation
+        IndexingModelManager.getInstance().extractModels(); // Instantiation of model for mapping creation
 
         // Stub the elasticsearch service that accepts calls with the right response body according to https://www.elastic.co/guide/en/elasticsearch/reference/7.17/docs-index_.html
         wireMockRule.stubFor(put("/person/_doc/httpexamplecomperson1")
@@ -219,7 +214,7 @@ public class ElasticsearchTest {
         SPARQLRestAPI.getTripleStore().load(testModelFile);
         SPARQLRestAPI.getTripleStore().load(testModelDataFile);
 
-        IndexingManager.getInstance().extractModels();
+        IndexingModelManager.getInstance().extractModels();
 
         // Stub the elasticsearch service that accepts calls with the right response body according to https://www.elastic.co/guide/en/elasticsearch/reference/7.17/docs-index_.html
         wireMockRule.stubFor(put("/person/_doc/httpexamplecompersonSimpleInsertTest"
@@ -275,7 +270,7 @@ public class ElasticsearchTest {
 
         SPARQLRestAPI.getTripleStore().getQueryProcess().query(insertBaseQuery);
 
-        IndexingManager.getInstance().extractModels();
+        IndexingModelManager.getInstance().extractModels();
 
         // Stub the elasticsearch service that accepts calls with the right response body according to https://www.elastic.co/guide/en/elasticsearch/reference/7.17/docs-index_.html
         wireMockRule.stubFor(put("/article/_doc/httpexamplecominsertMissingSubFieldDataTest"
@@ -351,7 +346,7 @@ public class ElasticsearchTest {
         SPARQLRestAPI.getTripleStore().load(testModelFile);
         SPARQLRestAPI.getTripleStore().load(testModelDataFile);
 
-        IndexingManager.getInstance().extractModels();
+        IndexingModelManager.getInstance().extractModels();
 
         // Stub the elasticsearch service that accepts calls with the right response body according to https://www.elastic.co/guide/en/elasticsearch/reference/7.17/docs-index_.html
         wireMockRule.stubFor(put("/person/_doc/httpexamplecomperson1"
@@ -396,7 +391,7 @@ public class ElasticsearchTest {
         SPARQLRestAPI.getTripleStore().load(testModelFile);
         SPARQLRestAPI.getTripleStore().load(testModelDataFile);
 
-        IndexingManager.getInstance().extractModels();
+        IndexingModelManager.getInstance().extractModels();
 
         // Stub the elasticsearch service that accepts calls with the right response body according to https://www.elastic.co/guide/en/elasticsearch/reference/7.17/docs-index_.html
         wireMockRule.stubFor(post("/person/_doc")
@@ -439,7 +434,7 @@ public class ElasticsearchTest {
         SPARQLRestAPI.getTripleStore().load(testModelDataFile);
 
         // Stub the elasticsearch service that accepts calls with the right response body according to https://www.elastic.co/guide/en/elasticsearch/reference/7.17/docs-index_.html
-        wireMockRule.stubFor(post("/person/_doc/personSimpleInsertTest")
+        wireMockRule.stubFor(put("/person/_doc/httpexamplecomdeleteExistingTest")
                 .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticsearchAPIKey()))
                 .withHeader(HTTPHeaders.CONTENT_TYPE, containing("application/vnd.elasticsearch+json"))
                 .willReturn(ok()
@@ -461,15 +456,15 @@ public class ElasticsearchTest {
                                 "}"))
         );
 
+        IndexingModelManager.getInstance().extractModels();
+
         SPARQLRestAPI.getTripleStore().getQueryProcess().query(insertQuery);
 
         SPARQLRestAPI.getTripleStore().getGraph().addEdgeChangeListener(new ElasticsearchListener(connexion));
 
-        IndexingManager.getInstance().extractModels();
-
         SPARQLRestAPI.getTripleStore().getQueryProcess().query(deleteQuery);
 
-        wireMockRule.verify(moreThanOrExactly(1), deleteRequestedFor(urlEqualTo("/person/_doc/deleteExistingTest"))
+        wireMockRule.verify(moreThanOrExactly(1), deleteRequestedFor(urlEqualTo("/person/_doc/httpexamplecomdeleteExistingTest"))
                 .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticsearchAPIKey()))
                 .withHeader(HTTPHeaders.CONTENT_TYPE, containing("application/vnd.elasticsearch+json"))
         );

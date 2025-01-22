@@ -4,6 +4,7 @@ import fr.inria.corese.core.kgram.api.core.Node;
 import fr.inria.corese.core.kgram.core.Mapping;
 import fr.inria.corese.core.kgram.core.Mappings;
 import fr.inria.corese.core.sparql.exceptions.EngineException;
+import fr.inria.corese.server.elasticsearch.util.ElasticsearchUtils;
 import fr.inria.corese.server.webservice.endpoint.SPARQLRestAPI;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -12,8 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -30,10 +29,12 @@ public class ESMappingManager {
      * The key is the sub-resource and the value is the set of resources that depend on it.
      */
     private Map<Node, Set<Node>> inverseInstanceDependencies;
+    private Map<Node, Set<Node>> instanceDependencies;
 
     private ESMappingManager() {
         classInstances = new HashMap<>();
         inverseInstanceDependencies = new HashMap<>();
+        instanceDependencies = new HashMap<>();
     }
 
     public static ESMappingManager getInstance() {
@@ -59,13 +60,13 @@ public class ESMappingManager {
      * @param instanceNode The URI of the instance to retrieve the models for, must be an IRI.
      * @return The models of the instance.
      */
-    private static Collection<IndexingModel> getModelsOfInstance(Node instanceNode) {
+    public Collection<IndexingModel> getModelsOfInstance(Node instanceNode) {
         HashSet<IndexingModel> models = new HashSet<>();
         try {
             Mappings typeMappings = SPARQLRestAPI.getQueryProcess().query(generateInstanceTypeQuery(instanceNode));
             if (!typeMappings.isEmpty()) {
                 for (Mapping m : typeMappings) {
-                    IndexingModel model = IndexingManager.getInstance().getModel(m.getValue("?type").stringValue());
+                    IndexingModel model = IndexingModelManager.getInstance().getModel(m.getValue("?type").stringValue());
                     if (model != null) {
                         models.add(model);
                     }
@@ -77,22 +78,14 @@ public class ESMappingManager {
         return models;
     }
 
-    /**
-     * Replace all special characters in a URI to generate a valid Elasticsearch document ID.
-     */
-    private static String generateDocIdFromUri(String uri) throws UnsupportedEncodingException {
-        String replacedURI = uri.replaceAll("<", "").replaceAll(">", "").replaceAll(":", "").replaceAll("/", "").replaceAll("#", "").replaceAll("\\.", "").replaceAll("\\?", "").replaceAll("&", "").replaceAll("=", "").replaceAll(";", "").replaceAll(",", "").replaceAll("\\+", "").replaceAll("\\*", "").replaceAll("\\(", "").replaceAll("\\)", "").replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\\{", "").replaceAll("\\}", "").replaceAll("\\|", "").replaceAll("\"", "").replaceAll("'", "").replaceAll("`", "").replaceAll(" ", "_");
-        return URLEncoder.encode(replacedURI, StandardCharsets.UTF_8.toString());
-    }
-
-    public void addClassInstanceUri(String classUri, Node instance) {
+    public void addClassInstance(String classUri, Node instance) {
         if (!classInstances.containsKey(classUri)) {
             classInstances.put(classUri, new HashSet<>());
         }
         classInstances.get(classUri).add(instance);
     }
 
-    public Set<Node> getClassInstancesUris(String classUri) {
+    public Set<Node> getClassInstances(String classUri) {
         return classInstances.get(classUri);
     }
 
@@ -104,59 +97,90 @@ public class ESMappingManager {
         return classInstances.values().stream().anyMatch(s -> s.contains(node));
     }
 
-    public void addInverseDependency(Node subResource, Node resource) {
-        if (inverseInstanceDependencies == null) {
-            inverseInstanceDependencies = new HashMap<>();
-        }
-        if (!inverseInstanceDependencies.containsKey(subResource)) {
-            inverseInstanceDependencies.put(subResource, new HashSet<>());
-        }
-        if (
-                (subResource.getDatatypeValue().isBlank()
-                        || subResource.getDatatypeValue().isURI())
-                        && (resource.getDatatypeValue().isBlank()
-                        || resource.getDatatypeValue().isURI())) {
-            logger.debug("Adding inverse dependency from {} to {}", subResource.getDatatypeValue().toSparql(), resource.getDatatypeValue().toSparql());
-            inverseInstanceDependencies.get(subResource).add(resource);
+    public boolean isModelClass(String nodeUri) {
+        return classInstances.containsKey(nodeUri);
+    }
+
+    /**
+     * Extracts the inverse dependencies of a node from existing data.
+     *
+     * @param node  The node to extract the inverse dependencies from
+     * @param model The model of the node
+     * @return The set of nodes that depend on the given node
+     */
+    public void extractDependencies(Node node, IndexingModel model) {
+        // Building dependencies graph
+        try {
+            String dependencyQueryString = generateDependenciesQuery(node, model);
+            Mappings dependenciesMappings = SPARQLRestAPI.getQueryProcess().query(dependencyQueryString);
+            for (Mapping m : dependenciesMappings) {
+                addDependency(node, m.getNode("?subResource"));
+            }
+        } catch (EngineException e) {
+            logger.error("Error while retrieving dependencies for individual {} for mapping", node, e);
         }
     }
 
-    public void addInverseDependencies(Node subResource, Set<Node> resources) {
-        if (inverseInstanceDependencies == null) {
-            inverseInstanceDependencies = new HashMap<>();
+    public void addDependency(Node resource, Node subResource) {
+        if (!subResource.getDatatypeValue().isLiteral()
+                && !resource.getDatatypeValue().isLiteral()) {
+            if (inverseInstanceDependencies == null) {
+                inverseInstanceDependencies = new HashMap<>();
+            }
+            if (instanceDependencies == null) {
+                instanceDependencies = new HashMap<>();
+            }
+            if (!inverseInstanceDependencies.containsKey(subResource)) {
+                inverseInstanceDependencies.put(subResource, new HashSet<>());
+            }
+            if (!instanceDependencies.containsKey(resource)) {
+                instanceDependencies.put(resource, new HashSet<>());
+            }
+
+            inverseInstanceDependencies.get(subResource).add(resource);
+            instanceDependencies.get(resource).add(subResource);
         }
-        if (!inverseInstanceDependencies.containsKey(subResource)) {
-            inverseInstanceDependencies.put(subResource, new HashSet<>());
-        }
-        inverseInstanceDependencies.get(subResource).addAll(resources);
     }
 
     public Set<Node> getInverseDependencies(Node subResource) {
         return inverseInstanceDependencies.get(subResource);
     }
 
+    public Set<Node> getDependencies(Node resource) {
+        return instanceDependencies.get(resource);
+    }
+
     public void removeInverseDependencies(Node subResource) {
         inverseInstanceDependencies.remove(subResource);
     }
 
-    public void removeInverseDependency(Node subResource, Node resource) {
+    public void removeDependency(Node subResource, Node resource) {
         if (inverseInstanceDependencies.containsKey(subResource)) {
             inverseInstanceDependencies.get(subResource).remove(resource);
+        }
+        if (instanceDependencies.containsKey(resource)) {
+            instanceDependencies.get(resource).remove(subResource);
         }
     }
 
     public void removeInverseDependency(Node subResource, Set<Node> resources) {
-        if (inverseInstanceDependencies.containsKey(subResource)) {
-            inverseInstanceDependencies.get(subResource).removeAll(resources);
-        }
+        resources.forEach(resource -> removeDependency(subResource, resource));
     }
 
     public boolean hasInverseDependencies(Node subResource) {
         return inverseInstanceDependencies.containsKey(subResource);
     }
 
+    public boolean hasDependencies(Node resource) {
+        return instanceDependencies.containsKey(resource);
+    }
+
     public void clearInverseDependencies() {
         inverseInstanceDependencies.clear();
+    }
+
+    public void clearDependencies() {
+        instanceDependencies.clear();
     }
 
     public void clearClassInstancesURIs() {
@@ -170,7 +194,7 @@ public class ESMappingManager {
      */
     public Map<String, JSONArray> getAllMappings() {
         Map<String, JSONArray> mappings = new HashMap<>();
-        for (IndexingModel model : IndexingManager.getInstance().getModels()) {
+        for (IndexingModel model : IndexingModelManager.getInstance().getModels()) {
             mappings.put(model.getIndexName(), retrieveModelMappings(model));
         }
         return mappings;
@@ -183,7 +207,7 @@ public class ESMappingManager {
      * @return The mappings in a JSON array.
      */
     public JSONArray getMappings(String classUri) {
-        IndexingModel model = IndexingManager.getInstance().getModel(classUri);
+        IndexingModel model = IndexingModelManager.getInstance().getModel(classUri);
         return retrieveModelMappings(model);
     }
 
@@ -199,8 +223,9 @@ public class ESMappingManager {
         try {
             Mappings instancesMappings = SPARQLRestAPI.getQueryProcess().query(model.generateInstanceListQuery());
             for (Mapping m : instancesMappings) {
-                instanceList.add(m.getValue("?instance"));
-                addClassInstanceUri(model.getClassUri(), m.getValue("?instance"));
+                Node instance = m.getValue("?instance");
+                instanceList.add(instance);
+                addClassInstance(model.getClassUri(), m.getValue("?instance"));
             }
         } catch (EngineException e) {
             logger.error("Error while retrieving instances of class {} for mapping", model.getClassUri(), e);
@@ -224,7 +249,6 @@ public class ESMappingManager {
      * @return The mappings for each model in a JSON array, if several models correspond to the individual
      */
     public Map<String, JSONArray> retrieveIndividualMapping(Node individualNode) {
-        logger.debug("Retrieving mappings for individual {}", individualNode.getDatatypeValue().toSparql());
         Collection<IndexingModel> models = getModelsOfInstance(individualNode);
         HashMap<String, JSONArray> instanceMappings = new HashMap<>();
         for (IndexingModel model : models) {
@@ -241,28 +265,20 @@ public class ESMappingManager {
      */
     public JSONArray retrieveIndividualMapping(Node individualNode, IndexingModel model) {
         // Building dependencies graph
-        try {
-            Mappings dependenciesMappings = SPARQLRestAPI.getQueryProcess().query(generateDependenciesQuery(individualNode, model));
-            for (Mapping m : dependenciesMappings) {
-                addInverseDependency(m.getNode("?subResource"), m.getNode("?resource"));
-            }
-        } catch (EngineException e) {
-            logger.error("Error while retrieving dependencies for individual {} for mapping", individualNode, e);
-        }
+        extractDependencies(individualNode, model);
 
         // retrieving individual mappings
         JSONArray instanceMappings = new JSONArray();
         String instanceQuery = model.generateInstanceDescriptionQuery(individualNode);
         try {
             Mappings instanceFieldQueryMappings = SPARQLRestAPI.getQueryProcess().query(instanceQuery);
-            logger.debug("Mappings for instance {} : {}", individualNode, instanceFieldQueryMappings.size());
             JSONObject instanceJSON = jsonFromFieldList(model.getFields().values(), instanceFieldQueryMappings);
-            instanceJSON.put("uri", generateDocIdFromUri(individualNode.getDatatypeValue().toSparql()));
+            instanceJSON.put("uri", ElasticsearchUtils.generateDocIdFromUri(individualNode.getDatatypeValue().toSparql()));
             instanceMappings.put(instanceJSON);
         } catch (EngineException | UnsupportedEncodingException e) {
             logger.error("Error while retrieving instance {} for mapping using {}", individualNode, instanceQuery, e);
         }
-        addClassInstanceUri(model.getClassUri(), individualNode);
+        addClassInstance(model.getClassUri(), individualNode);
         return instanceMappings;
     }
 
@@ -320,7 +336,7 @@ public class ESMappingManager {
         for (IndexingField field : fieldList) {
             Node subfieldNode = instanceMapping.getNode("?" + field.getLabel());
             Node instanceNode = instanceMapping.getNode("?instance");
-            addInverseDependency(subfieldNode, instanceNode);
+            addDependency(instanceNode, subfieldNode);
             String retrievedValue = jsonFieldValueFromFieldMapping(field, instanceMapping);
             if (retrievedValue != null) {
                 json.put(field.getLabel(), retrievedValue);
@@ -340,7 +356,7 @@ public class ESMappingManager {
                 instanceMappings.forEach(mapping -> {
                     Node subfieldNode = mapping.getNode("?" + field.getLabel());
                     Node instanceNode = mapping.getNode("?instance");
-                    addInverseDependency(subfieldNode, instanceNode);
+                    addDependency(instanceNode, subfieldNode);
                 });
                 return jsonFromFieldList(field.getSubfields().values(), instanceMappings).toString();
             } else {

@@ -5,7 +5,7 @@ import fr.inria.corese.core.load.LoadException;
 import fr.inria.corese.core.sparql.exceptions.EngineException;
 import fr.inria.corese.server.JSONUtils;
 import fr.inria.corese.server.elasticsearch.model.ESMappingManager;
-import fr.inria.corese.server.elasticsearch.model.IndexingManager;
+import fr.inria.corese.server.elasticsearch.model.IndexingModelManager;
 import fr.inria.corese.server.elasticsearch.model.IndexingModel;
 import fr.inria.corese.server.webservice.endpoint.SPARQLRestAPI;
 import org.json.JSONArray;
@@ -16,7 +16,7 @@ import java.util.ArrayList;
 
 import static org.junit.Assert.*;
 
-public class ESIndexingManagerTest {
+public class ESMappingManagerTest {
 
     private static final String testModelFile1 = "src/test/resources/fr/inria/corese/server/elasticsearch/indexingModelExample.trig";
     private static final String testModelFile2 = "src/test/resources/fr/inria/corese/server/elasticsearch/esModel.ttl";
@@ -27,10 +27,10 @@ public class ESIndexingManagerTest {
         SPARQLRestAPI.getTripleStore().load(testModelFile1, Loader.format.TRIG_FORMAT);
 
         // Test the loading of the indexing model
-        IndexingManager.getInstance().extractModels();
+        IndexingModelManager.getInstance().extractModels();
 
         // Test the indexing model from the data file
-        IndexingModel model = IndexingManager.getInstance().getModel("http://data.clairsienne.com/ontologies/2019/12/clr-patrimoine#Lot");
+        IndexingModel model = IndexingModelManager.getInstance().getModel("http://data.clairsienne.com/ontologies/2019/12/clr-patrimoine#Lot");
 
         assertNotNull(model);
         assertEquals("http://data.clairsienne.com/ontologies/2019/12/clr-patrimoine#Lot", model.getClassUri());
@@ -82,10 +82,10 @@ public class ESIndexingManagerTest {
         SPARQLRestAPI.getTripleStore().load(testModelFile2, "", Loader.format.TURTLE_FORMAT);
 
         // Test the loading of the indexing model
-        IndexingManager.getInstance().extractModels();
+        IndexingModelManager.getInstance().extractModels();
 
         // Test the indexing model from the data file
-        IndexingModel model = IndexingManager.getInstance().getModel("https://schema.org/Person");
+        IndexingModel model = IndexingModelManager.getInstance().getModel("https://schema.org/Person");
 
         assertNotNull(model);
 
@@ -152,7 +152,7 @@ public class ESIndexingManagerTest {
         SPARQLRestAPI.getTripleStore().load(testModelDataFile2, "", Loader.format.TURTLE_FORMAT);
 
         // Test the loading of the indexing model
-        IndexingManager.getInstance().extractModels();
+        IndexingModelManager.getInstance().extractModels();
 
         JSONArray allMappings = ESMappingManager.getInstance().getMappings("https://schema.org/Person");
 
@@ -178,7 +178,7 @@ public class ESIndexingManagerTest {
         SPARQLRestAPI.getTripleStore().load(testModelDataFile2, Loader.format.TURTLE_FORMAT);
 
         // Test the loading of the indexing model
-        IndexingManager.getInstance().extractModels();
+        IndexingModelManager.getInstance().extractModels();
 
         JSONArray allMappings = ESMappingManager.getInstance().getMappings("https://schema.org/Article");
         allMappings.forEach(o -> ((JSONObject) o).remove("uri")); // Emulating the removal of the URI done when the mappings are returned by the API

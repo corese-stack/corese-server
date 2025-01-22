@@ -1,4 +1,4 @@
-package fr.inria.corese.server.elasticsearch.model;
+package fr.inria.corese.server.elasticsearch.util;
 
 /**
  * Based on the ontology of the indexing model in https://gitlab.com/mnemotix/synaptix/mnx-models/-/blob/aa8134f95b1db258b1678aab1030e70e6763925f/indexing-model/indexing-model.owl

@@ -1,13 +1,15 @@
 package fr.inria.corese.server.elasticsearch.model;
 
+import fr.inria.corese.core.kgram.api.core.Node;
+
 import java.util.HashMap;
 import java.util.Map;
 
 public class IndexingField {
 
-    private String label;
-    private String datatype;
-    private String path;
+    private final String label;
+    private final String datatype;
+    private final String path;
     private boolean multivalued = true;
     private boolean analyzed = true;
     private boolean optional = true;
@@ -102,6 +104,10 @@ public class IndexingField {
         return !subfields.isEmpty();
     }
 
+    public String getQueryStatement(Node node) {
+        return getQueryStatement(node.getDatatypeValue().toSparql());
+    }
+
     public String getQueryStatement(String uri) {
         StringBuilder sb = new StringBuilder();
 
@@ -109,11 +115,7 @@ public class IndexingField {
             sb.append("OPTIONAL {\n");
         }
 
-        if(uri.startsWith("?")) {
-            sb.append("    ").append(uri).append(" ").append(getPath()).append(" ?").append(getLabel()).append(" .\n");
-        } else {
-            sb.append("    ").append(uri).append(" ").append(getPath()).append(" ?").append(getLabel()).append(" .\n");
-        }
+        sb.append("    ").append(uri).append(" ").append(getPath()).append(" ?").append(getLabel()).append(" .\n");
 
         for(Map.Entry<String, IndexingField> subfieldEntry : subfields.entrySet()) {
             sb.append("    ").append(subfieldEntry.getValue().getQueryStatement("?"+getLabel()));

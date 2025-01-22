@@ -14,19 +14,19 @@ import java.util.*;
 /**
  * In charge of managing the indexing models.
  */
-public class IndexingManager {
-    private static final Logger logger = LoggerFactory.getLogger(IndexingManager.class);
-    private static IndexingManager instance = null;
+public class IndexingModelManager {
+    private static final Logger logger = LoggerFactory.getLogger(IndexingModelManager.class);
+    private static IndexingModelManager instance = null;
 
     private Map<String, IndexingModel> models;
 
-    private IndexingManager() {
+    private IndexingModelManager() {
         models = new HashMap<>();
     }
 
-    public static IndexingManager getInstance() {
+    public static IndexingModelManager getInstance() {
         if (instance == null) {
-            instance = new IndexingManager();
+            instance = new IndexingModelManager();
         }
         return instance;
     }
@@ -170,9 +170,9 @@ public class IndexingManager {
                 Mappings result = exec.query(query);
                 for (Mapping mapping : result.getMappingList()) {
                     Node instanceNode = mapping.getValue("?instance");
-                    ESMappingManager.getInstance().addClassInstanceUri(model.getClassUri(), instanceNode);
-                    logger.debug("Adding instance {} to class {}", instanceNode, model.getClassUri());
+                    ESMappingManager.getInstance().addClassInstance(model.getClassUri(), instanceNode);
                 }
+
                 ESMappingManager.getInstance().getMappings(model.getClassUri());
             } catch (EngineException e) {
                 logger.error("Error while extracting instances for indexing model: {}", query, e);

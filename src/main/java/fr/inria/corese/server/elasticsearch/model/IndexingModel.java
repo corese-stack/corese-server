@@ -6,7 +6,9 @@ import org.slf4j.LoggerFactory;
 
 import java.text.Normalizer;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class IndexingModel {
     private static final Logger logger = LoggerFactory.getLogger(IndexingModel.class);
@@ -15,19 +17,23 @@ public class IndexingModel {
     private String classLabel;
     private Map<String, String> prefixes;
     private Map<String, IndexingField> fields;
+    private Set<String> fieldUris;
 
     public IndexingModel(String classUri) {
         this.classUri = classUri;
         this.prefixes = new HashMap<>();
         this.fields = new HashMap<>();
+        this.fieldUris = new HashSet<>();
     }
 
     public void addPrefix(String prefix, String uri) {
         prefixes.put(prefix, uri);
+        this.fieldUris = getFieldProperties();
     }
 
     public void addField(String fieldName, IndexingField field) {
         fields.put(fieldName, field);
+        this.fieldUris = getFieldProperties();
     }
 
     public String getClassUri() {
@@ -86,7 +92,7 @@ public class IndexingModel {
         sb.append("    FILTER(?instance = ").append(instanceString).append(")\n");
         sb.append("    ?instance a <").append(classUri).append("> .\n");
         for(IndexingField field : fields.values()) {
-            sb.append(field.getQueryStatement(instanceString)).append("\n");
+            sb.append(field.getQueryStatement(instanceNode)).append("\n");
         }
 
         sb.append("}\n");
@@ -115,7 +121,7 @@ public class IndexingModel {
     /**
      * Generate an ASK query that checks in the non-optional fields of an instance are present.
      */
-    public String generateCheckInstanceIsComplete() {
+    public String generateCheckInstanceIsCompleteQuery(Node instanceNode) {
         StringBuilder sb = new StringBuilder();
 
         for(Map.Entry<String, String> prefixEntry : prefixes.entrySet()) {
@@ -129,6 +135,7 @@ public class IndexingModel {
                 sb.append(field.getQueryStatement("?instance")).append("\n");
             }
         }
+        sb.append("FILTER(?instance = ").append(instanceNode.getDatatypeValue().toSparql()).append(")\n");
         sb.append("}\n");
 
         return sb.toString();
@@ -136,5 +143,33 @@ public class IndexingModel {
 
     public IndexingField getField(String fieldLabel) {
         return fields.get(fieldLabel);
+    }
+
+    /**
+     * Does the application of the prefixes to recover the actual URIs behind each field path
+     */
+    private Set<String> getFieldProperties() {
+        Set<String> result = new HashSet<>();
+
+        this.fields.values().forEach(field -> {
+            String fieldPath = field.getPath();
+            this.getPrefixes().forEach((prefix, uri) -> {
+                if(fieldPath.startsWith(prefix + ":")) {
+                    result.add(uri + fieldPath.substring(prefix.length() + 1));
+                }
+            });
+        });
+
+        return result;
+    }
+
+    public boolean usesProperty(String propertyUri) {
+        boolean result = this.fieldUris.stream().anyMatch(uri -> uri.equals(propertyUri));
+        for(Map.Entry<String, IndexingField> fieldEntry : this.getFields().entrySet()) {
+            if(fieldEntry.getValue().hasSubfields()) {
+                result = result || fieldEntry.getValue().getSubfields().values().stream().anyMatch(uri -> uri.equals(propertyUri));
+            }
+        }
+        return result;
     }
 }
