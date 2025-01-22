@@ -39,12 +39,15 @@ public class IndexingModelManager {
         return !models.isEmpty();
     }
 
+    public boolean isModelClass(String nodeUri) {
+        return models.containsKey(nodeUri);
+    }
+
     /**
      * Search for the model associated with all classes and extract them.
      */
     public void extractModels() {
         extractModels(null);
-        logger.info("{} extracted models: {}", models.size(), models.keySet());
     }
 
     /**

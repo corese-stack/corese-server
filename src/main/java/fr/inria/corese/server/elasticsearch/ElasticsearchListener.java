@@ -52,7 +52,6 @@ public class ElasticsearchListener extends EdgeChangeListener {
     @Override
     public void onBulkEdgeChange(List<Edge> delete, List<Edge> add) {
         if (IndexingModelManager.getInstance().hasModels()) {
-            logger.debug("Bulk edge change with {} edges to delete and {} edges to add", delete.size(), add.size());
             HashSet<Node> modifiedClassUris = new HashSet<>();
             // If edge modifies models, then we refresh the model objects and send their instances to Elasticsearch
             // If an edge modifies an instance of a model, we send the description of the instance to Elasticsearch or the deletion order
@@ -75,10 +74,8 @@ public class ElasticsearchListener extends EdgeChangeListener {
             // Search for model instances that have been modified to send ES calls as appropriate
             // Pure delete are handled separately than modifications and insertion
             if (add.isEmpty() && !delete.isEmpty()) {
-                logger.debug("Pure delete detected");
                 handleBulkDelete(delete);
             } else {
-                logger.debug("Insertion/update detected");
                 handleBulkEdgeInsertionModification(delete, add);
             }
         }
@@ -106,7 +103,6 @@ public class ElasticsearchListener extends EdgeChangeListener {
 
                             if (response != null) {
                                 if (response.result() == Result.Created || response.result() == Result.Updated) {
-                                    logger.debug("JSON sent to Elasticsearch index {} with response: {}", instanceMappings.getKey(), response);
                                 } else {
                                     logger.error("Error while sending JSON to Elasticsearch index {}: {}", instanceMappings.getKey(), response);
                                 }
@@ -124,8 +120,8 @@ public class ElasticsearchListener extends EdgeChangeListener {
         add.forEach(edge -> {
 
             // scanning for instantiation of known model classes
-            if ((edge.getPropertyNode().getDatatypeValue().getLabel().equals(RDF.TYPE) )
-                    && ESMappingManager.getInstance().isModelClass(edge.getObjectNode().getLabel())) {
+            if ((edge.getPropertyNode().getLabel().equals(RDF.TYPE) )
+                    && IndexingModelManager.getInstance().isModelClass(edge.getObjectNode().getLabel())) {
                 Node classNode = edge.getObjectNode();
                 Node instanceNode = edge.getSubjectNode();
                 ESMappingManager.getInstance().addClassInstance(classNode.getLabel(), instanceNode);
@@ -145,21 +141,16 @@ public class ElasticsearchListener extends EdgeChangeListener {
     }
 
     private void handleBulkDelete(List<Edge> delete) {
-        logger.debug("Handling pure delete of {}", delete);
         HashSet<Node> modifiedInstancesUrisInDeletion = new HashSet<>(extractModifiedInstanceNodes(delete));
-        logger.debug("Modified instances in deletion: {}", modifiedInstancesUrisInDeletion);
 
         for (Node instanceNode : modifiedInstancesUrisInDeletion) {
             if(instanceNode.getDatatypeValue().isURI()) {
-                logger.debug("Handling deletion of instance {}", instanceNode);
                 // If the instance is in deletion, we check if it is complete and if not, we delete it
                 ESMappingManager.getInstance().getModelsOfInstance(instanceNode).forEach(model -> {
                     String isInstanceCompleteQueryString = model.generateCheckInstanceIsCompleteQuery(instanceNode);
-                    logger.debug("Checking if instance is complete with query: {}", isInstanceCompleteQueryString);
                     try {
                         Mappings instanceCompletudeResult = SPARQLRestAPI.getQueryProcess().query(isInstanceCompleteQueryString);
                         if (instanceCompletudeResult.size() == 0) {
-                            logger.debug("Instance {} is not complete anymore, deleting it", instanceNode);
                             connexion.sendDelete(model.getIndexName(), ElasticsearchUtils.generateDocIdFromUri(instanceNode.getDatatypeValue().toSparql()));
                         }
                     } catch (EngineException | IOException e) {

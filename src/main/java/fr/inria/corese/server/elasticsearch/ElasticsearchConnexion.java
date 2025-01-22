@@ -104,9 +104,9 @@ public class ElasticsearchConnexion {
      */
     public IndexResponse sendJSON(String index, JSONObject json) throws IOException {
         if((elasticSearchUrl != null) && (elasticSearchAPIKey != null)) {
-            logger.info("Sending to Elasticsearch server {} {}", elasticSearchUrl, json);
             String docuri = json.getString("uri");
             json.remove("uri"); // remove the uri field (it is used as the id in the index
+            
             Reader input = new StringReader(json.toString());
             IndexRequest<JsonData> request = IndexRequest.of(i -> i
                     .index(index)

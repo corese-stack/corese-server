@@ -89,10 +89,6 @@ public class ESMappingManager {
         return classInstances.values().stream().anyMatch(s -> s.contains(node));
     }
 
-    public boolean isModelClass(String nodeUri) {
-        return classInstances.containsKey(nodeUri);
-    }
-
     /**
      * Extracts the inverse dependencies of a node from existing data.
      *

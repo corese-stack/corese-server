@@ -176,7 +176,7 @@ public class LifecycleWithElasticsearchTest {
 
 
         // Verify that the elasticsearch service was called with the right data
-        SPARQLRestAPI.getTripleStore().load(testModelDataFile); // Mappings should be sent as triples are loaded
+        SPARQLRestAPI.getTripleStore().load(testModelDataFile);
 
         wireMockRule.verify(moreThanOrExactly(1), putRequestedFor(urlEqualTo("/person/_doc/httpexamplecomperson1")).withRequestBody(
                 equalToJson("{\"firstName\":\"John\",\"lastName\":\"Doe\",\"address\":[{\"country\":\"United States\",\"streetAddress\":\"123 Main Street\",\"postalCode\":\"10001\",\"locality\":\"New York\"}]}", true, true)
