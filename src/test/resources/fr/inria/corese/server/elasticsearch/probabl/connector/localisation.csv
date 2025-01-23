@@ -1,0 +1,12 @@
+fieldName,propertyChain,datatype,indexed,stored,analyzed,defaultValue,esAnalyzer,multivalued,ignoreInvalidValues,fielddata,array,keyword,keywordNotNorm,objectFields,valueTypeFilter,valueFilter
+entityId,"$self",URI,true,true,,,,,false,,,,true,,,,
+RDFType,"http://www.w3.org/1999/02/22-rdf-syntax-ns#type",URI,true,true,,,,,true,,,,true,,,,
+wktLocation,"http://www.opengis.net/ont/geosparql#hasGeometry, http://www.opengis.net/ont/geosparql#asWKT",GEOPOINT,true,true,true,,,,false,,,,true,,,,
+has_insee_uri,"http://www.inrap.fr/archipel/inrap_ont/has_affiliation_role, http://www.w3.org/2004/02/skos/core#prefLabel",URI,true,true,,,,,false,,,,true,,,,
+has_code_insee,"http://www.inrap.fr/archipel/inrap_ont/has_code_insee",STRING,true,true,,,,,false,,,,true,,,,
+has_place_name,"http://www.inrap.fr/archipel/inrap_ont/has_place_name",STRING,true,true,,,,,false,,,,true,,,,
+has_lieudit,"http://www.inrap.fr/archipel/inrap_ont/has_lieudit",URI,true,true,,,,,false,,,,true,,,,
+has_address,"http://www.inrap.fr/archipel/inrap_ont/has_address",URI,true,true,,,,,false,,,,true,,,,
+has_city,"http://www.inrap.fr/archipel/inrap_ont/has_city",URI,true,true,,,,,false,,,,true,,,,
+has_departement,"http://www.inrap.fr/archipel/inrap_ont/has_departement",URI,true,true,,,,,false,,,,true,,,,
+has_region,"http://www.inrap.fr/archipel/inrap_ont/has_region",URI,true,true,,,,,false,,,,true,,,,

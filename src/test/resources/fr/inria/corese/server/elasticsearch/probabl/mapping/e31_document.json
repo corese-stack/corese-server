@@ -1,0 +1,168 @@
+{
+  "mappings": {
+    "properties": {
+      "P2_has_type": {
+        "type": "keyword"
+      },
+      "P70_documents": {
+        "type": "keyword"
+      },
+      "RDFType": {
+        "type": "keyword"
+      },
+      "abstract": {
+        "type": "text",
+        "store": true,
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256,
+            "normalizer": "lowercase_no_accent"
+          }
+        },
+        "analyzer": "autocomplete"
+      },
+      "author_name": {
+        "type": "keyword"
+      },
+      "coauthor_name": {
+        "type": "keyword"
+      },
+      "contributor_name": {
+        "type": "keyword"
+      },
+      "dates": {
+        "type": "date"
+      },
+      "document_has_involvement": {
+        "type": "keyword"
+      },
+      "entityId": {
+        "type": "keyword"
+      },
+      "has_author": {
+        "type": "keyword"
+      },
+      "has_coauthor": {
+        "type": "keyword"
+      },
+      "has_contributor": {
+        "type": "keyword"
+      },
+      "has_description": {
+        "type": "text",
+        "store": true,
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256,
+            "normalizer": "lowercase_no_accent"
+          }
+        },
+        "analyzer": "autocomplete"
+      },
+      "has_landing_page": {
+        "type": "keyword"
+      },
+      "has_native_period_facet": {
+        "type": "keyword"
+      },
+      "has_native_subject_facet": {
+        "type": "keyword"
+      },
+      "has_ranked_author": {
+        "type": "keyword"
+      },
+      "has_secondary_contributor": {
+        "type": "keyword"
+      },
+      "has_spatial_coverage_facet": {
+        "type": "keyword"
+      },
+      "has_subtitle": {
+        "type": "text",
+        "store": true,
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256,
+            "normalizer": "lowercase_no_accent"
+          }
+        },
+        "analyzer": "autocomplete"
+      },
+      "has_temporal_coverage": {
+        "type": "keyword"
+      },
+      "has_title": {
+        "type": "text",
+        "store": true,
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256,
+            "normalizer": "lowercase_no_accent"
+          }
+        },
+        "analyzer": "autocomplete"
+      },
+      "person_full_name": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "person_full_name$1": {
+        "type": "keyword"
+      },
+      "person_full_name$2": {
+        "type": "keyword"
+      },
+      "person_full_name$3": {
+        "type": "keyword"
+      },
+      "publisher_name": {
+        "type": "text",
+        "store": true,
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256,
+            "normalizer": "lowercase_no_accent"
+          }
+        },
+        "analyzer": "autocomplete"
+      },
+      "publishing_place": {
+        "type": "text",
+        "store": true,
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256,
+            "normalizer": "lowercase_no_accent"
+          }
+        },
+        "analyzer": "autocomplete"
+      },
+      "report_has_project": {
+        "type": "keyword"
+      },
+      "sourceDataset": {
+        "type": "keyword"
+      },
+      "subject": {
+        "type": "keyword"
+      },
+      "type": {
+        "type": "keyword"
+      },
+      "was_issued": {
+        "type": "date"
+      }
+    }
+  }
+}

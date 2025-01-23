@@ -1,0 +1,18 @@
+{
+  "mappings": {
+    "properties": {
+      "RDFType": {
+        "type": "keyword"
+      },
+      "entityId": {
+        "type": "keyword"
+      },
+      "has_rank": {
+        "type": "integer"
+      },
+      "sortable": {
+        "type": "keyword"
+      }
+    }
+  }
+}

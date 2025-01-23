@@ -1,0 +1,117 @@
+{
+  "mappings": {
+    "properties": {
+      "P2_has_type": {
+        "type": "keyword"
+      },
+      "RDFType": {
+        "type": "keyword"
+      },
+      "dates": {
+        "type": "date"
+      },
+      "dates$1": {
+        "type": "date"
+      },
+      "dates$2": {
+        "type": "date"
+      },
+      "dates$3": {
+        "type": "date"
+      },
+      "entityId": {
+        "type": "keyword"
+      },
+      "has_involvement_role": {
+        "type": "keyword"
+      },
+      "has_involvement_role_label": {
+        "type": "keyword"
+      },
+      "has_involvement_role_notation": {
+        "type": "keyword"
+      },
+      "has_start_date": {
+        "type": "text",
+        "store": true,
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256,
+            "normalizer": "lowercase_no_accent"
+          }
+        },
+        "analyzer": "autocomplete"
+      },
+      "has_title": {
+        "type": "text",
+        "store": true,
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256,
+            "normalizer": "lowercase_no_accent"
+          }
+        },
+        "analyzer": "autocomplete"
+      },
+      "involvement_has_agent": {
+        "type": "keyword"
+      },
+      "involvement_has_agent_lastName": {
+        "type": "keyword"
+      },
+      "involvement_in": {
+        "type": "keyword"
+      },
+      "involvement_in_date": {
+        "type": "date"
+      },
+      "involvement_in_date$1": {
+        "type": "date"
+      },
+      "involvement_in_date$2": {
+        "type": "date"
+      },
+      "involvement_in_date$3": {
+        "type": "date"
+      },
+      "involvement_in_type": {
+        "type": "keyword"
+      },
+      "title": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "title$1": {
+        "type": "text",
+        "store": true,
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256,
+            "normalizer": "lowercase_no_accent"
+          }
+        },
+        "analyzer": "autocomplete"
+      },
+      "title$2": {
+        "type": "text",
+        "store": true,
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256,
+            "normalizer": "lowercase_no_accent"
+          }
+        },
+        "analyzer": "autocomplete"
+      }
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "mappings": {
+    "properties": {
+      "RDFType": {
+        "type": "keyword"
+      },
+      "affiliation_has_organization": {
+        "type": "keyword"
+      },
+      "entityId": {
+        "type": "keyword"
+      },
+      "has_affiliation_role_pref_label": {
+        "type": "keyword"
+      },
+      "has_end_date": {
+        "type": "date"
+      },
+      "has_start_date": {
+        "type": "date"
+      }
+    }
+  }
+}

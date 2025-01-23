@@ -1,0 +1,57 @@
+{
+  "mappings": {
+    "properties": {
+      "RDFType": {
+        "type": "keyword"
+      },
+      "entityId": {
+        "type": "keyword"
+      },
+      "has_address": {
+        "type": "keyword"
+      },
+      "has_city": {
+        "type": "keyword"
+      },
+      "has_code_insee": {
+        "type": "text",
+        "store": true,
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256,
+            "normalizer": "lowercase_no_accent"
+          }
+        },
+        "analyzer": "autocomplete"
+      },
+      "has_departement": {
+        "type": "keyword"
+      },
+      "has_insee_uri": {
+        "type": "keyword"
+      },
+      "has_lieudit": {
+        "type": "keyword"
+      },
+      "has_place_name": {
+        "type": "text",
+        "store": true,
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256,
+            "normalizer": "lowercase_no_accent"
+          }
+        },
+        "analyzer": "autocomplete"
+      },
+      "has_region": {
+        "type": "keyword"
+      },
+      "wktLocation": {
+        "type": "geo_point"
+      }
+    }
+  }
+}

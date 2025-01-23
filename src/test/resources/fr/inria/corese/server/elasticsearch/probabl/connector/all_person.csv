@@ -1,0 +1,10 @@
+fieldName,propertyChain,datatype,indexed,stored,analyzed,defaultValue,esAnalyzer,multivalued,ignoreInvalidValues,fielddata,array,keyword,keywordNotNorm,objectFields,valueTypeFilter,valueFilter
+entityId,"$self",URI,true,true,,,,,false,,,,true,,,,
+inrapURI,"http://www.w3.org/2002/07/owl#sameAs",URI,true,true,,,,,false,,,,true,,,,
+RDFType,"http://www.w3.org/1999/02/22-rdf-syntax-ns#type",URI,true,true,,,,,true,,,,true,,,,
+sourceDataset,"http://ns.mnemotix.com/ontologies/2019/8/generic-model/sourceDataset",URI,true,true,,,,,true,,,,true,,,,
+has_usual_name,"http://www.inrap.fr/archipel/inrap_ont/has_usal_name",STRING,true,true,,,,,false,,,,false,,,,
+lastName,"http://xmlns.com/foaf/0.1/lastName",STRING,true,true,true,,,,false,,,,true,,,,
+firstName,"http://xmlns.com/foaf/0.1/firstName",STRING,true,true,true,,,,false,,,,true,,,,
+name,"http://xmlns.com/foaf/0.1/name",URI,true,true,true,,,,false,,,,true,,,,
+is_inrap_member,"http://www.inrap.fr/archipel/inrap_ont/is_inrap_member",BOOLEAN,true,true,,,,,false,,,,false,,,,

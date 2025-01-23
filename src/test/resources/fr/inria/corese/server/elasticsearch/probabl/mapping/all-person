@@ -1,0 +1,53 @@
+{
+  "mappings": {
+    "properties": {
+      "RDFType": {
+        "type": "keyword"
+      },
+      "entityId": {
+        "type": "keyword"
+      },
+      "firstName": {
+        "type": "text",
+        "store": true,
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256,
+            "normalizer": "lowercase_no_accent"
+          }
+        },
+        "analyzer": "autocomplete"
+      },
+      "has_usual_name": {
+        "type": "text",
+        "store": true,
+        "analyzer": "autocomplete"
+      },
+      "inrapURI": {
+        "type": "keyword"
+      },
+      "is_inrap_member": {
+        "type": "boolean"
+      },
+      "lastName": {
+        "type": "text",
+        "store": true,
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256,
+            "normalizer": "lowercase_no_accent"
+          }
+        },
+        "analyzer": "autocomplete"
+      },
+      "name": {
+        "type": "keyword"
+      },
+      "sourceDataset": {
+        "type": "keyword"
+      }
+    }
+  }
+}

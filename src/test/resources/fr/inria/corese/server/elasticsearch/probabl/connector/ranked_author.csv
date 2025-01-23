@@ -1,0 +1,5 @@
+fieldName,propertyChain,datatype,indexed,stored,analyzed,multivalued
+entityId,"$self",URI,true,true,true,false
+RDFType,"http://www.w3.org/1999/02/22-rdf-syntax-ns#type",URI,true,true,true,true
+has_rank,"${namespaces().get("inrap").get}has_rank",INT,true,true,true,false
+sortable,"${namespaces().get("inrap").get}ranked_author_has_author",URI,true,true,true,false

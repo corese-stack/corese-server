@@ -1,0 +1,200 @@
+{
+  "mappings": {
+    "properties": {
+      "P2_has_type": {
+        "type": "keyword"
+      },
+      "P70i_is_documented_in": {
+        "type": "keyword"
+      },
+      "RDFType": {
+        "type": "keyword"
+      },
+      "activity_has_involvement": {
+        "type": "keyword"
+      },
+      "dates": {
+        "type": "date"
+      },
+      "dates$1": {
+        "type": "date"
+      },
+      "dates$2": {
+        "type": "date"
+      },
+      "description": {
+        "type": "text",
+        "store": true,
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256,
+            "normalizer": "lowercase_no_accent"
+          }
+        },
+        "analyzer": "autocomplete"
+      },
+      "entityId": {
+        "type": "keyword"
+      },
+      "has_boundaries": {
+        "type": "geo_shape"
+      },
+      "has_boundaries_center": {
+        "type": "geo_point"
+      },
+      "has_collection_status": {
+        "type": "text",
+        "store": true,
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256,
+            "normalizer": "lowercase_no_accent"
+          }
+        },
+        "analyzer": "autocomplete"
+      },
+      "has_duration_in_year": {
+        "type": "text",
+        "store": true,
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256,
+            "normalizer": "lowercase_no_accent"
+          }
+        },
+        "analyzer": "autocomplete"
+      },
+      "has_end_date": {
+        "type": "date"
+      },
+      "has_linked_operation": {
+        "type": "keyword"
+      },
+      "has_localisation": {
+        "type": "keyword"
+      },
+      "has_localisation_commune": {
+        "type": "keyword"
+      },
+      "has_native_period_facet": {
+        "type": "keyword"
+      },
+      "has_native_subject_facet": {
+        "type": "keyword"
+      },
+      "has_numope": {
+        "type": "text",
+        "store": true,
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256,
+            "normalizer": "lowercase_no_accent"
+          }
+        },
+        "analyzer": "autocomplete"
+      },
+      "has_operation_participant": {
+        "type": "keyword"
+      },
+      "has_operation_participant_name": {
+        "type": "keyword"
+      },
+      "has_operation_responsible": {
+        "type": "keyword"
+      },
+      "has_operation_responsible_name": {
+        "type": "keyword"
+      },
+      "has_project_participant": {
+        "type": "keyword"
+      },
+      "has_project_participant_name": {
+        "type": "keyword"
+      },
+      "has_project_responsible": {
+        "type": "keyword"
+      },
+      "has_project_responsible_name": {
+        "type": "keyword"
+      },
+      "has_spatial_coverage_facet": {
+        "type": "keyword"
+      },
+      "has_start_date": {
+        "type": "date"
+      },
+      "has_sub_type": {
+        "type": "keyword"
+      },
+      "has_title": {
+        "type": "text",
+        "store": true,
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256,
+            "normalizer": "lowercase_no_accent"
+          }
+        },
+        "analyzer": "autocomplete"
+      },
+      "identifier": {
+        "type": "text",
+        "store": true,
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256,
+            "normalizer": "lowercase_no_accent"
+          }
+        },
+        "analyzer": "autocomplete"
+      },
+      "is_linked_operation_of": {
+        "type": "keyword"
+      },
+      "label": {
+        "type": "text",
+        "store": true,
+        "analyzer": "autocomplete"
+      },
+      "operation_P2_has_type": {
+        "type": "keyword"
+      },
+      "operation_has_native_period_facet": {
+        "type": "keyword"
+      },
+      "operation_has_native_subject_facet": {
+        "type": "keyword"
+      },
+      "operation_has_spatial_coverage_facet": {
+        "type": "keyword"
+      },
+      "person_full_name": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "person_full_name$1": {
+        "type": "keyword"
+      },
+      "person_full_name$2": {
+        "type": "keyword"
+      },
+      "sourceDataset": {
+        "type": "keyword"
+      },
+      "supports_type_of_research": {
+        "type": "keyword"
+      }
+    }
+  }
+}

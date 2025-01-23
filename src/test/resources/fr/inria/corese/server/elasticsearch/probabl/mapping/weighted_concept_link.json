@@ -1,0 +1,21 @@
+{
+  "mappings": {
+    "properties": {
+      "RDFType": {
+        "type": "keyword"
+      },
+      "entityId": {
+        "type": "keyword"
+      },
+      "has_link_type": {
+        "type": "keyword"
+      },
+      "label": {
+        "type": "keyword"
+      },
+      "weight": {
+        "type": "integer"
+      }
+    }
+  }
+}

@@ -1,0 +1,153 @@
+{
+  "mappings": {
+    "properties": {
+      "RDFType": {
+        "type": "keyword"
+      },
+      "centre_de_rattachement": {
+        "type": "keyword"
+      },
+      "collaboratesWith": {
+        "type": "keyword"
+      },
+      "dates": {
+        "type": "date"
+      },
+      "dates$1": {
+        "type": "date"
+      },
+      "dates$2": {
+        "type": "date"
+      },
+      "dates$3": {
+        "type": "date"
+      },
+      "entityId": {
+        "type": "keyword"
+      },
+      "firstName": {
+        "type": "text",
+        "store": true,
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256,
+            "normalizer": "lowercase_no_accent"
+          }
+        },
+        "analyzer": "autocomplete"
+      },
+      "has_affiliation": {
+        "type": "keyword"
+      },
+      "has_associated_period_facet": {
+        "type": "keyword"
+      },
+      "has_associated_subject_facet": {
+        "type": "keyword"
+      },
+      "has_associated_weighted_period": {
+        "type": "keyword"
+      },
+      "has_associated_weighted_place": {
+        "type": "keyword"
+      },
+      "has_associated_weighted_subject": {
+        "type": "keyword"
+      },
+      "has_involvement": {
+        "type": "keyword"
+      },
+      "has_linked_project": {
+        "type": "keyword"
+      },
+      "has_native_period_facet": {
+        "type": "keyword"
+      },
+      "has_native_subject_facet": {
+        "type": "keyword"
+      },
+      "has_participated_in": {
+        "type": "keyword"
+      },
+      "has_rapport_operation": {
+        "type": "keyword"
+      },
+      "has_registration_no": {
+        "type": "keyword"
+      },
+      "has_spatial_coverage_facet": {
+        "type": "keyword"
+      },
+      "has_usual_name": {
+        "type": "text",
+        "store": true,
+        "analyzer": "autocomplete"
+      },
+      "has_weighted_collaborator": {
+        "type": "keyword"
+      },
+      "idrefURI": {
+        "type": "text",
+        "store": true,
+        "analyzer": "autocomplete"
+      },
+      "inrapURI": {
+        "type": "keyword"
+      },
+      "is_author_of": {
+        "type": "keyword"
+      },
+      "is_coauthor_of": {
+        "type": "keyword"
+      },
+      "is_contributor_of": {
+        "type": "keyword"
+      },
+      "is_in_activity": {
+        "type": "boolean"
+      },
+      "is_inrap_member": {
+        "type": "boolean"
+      },
+      "is_participant_of_operation": {
+        "type": "keyword"
+      },
+      "is_responsible_for": {
+        "type": "keyword"
+      },
+      "is_responsible_for_operation": {
+        "type": "keyword"
+      },
+      "is_secondary_contributor_of": {
+        "type": "keyword"
+      },
+      "lastName": {
+        "type": "text",
+        "store": true,
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256,
+            "normalizer": "lowercase_no_accent"
+          }
+        },
+        "analyzer": "autocomplete"
+      },
+      "name": {
+        "type": "keyword"
+      },
+      "orcidURI": {
+        "type": "text",
+        "store": true,
+        "analyzer": "autocomplete"
+      },
+      "person_full_name": {
+        "type": "keyword"
+      },
+      "sourceDataset": {
+        "type": "keyword"
+      }
+    }
+  }
+}

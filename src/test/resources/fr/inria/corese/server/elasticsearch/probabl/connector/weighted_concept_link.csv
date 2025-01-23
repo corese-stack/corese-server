@@ -1,0 +1,6 @@
+fieldName,propertyChain,datatype,indexed,stored,analyzed,defaultValue,esAnalyzer,multivalued,ignoreInvalidValues,fielddata,array,keyword,keywordNotNorm,objectFields,valueTypeFilter,valueFilter
+entityId,"http://www.inrap.fr/archipel/inrap_ont/self",URI,true,true,false,,,,false,false,false,true,,,,,
+RDFType,"http://www.w3.org/1999/02/22-rdf-syntax-ns#type",URI,true,true,false,,,,true,false,false,true,,,,,
+weight,"http://www.inrap.fr/archipel/inrap_ont/has_weight",INT,true,true,false,,,,false,false,false,true,,,,,
+label,"http://www.inrap.fr/archipel/inrap_ont/has_linked_concept, http://www.w3.org/2004/02/skos/core#prefLabel",URI,true,true,false,,,,false,false,false,true,,,,,
+has_link_type,"http://www.inrap.fr/archipel/inrap_ont/has_link_type",URI,true,true,false,,,,true,false,false,true,,,,,
