@@ -31,17 +31,6 @@ public class Utility {
         }
         return stringList;
     }
-
-    /**
-     * Read a file to stringbuilder
-     * @param path
-     * @return
-     * @throws IOException 
-     */
-//    public static StringBuilder readFile(String path) throws IOException {
-//        byte[] encoded = Files.readAllBytes(Paths.get(path));
-//        return new StringBuilder(new String(encoded, StandardCharsets.UTF_8));
-//    }
     
     public static StringBuilder readFile(String path) throws IOException {
         QueryLoad ql = QueryLoad.create();

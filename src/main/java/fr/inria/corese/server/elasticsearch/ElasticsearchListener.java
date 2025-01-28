@@ -45,7 +45,7 @@ public class ElasticsearchListener extends EdgeChangeListener {
         this.connexion = connexion;
     }
 
-    public ElasticsearchListener() {
+    public ElasticsearchListener() throws MalformedURLException {
         this(ElasticsearchConnexion.create());
     }
 

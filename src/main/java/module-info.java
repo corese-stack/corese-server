@@ -32,4 +32,6 @@ module fr.inria.corese.corese_server {
     requires org.apache.httpcomponents.httpcore;
     requires elasticsearch.rest.client;
     requires elasticsearch.java;
+    requires org.apache.httpcomponents.httpasyncclient;
+    requires org.apache.httpcomponents.httpclient;
 }

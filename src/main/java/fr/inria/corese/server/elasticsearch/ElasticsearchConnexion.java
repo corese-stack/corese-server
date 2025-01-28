@@ -9,6 +9,10 @@ import co.elastic.clients.transport.rest_client.RestClientTransport;
 import fr.inria.corese.core.util.HTTPHeaders;
 import fr.inria.corese.core.util.Property;
 import org.apache.http.Header;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.message.BasicHeader;
 import org.elasticsearch.client.RestClient;
 import org.json.JSONArray;
@@ -31,6 +35,8 @@ public class ElasticsearchConnexion {
     private static final String DEFAULT_ELASTICSEARCH_URL = "http://localhost:9200";
     private String elasticSearchUrl = Property.getStringValue(Property.Value.ELASTICSEARCH_API_ADDRESS);
     private String elasticSearchAPIKey = Property.getStringValue(Property.Value.ELASTICSEARCH_API_KEY);
+    private String elasticSearchUsername = Property.getStringValue(Property.Value.ELASTICSEARCH_API_USERNAME);
+    private String elasticSearchPassword = Property.getStringValue(Property.Value.ELASTICSEARCH_API_PASSWORD);
 
     private ElasticsearchClient esClient;
 
@@ -43,10 +49,20 @@ public class ElasticsearchConnexion {
         connexion.setElasticsearchAPIKey(key);
         URL url = new URL(elasticSearchUrl);
 
+        final CredentialsProvider credentialsProvider =
+                new BasicCredentialsProvider();
+        credentialsProvider.setCredentials(AuthScope.ANY,
+                new UsernamePasswordCredentials(connexion.elasticSearchUsername, connexion.elasticSearchPassword));
+
         RestClient restClient = RestClient.builder(
-                new org.apache.http.HttpHost(url.getHost(), url.getPort(), url.getProtocol())).setDefaultHeaders(new Header[] {
-                        new BasicHeader(HTTPHeaders.AUTHORIZATION_TYPE, "ApiKey " + key)
-        }).build();
+                new org.apache.http.HttpHost(url.getHost(), url.getPort(), url.getProtocol())).setDefaultHeaders(new Header[]{
+                new BasicHeader(HTTPHeaders.AUTHORIZATION_TYPE, "ApiKey " + key)
+        })
+                .setHttpClientConfigCallback(httpClientBuilder -> {
+                    return httpClientBuilder
+                            .setDefaultCredentialsProvider(credentialsProvider);
+                }).build();
+        logger.debug("Elasticsearch client created: {}", restClient);
         ElasticsearchTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper());
         connexion.esClient = new ElasticsearchClient(transport);
         return connexion;
@@ -56,28 +72,16 @@ public class ElasticsearchConnexion {
         return ElasticsearchConnexion.create(DEFAULT_ELASTICSEARCH_URL, key);
     }
 
-    public static ElasticsearchConnexion create() throws IllegalStateException {
+    public static ElasticsearchConnexion create() throws IllegalStateException, MalformedURLException {
         ElasticsearchConnexion connexion = new ElasticsearchConnexion();
-        if(connexion.getElasticsearchAPIKey() == null) {
+        if (connexion.getElasticsearchAPIKey() == null) {
             throw new IllegalStateException("Elasticsearch API key is not set");
         }
-        if(connexion.getElasticsearchUrl() == null) {
+        if (connexion.getElasticsearchUrl() == null) {
             throw new IllegalStateException("Elasticsearch URL is not set");
         }
-        URL url = null;
-        try {
-            url = new URL(connexion.getElasticsearchUrl());
-        } catch (MalformedURLException e) {
-            logger.error("Error while creating ElasticsearchConnexion {}", url, e);
-        }
 
-        RestClient restClient = RestClient.builder(
-                new org.apache.http.HttpHost(url.getHost(), url.getPort(), url.getProtocol())).setDefaultHeaders(new Header[] {
-                new BasicHeader(HTTPHeaders.AUTHORIZATION_TYPE, "ApiKey " + connexion.getElasticsearchAPIKey())
-        }).build();
-        ElasticsearchTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper());
-        connexion.esClient = new ElasticsearchClient(transport);
-        return connexion;
+        return create(connexion.getElasticsearchUrl(), connexion.getElasticsearchAPIKey());
     }
 
     public String getElasticsearchUrl() {
@@ -98,15 +102,16 @@ public class ElasticsearchConnexion {
 
     /**
      * Send a JSON object to the Elasticsearch server
+     *
      * @param index the index to send the JSON object to
-     * @param json the JSON object to send
+     * @param json  the JSON object to send
      * @return the response from the server or null if no server is set
      */
     public IndexResponse sendJSON(String index, JSONObject json) throws IOException {
-        if((elasticSearchUrl != null) && (elasticSearchAPIKey != null)) {
+        if ((elasticSearchUrl != null) && (elasticSearchAPIKey != null)) {
             String docuri = json.getString("uri");
             json.remove("uri"); // remove the uri field (it is used as the id in the index
-            
+
             Reader input = new StringReader(json.toString());
             IndexRequest<JsonData> request = IndexRequest.of(i -> i
                     .index(index)
@@ -121,10 +126,10 @@ public class ElasticsearchConnexion {
     }
 
     public BulkResponse sendBulkJSON(String index, JSONArray json) throws IOException {
-        if((elasticSearchUrl != null) && (elasticSearchAPIKey != null)) {
+        if ((elasticSearchUrl != null) && (elasticSearchAPIKey != null)) {
             BulkRequest.Builder br = new BulkRequest.Builder();
 
-            for(int i = 0; i < json.length(); i++) {
+            for (int i = 0; i < json.length(); i++) {
                 JSONObject obj = json.getJSONObject(i);
                 String docuri = obj.getString("uri");
                 obj.remove("uri"); // remove the uri field (it is used as the id in the index)
@@ -132,9 +137,9 @@ public class ElasticsearchConnexion {
 
                 br.operations(op -> op
                         .index(idx -> idx
-                            .index(index)
-                            .id(docuri)
-                            .withJson(input)
+                                .index(index)
+                                .id(docuri)
+                                .withJson(input)
                         ));
             }
 
@@ -145,7 +150,7 @@ public class ElasticsearchConnexion {
     }
 
     public UpdateResponse<JsonData> sendUpdateJSON(String index, String id, JSONObject json) throws IOException {
-        if((elasticSearchUrl != null) && (elasticSearchAPIKey != null)) {
+        if ((elasticSearchUrl != null) && (elasticSearchAPIKey != null)) {
             Reader input = new StringReader(json.toString());
             UpdateRequest<JsonData, JsonData> request = (new UpdateRequest.Builder<JsonData, JsonData>()
                     .id(id)
@@ -160,7 +165,7 @@ public class ElasticsearchConnexion {
     }
 
     public DeleteResponse sendDelete(String index, String id) throws IOException {
-        if((elasticSearchUrl != null) && (elasticSearchAPIKey != null)) {
+        if ((elasticSearchUrl != null) && (elasticSearchAPIKey != null)) {
             DeleteRequest request = new DeleteRequest.Builder()
                     .index(index)
                     .id(id)

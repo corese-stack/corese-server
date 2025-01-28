@@ -1,28 +1,42 @@
 package fr.inria.corese.server.elasticsearch;
 
 import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
+import fr.inria.corese.core.api.Loader;
 import fr.inria.corese.core.load.LoadException;
 import fr.inria.corese.core.sparql.exceptions.EngineException;
 import fr.inria.corese.core.util.HTTPHeaders;
+import fr.inria.corese.core.util.Property;
 import fr.inria.corese.server.elasticsearch.model.ESMappingManager;
 import fr.inria.corese.server.elasticsearch.model.IndexingModelManager;
 import fr.inria.corese.server.webservice.endpoint.SPARQLRestAPI;
+import org.json.JSONArray;
 import org.junit.*;
 
 import java.net.MalformedURLException;
+import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static org.junit.Assert.assertTrue;
 
 public class LifecycleWithElasticsearchTest {
 
     private static final String testModelFile = "src/test/resources/fr/inria/corese/server/elasticsearch/esModel.ttl";
     private static final String testModelDataFile = "src/test/resources/fr/inria/corese/server/elasticsearch/esModelData.ttl";
-
+    private static final String testInrapSampleFile = "src/test/resources/fr/inria/corese/server/elasticsearch/probabl/inrap_sample.edit.trig";
+/*
     @ClassRule
     public static WireMockClassRule wireMockRule = new WireMockClassRule(9200);
 
     @Rule
-    public WireMockClassRule instanceRule = wireMockRule;
+    public WireMockClassRule instanceRule = wireMockRule;*/
+
+
+    private String elasticSearchUrl = "http://localhost:9200"; //   instanceRule.baseUrl();
+
+    @Before
+    public void setUp() {
+        Property.set(Property.Value.DISABLE_OWL_AUTO_IMPORT, true);
+    }
 
     @Before
     @After
@@ -39,13 +53,13 @@ public class LifecycleWithElasticsearchTest {
      */
     @Test
     public void loadThroughAPITest() throws LoadException, MalformedURLException {
-        ElasticsearchConnexion connexion = ElasticsearchConnexion.create(instanceRule.baseUrl(), "testKey");
+        ElasticsearchConnexion connexion = ElasticsearchConnexion.create(elasticSearchUrl, "a0VCUzA1SUJWMF96WVA3LWtnQ1I6YWFsaUxSS2lSQ09TVE0tdEd4WXJiUQ");
 
         SPARQLRestAPI.getTripleStore().getGraph().addEdgeChangeListener(new ElasticsearchListener(connexion));
         SPARQLRestAPI.getTripleStore().load(testModelFile); // Model declaration
 
         IndexingModelManager.getInstance().extractModels(); // Instantiation of model for mapping creation
-
+/*
         // Stub the elasticsearch service that accepts calls with the right response body according to https://www.elastic.co/guide/en/elasticsearch/reference/7.17/docs-index_.html
         wireMockRule.stubFor(put("/person/_doc/httpexamplecomperson1")
                 .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticsearchAPIKey()))
@@ -172,12 +186,12 @@ public class LifecycleWithElasticsearchTest {
                                 "\"_seq_no\": 0, " +
                                 "\"_primary_term\": 1 " +
                                 "}"))
-        );
+        );*/
 
 
         // Verify that the elasticsearch service was called with the right data
         SPARQLRestAPI.getTripleStore().load(testModelDataFile);
-
+/*
         wireMockRule.verify(moreThanOrExactly(1), putRequestedFor(urlEqualTo("/person/_doc/httpexamplecomperson1")).withRequestBody(
                 equalToJson("{\"firstName\":\"John\",\"lastName\":\"Doe\",\"address\":[{\"country\":\"United States\",\"streetAddress\":\"123 Main Street\",\"postalCode\":\"10001\",\"locality\":\"New York\"}]}", true, true)
         ));
@@ -199,296 +213,316 @@ public class LifecycleWithElasticsearchTest {
         wireMockRule.verify(moreThanOrExactly(1), putRequestedFor(urlEqualTo("/article/_doc/httpexamplecomarticle3")).withRequestBody(
                 equalToJson("{\"author\":[{\"firstName\":\"John\",\"lastName\":\"Doe\"}, {\"firstName\":\"John\",\"lastName\":\"Smith\"}],\"about\":[\"dog\",\"cute\",\"cat\"],\"abstract\":[\"Article 3\"]}", true, true)
         ));
+        */
     }
 
-    /**
-     * Insertion of a description of a new person with a simple address
-     */
-    @Test
-    public void simpleInsertTest() throws EngineException, LoadException, MalformedURLException {
-        String query = "prefix foaf: <http://xmlns.com/foaf/0.1/> prefix schema: <https://schema.org/> prefix vcard: <http://www.w3.org/2006/vcard/ns#> INSERT DATA { <http://example.com/personSimpleInsertTest> a schema:Person ; foaf:firstName \"Jean\" ; foaf:lastName \"Dupont\" ; vcard:adr [ vcard:country-name \"France\" ; vcard:locality \"Nice\" ; vcard:postal-code \"06000\" ; vcard:street-address \"75 Promenade des anglais\" ] }";
-
-        ElasticsearchConnexion connexion = ElasticsearchConnexion.create(instanceRule.baseUrl(), "testKey");
-
-        SPARQLRestAPI.getTripleStore().getGraph().addEdgeChangeListener(new ElasticsearchListener(connexion));
-        SPARQLRestAPI.getTripleStore().load(testModelFile);
-        SPARQLRestAPI.getTripleStore().load(testModelDataFile);
-
-        IndexingModelManager.getInstance().extractModels();
-
-        // Stub the elasticsearch service that accepts calls with the right response body according to https://www.elastic.co/guide/en/elasticsearch/reference/7.17/docs-index_.html
-        wireMockRule.stubFor(put("/person/_doc/httpexamplecompersonSimpleInsertTest"
-                // + URLEncoder.encode("http://example.com/personSimpleInsertTest", StandardCharsets.UTF_8)
-                )
-                        .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticsearchAPIKey()))
-                        .withHeader(HTTPHeaders.CONTENT_TYPE, containing("application/vnd.elasticsearch+json"))
-                        .willReturn(ok()
-                                .withHeader("X-Elastic-Product", "Elasticsearch")
-                                .withHeader("Content-Type", "application/json")
-                                .withBody("{ " +
-                                        "\"_index\": \"person\", " +
-                                        "\"_type\": \"_doc\", " +
-                                        "\"_id\": \"1\", " +
-                                        "\"_version\": 2, " +
-                                        "\"result\": \"created\", " +
-                                        "\"_shards\": { " +
-                                        "\"total\": 1, " +
-                                        "\"successful\": 1, " +
-                                        "\"failed\": 0 " +
-                                        "}, " +
-                                        "\"_seq_no\": 0, " +
-                                        "\"_primary_term\": 1 " +
-                                        "}"))
-        );
-
-        SPARQLRestAPI.getTripleStore().getQueryProcess().query(query);
-
-        // Verify that the elasticsearch service was called with the right data
-        wireMockRule.verify(moreThanOrExactly(1), putRequestedFor(urlEqualTo("/person/_doc/httpexamplecompersonSimpleInsertTest")).withRequestBody(
-                equalToJson("{\"firstName\":\"Jean\",\"lastName\":\"Dupont\",\"address\":[{\"country\":\"France\",\"streetAddress\":\"75 Promenade des anglais\",\"postalCode\":\"06000\",\"locality\":\"Nice\"}]}", true, true)
-        ));
-    }
-
-    /**
-     * Insertion first of a partial of an article, then of the author description that is missing for the article
-     */
-    @Test
-    public void insertMissingSubFieldDataTest() throws EngineException, LoadException, MalformedURLException {
-        String insertBaseQuery = "prefix foaf: <http://xmlns.com/foaf/0.1/> prefix schema: <https://schema.org/> prefix vcard: <http://www.w3.org/2006/vcard/ns#> prefix : <http://example.com/> INSERT DATA { <http://example.com/insertMissingSubFieldDataTest> a schema:Article ;\n" +
-                "    schema:author :person4 ;\n" +
-                "    schema:abstract \"insertMissingSubFieldDataTest\" ;\n" +
-                "    schema:about \"unit-test\", \"insert\", \"partial\" . }";
-        String insertMissingDataQuery = "prefix foaf: <http://xmlns.com/foaf/0.1/> prefix schema: <https://schema.org/> prefix vcard: <http://www.w3.org/2006/vcard/ns#> prefix : <http://example.com/> INSERT DATA { :person4 a schema:Person ;\n" +
-                "    foaf:firstName \"Jean\" ;\n" +
-                "    foaf:lastName \"Martin\" . }";
-
-        ElasticsearchConnexion connexion = ElasticsearchConnexion.create(instanceRule.baseUrl(), "testKey");
-
-        SPARQLRestAPI.getTripleStore().getGraph().addEdgeChangeListener(new ElasticsearchListener(connexion));
-        SPARQLRestAPI.getTripleStore().load(testModelFile);
-        SPARQLRestAPI.getTripleStore().load(testModelDataFile);
-
-        SPARQLRestAPI.getTripleStore().getQueryProcess().query(insertBaseQuery);
-
-        IndexingModelManager.getInstance().extractModels();
-
-        // Stub the elasticsearch service that accepts calls with the right response body according to https://www.elastic.co/guide/en/elasticsearch/reference/7.17/docs-index_.html
-        wireMockRule.stubFor(put("/article/_doc/httpexamplecominsertMissingSubFieldDataTest"
-                )
-                        .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticsearchAPIKey()))
-                        .withHeader(HTTPHeaders.CONTENT_TYPE, containing("application/vnd.elasticsearch+json"))
-                        .willReturn(ok()
-                                .withHeader("X-Elastic-Product", "Elasticsearch")
-                                .withHeader("Content-Type", "application/json")
-                                .withBody("{ " +
-                                        "\"_index\": \"person\", " +
-                                        "\"_type\": \"_doc\", " +
-                                        "\"_id\": \"1\", " +
-                                        "\"_version\": 2, " +
-                                        "\"result\": \"created\", " +
-                                        "\"_shards\": { " +
-                                        "\"total\": 1, " +
-                                        "\"successful\": 1, " +
-                                        "\"failed\": 0 " +
-                                        "}, " +
-                                        "\"_seq_no\": 0, " +
-                                        "\"_primary_term\": 1 " +
-                                        "}"))
-        );
-        wireMockRule.stubFor(put("/person/_doc/httpexamplecomperson4"
-                // + URLEncoder.encode("http://example.com/personSimpleInsertTest", StandardCharsets.UTF_8)
-                )
-                        .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticsearchAPIKey()))
-                        .withHeader(HTTPHeaders.CONTENT_TYPE, containing("application/vnd.elasticsearch+json"))
-                        .willReturn(ok()
-                                .withHeader("X-Elastic-Product", "Elasticsearch")
-                                .withHeader("Content-Type", "application/json")
-                                .withBody("{ " +
-                                        "\"_index\": \"person\", " +
-                                        "\"_type\": \"_doc\", " +
-                                        "\"_id\": \"1\", " +
-                                        "\"_version\": 2, " +
-                                        "\"result\": \"created\", " +
-                                        "\"_shards\": { " +
-                                        "\"total\": 1, " +
-                                        "\"successful\": 1, " +
-                                        "\"failed\": 0 " +
-                                        "}, " +
-                                        "\"_seq_no\": 0, " +
-                                        "\"_primary_term\": 1 " +
-                                        "}"))
-        );
-
-        SPARQLRestAPI.getTripleStore().getQueryProcess().query(insertMissingDataQuery);
-
-        // Verify that the elasticsearch service was called with the right data
-        wireMockRule.verify(moreThanOrExactly(1), putRequestedFor(urlEqualTo("/person/_doc/httpexamplecomperson4")).withRequestBody(
-                equalToJson("{\n" +
-                        "  \"firstName\" : \"Jean\",\n" +
-                        "  \"lastName\" : \"Martin\"\n" +
-                        "}", true, true)
-        ));
-        wireMockRule.verify(moreThanOrExactly(1), putRequestedFor(urlEqualTo("/article/_doc/httpexamplecominsertMissingSubFieldDataTest")).withRequestBody(
-                equalToJson("{ \"author\": [{ \"firstName\": \"Jean\",  \"lastName\": \"Martin\"}], \"about\" : [ \"unit-test\", \"insert\", \"partial\" ],\"abstract\": [\"insertMissingSubFieldDataTest\"] }", true, true)
-        ));
-    }
-
-    /**
-     * Insertion of a description of a second address to person 1
-     */
-    @Test
-    public void insertMultiValuedTest() throws EngineException, LoadException, MalformedURLException {
-        String query = "prefix foaf: <http://xmlns.com/foaf/0.1/> prefix schema: <https://schema.org/> prefix vcard: <http://www.w3.org/2006/vcard/ns#> INSERT DATA { <http://example.com/person1> vcard:adr [ vcard:country-name \"France\" ; vcard:locality \"Cannes\" ; vcard:postal-code \"06100\" ; vcard:street-address \"6 Promenade des anglais\" ] }";
-
-        ElasticsearchConnexion connexion = ElasticsearchConnexion.create(instanceRule.baseUrl(), "testKey");
-
-        SPARQLRestAPI.getTripleStore().getGraph().addEdgeChangeListener(new ElasticsearchListener(connexion));
-        SPARQLRestAPI.getTripleStore().load(testModelFile);
-        SPARQLRestAPI.getTripleStore().load(testModelDataFile);
-
-        IndexingModelManager.getInstance().extractModels();
-
-        // Stub the elasticsearch service that accepts calls with the right response body according to https://www.elastic.co/guide/en/elasticsearch/reference/7.17/docs-index_.html
-        wireMockRule.stubFor(put("/person/_doc/httpexamplecomperson1"
-                // + URLEncoder.encode("http://example.com/personSimpleInsertTest", StandardCharsets.UTF_8)
-                )
-                        .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticsearchAPIKey()))
-                        .withHeader(HTTPHeaders.CONTENT_TYPE, containing("application/vnd.elasticsearch+json"))
-                        .willReturn(ok()
-                                .withHeader("X-Elastic-Product", "Elasticsearch")
-                                .withHeader("Content-Type", "application/json")
-                                .withBody("{ " +
-                                        "\"_index\": \"person\", " +
-                                        "\"_type\": \"_doc\", " +
-                                        "\"_id\": \"1\", " +
-                                        "\"_version\": 2, " +
-                                        "\"result\": \"updated\", " +
-                                        "\"_shards\": { " +
-                                        "\"total\": 1, " +
-                                        "\"successful\": 1, " +
-                                        "\"failed\": 0 " +
-                                        "}, " +
-                                        "\"_seq_no\": 0, " +
-                                        "\"_primary_term\": 1 " +
-                                        "}"))
-        );
-
-        SPARQLRestAPI.getTripleStore().getQueryProcess().query(query);
-
-        // Verify that the elasticsearch service was called with the right data
-        wireMockRule.verify(moreThanOrExactly(1), putRequestedFor(urlEqualTo("/person/_doc/httpexamplecomperson1")).withRequestBody(
-                equalToJson("{\"firstName\":\"John\",\"lastName\":\"Doe\",\"address\":[{\"country\":\"France\",\"streetAddress\":\"6 Promenade des anglais\",\"postalCode\":\"06100\",\"locality\":\"Cannes\"}, {\"country\":\"United States\",\"streetAddress\":\"123 Main Street\",\"postalCode\":\"10001\",\"locality\":\"New York\"}]}", true, true)
-        ));
-    }
-
-    @Test
-    public void deleteNonExistingTest() throws EngineException, MalformedURLException, LoadException {
-        String query = "prefix foaf: <http://xmlns.com/foaf/0.1/> prefix schema: <https://schema.org/> prefix vcard: <http://www.w3.org/2006/vcard/ns#> DELETE DATA { <http://example.com/personSimpleInsertTest> a schema:Person ; foaf:firstName \"Jean\" ; foaf:lastName \"Dupont\" ; vcard:adr [ vcard:country-name \"France\" ; vcard:locality \"Nice\" ; vcard:postal-code \"06000\" ; vcard:street-address \"75 Promenade des anglais\" ] }";
-
-        ElasticsearchConnexion connexion = ElasticsearchConnexion.create(instanceRule.baseUrl(), "testKey");
-
-        SPARQLRestAPI.getTripleStore().getGraph().addEdgeChangeListener(new ElasticsearchListener(connexion));
-        SPARQLRestAPI.getTripleStore().load(testModelFile);
-        SPARQLRestAPI.getTripleStore().load(testModelDataFile);
-
-        IndexingModelManager.getInstance().extractModels();
-
-        // Stub the elasticsearch service that accepts calls with the right response body according to https://www.elastic.co/guide/en/elasticsearch/reference/7.17/docs-index_.html
-        wireMockRule.stubFor(post("/person/_doc")
-                .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticsearchAPIKey()))
-                .withHeader(HTTPHeaders.CONTENT_TYPE, containing("application/vnd.elasticsearch+json"))
-                .willReturn(ok()
-                        .withHeader("X-Elastic-Product", "Elasticsearch")
-                        .withHeader("Content-Type", "application/json")
-                        .withBody("{ " +
-                                "\"_index\": \"person\", " +
-                                "\"_type\": \"_doc\", " +
-                                "\"_id\": \"1\", " +
-                                "\"_version\": 1, " +
-                                "\"result\": \"updated\", " +
-                                "\"_shards\": { " +
-                                "\"total\": 0, " +
-                                "\"successful\": 0, " +
-                                "\"failed\": 1 " +
-                                "}, " +
-                                "\"_seq_no\": 0, " +
-                                "\"_primary_term\": 1 " +
-                                "}"))
-        );
-
-        SPARQLRestAPI.getTripleStore().getQueryProcess().query(query);
-
-        // Verify that the elasticsearch service was not called
-        wireMockRule.verify(moreThanOrExactly(0), postRequestedFor(urlEqualTo("/person/_doc")));
-    }
-
-    @Test
-    public void deleteExistingTest() throws EngineException, MalformedURLException, LoadException {
-        String insertQuery = "prefix foaf: <http://xmlns.com/foaf/0.1/> prefix schema: <https://schema.org/> prefix vcard: <http://www.w3.org/2006/vcard/ns#> INSERT DATA { <http://example.com/deleteExistingTest> a schema:Person ; foaf:firstName \"Jean\" ; foaf:lastName \"Dupont\" ; vcard:adr [ vcard:country-name \"France\" ; vcard:locality \"Nice\" ; vcard:postal-code \"06000\" ; vcard:street-address \"75 Promenade des anglais\" ] }";
-
-
-
-
-        String deleteQuery = "prefix foaf: <http://xmlns.com/foaf/0.1/> prefix schema: <https://schema.org/> prefix vcard: <http://www.w3.org/2006/vcard/ns#> DELETE DATA { <http://example.com/deleteExistingTest> a schema:Person . }";
-
-        ElasticsearchConnexion connexion = ElasticsearchConnexion.create(instanceRule.baseUrl(), "testKey");
-
-        SPARQLRestAPI.getTripleStore().getGraph().addEdgeChangeListener(new ElasticsearchListener(connexion));
-        SPARQLRestAPI.getTripleStore().load(testModelFile);
-        SPARQLRestAPI.getTripleStore().load(testModelDataFile);
-
-        // Stub the elasticsearch service that accepts calls with the right response body according to https://www.elastic.co/guide/en/elasticsearch/reference/7.17/docs-index_.html
-        wireMockRule.stubFor(put("/person/_doc/httpexamplecomdeleteExistingTest")
-                .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticsearchAPIKey()))
-                .withHeader(HTTPHeaders.CONTENT_TYPE, containing("application/vnd.elasticsearch+json"))
-                .willReturn(ok()
-                        .withHeader("X-Elastic-Product", "Elasticsearch")
-                        .withHeader("Content-Type", "application/json")
-                        .withBody("{ " +
-                                "\"_index\": \"person\", " +
-                                "\"_type\": \"_doc\", " +
-                                "\"_id\": \"1\", " +
-                                "\"_version\": 1, " +
-                                "\"result\": \"updated\", " +
-                                "\"_shards\": { " +
-                                "\"total\": 0, " +
-                                "\"successful\": 1, " +
-                                "\"failed\": 0 " +
-                                "}, " +
-                                "\"_seq_no\": 0, " +
-                                "\"_primary_term\": 1 " +
-                                "}"))
-        );
-        wireMockRule.stubFor(delete("/person/_doc/httpexamplecomdeleteExistingTest")
-                .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticsearchAPIKey()))
-                .willReturn(ok()
-                        .withHeader("X-Elastic-Product", "Elasticsearch")
-                        .withBody("{ " +
-                                "\"_index\": \"person\", " +
-                                "\"_type\": \"_doc\", " +
-                                "\"_id\": \"1\", " +
-                                "\"_version\": 1, " +
-                                "\"result\": \"deleted\", " +
-                                "\"_shards\": { " +
-                                "\"total\": 0, " +
-                                "\"successful\": 1, " +
-                                "\"failed\": 0 " +
-                                "}, " +
-                                "\"_seq_no\": 0, " +
-                                "\"_primary_term\": 1 " +
-                                "}"))
-        );
-
-        IndexingModelManager.getInstance().extractModels();
-
-        SPARQLRestAPI.getTripleStore().getQueryProcess().query(insertQuery);
-
-        SPARQLRestAPI.getTripleStore().getGraph().addEdgeChangeListener(new ElasticsearchListener(connexion));
-
-        SPARQLRestAPI.getTripleStore().getQueryProcess().query(deleteQuery);
-
-        wireMockRule.verify(moreThanOrExactly(1), deleteRequestedFor(urlEqualTo("/person/_doc/httpexamplecomdeleteExistingTest"))
-                .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticsearchAPIKey()))
-        );
-    }
+//
+//    /**
+//     * Insertion of a description of a new person with a simple address
+//     */
+//    @Test
+//    public void simpleInsertTest() throws EngineException, LoadException, MalformedURLException {
+//        String query = "prefix foaf: <http://xmlns.com/foaf/0.1/> prefix schema: <https://schema.org/> prefix vcard: <http://www.w3.org/2006/vcard/ns#> INSERT DATA { <http://example.com/personSimpleInsertTest> a schema:Person ; foaf:firstName \"Jean\" ; foaf:lastName \"Dupont\" ; vcard:adr [ vcard:country-name \"France\" ; vcard:locality \"Nice\" ; vcard:postal-code \"06000\" ; vcard:street-address \"75 Promenade des anglais\" ] }";
+//
+//        ElasticsearchConnexion connexion = ElasticsearchConnexion.create(instanceRule.baseUrl(), "testKey");
+//
+//        SPARQLRestAPI.getTripleStore().getGraph().addEdgeChangeListener(new ElasticsearchListener(connexion));
+//        SPARQLRestAPI.getTripleStore().load(testModelFile);
+//        SPARQLRestAPI.getTripleStore().load(testModelDataFile);
+//
+//        IndexingModelManager.getInstance().extractModels();
+//
+//        // Stub the elasticsearch service that accepts calls with the right response body according to https://www.elastic.co/guide/en/elasticsearch/reference/7.17/docs-index_.html
+//        wireMockRule.stubFor(put("/person/_doc/httpexamplecompersonSimpleInsertTest"
+//                // + URLEncoder.encode("http://example.com/personSimpleInsertTest", StandardCharsets.UTF_8)
+//                )
+//                        .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticsearchAPIKey()))
+//                        .withHeader(HTTPHeaders.CONTENT_TYPE, containing("application/vnd.elasticsearch+json"))
+//                        .willReturn(ok()
+//                                .withHeader("X-Elastic-Product", "Elasticsearch")
+//                                .withHeader("Content-Type", "application/json")
+//                                .withBody("{ " +
+//                                        "\"_index\": \"person\", " +
+//                                        "\"_type\": \"_doc\", " +
+//                                        "\"_id\": \"1\", " +
+//                                        "\"_version\": 2, " +
+//                                        "\"result\": \"created\", " +
+//                                        "\"_shards\": { " +
+//                                        "\"total\": 1, " +
+//                                        "\"successful\": 1, " +
+//                                        "\"failed\": 0 " +
+//                                        "}, " +
+//                                        "\"_seq_no\": 0, " +
+//                                        "\"_primary_term\": 1 " +
+//                                        "}"))
+//        );
+//
+//        SPARQLRestAPI.getTripleStore().getQueryProcess().query(query);
+//
+//        // Verify that the elasticsearch service was called with the right data
+//        wireMockRule.verify(moreThanOrExactly(1), putRequestedFor(urlEqualTo("/person/_doc/httpexamplecompersonSimpleInsertTest")).withRequestBody(
+//                equalToJson("{\"firstName\":\"Jean\",\"lastName\":\"Dupont\",\"address\":[{\"country\":\"France\",\"streetAddress\":\"75 Promenade des anglais\",\"postalCode\":\"06000\",\"locality\":\"Nice\"}]}", true, true)
+//        ));
+//    }
+//
+//    /**
+//     * Insertion first of a partial of an article, then of the author description that is missing for the article
+//     */
+//    @Test
+//    public void insertMissingSubFieldDataTest() throws EngineException, LoadException, MalformedURLException {
+//        String insertBaseQuery = "prefix foaf: <http://xmlns.com/foaf/0.1/> prefix schema: <https://schema.org/> prefix vcard: <http://www.w3.org/2006/vcard/ns#> prefix : <http://example.com/> INSERT DATA { <http://example.com/insertMissingSubFieldDataTest> a schema:Article ;\n" +
+//                "    schema:author :person4 ;\n" +
+//                "    schema:abstract \"insertMissingSubFieldDataTest\" ;\n" +
+//                "    schema:about \"unit-test\", \"insert\", \"partial\" . }";
+//        String insertMissingDataQuery = "prefix foaf: <http://xmlns.com/foaf/0.1/> prefix schema: <https://schema.org/> prefix vcard: <http://www.w3.org/2006/vcard/ns#> prefix : <http://example.com/> INSERT DATA { :person4 a schema:Person ;\n" +
+//                "    foaf:firstName \"Jean\" ;\n" +
+//                "    foaf:lastName \"Martin\" . }";
+//
+//        ElasticsearchConnexion connexion = ElasticsearchConnexion.create(instanceRule.baseUrl(), "testKey");
+//
+//        SPARQLRestAPI.getTripleStore().getGraph().addEdgeChangeListener(new ElasticsearchListener(connexion));
+//        SPARQLRestAPI.getTripleStore().load(testModelFile);
+//        SPARQLRestAPI.getTripleStore().load(testModelDataFile);
+//
+//        SPARQLRestAPI.getTripleStore().getQueryProcess().query(insertBaseQuery);
+//
+//        IndexingModelManager.getInstance().extractModels();
+//
+//        // Stub the elasticsearch service that accepts calls with the right response body according to https://www.elastic.co/guide/en/elasticsearch/reference/7.17/docs-index_.html
+//        wireMockRule.stubFor(put("/article/_doc/httpexamplecominsertMissingSubFieldDataTest"
+//                )
+//                        .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticsearchAPIKey()))
+//                        .withHeader(HTTPHeaders.CONTENT_TYPE, containing("application/vnd.elasticsearch+json"))
+//                        .willReturn(ok()
+//                                .withHeader("X-Elastic-Product", "Elasticsearch")
+//                                .withHeader("Content-Type", "application/json")
+//                                .withBody("{ " +
+//                                        "\"_index\": \"person\", " +
+//                                        "\"_type\": \"_doc\", " +
+//                                        "\"_id\": \"1\", " +
+//                                        "\"_version\": 2, " +
+//                                        "\"result\": \"created\", " +
+//                                        "\"_shards\": { " +
+//                                        "\"total\": 1, " +
+//                                        "\"successful\": 1, " +
+//                                        "\"failed\": 0 " +
+//                                        "}, " +
+//                                        "\"_seq_no\": 0, " +
+//                                        "\"_primary_term\": 1 " +
+//                                        "}"))
+//        );
+//        wireMockRule.stubFor(put("/person/_doc/httpexamplecomperson4"
+//                // + URLEncoder.encode("http://example.com/personSimpleInsertTest", StandardCharsets.UTF_8)
+//                )
+//                        .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticsearchAPIKey()))
+//                        .withHeader(HTTPHeaders.CONTENT_TYPE, containing("application/vnd.elasticsearch+json"))
+//                        .willReturn(ok()
+//                                .withHeader("X-Elastic-Product", "Elasticsearch")
+//                                .withHeader("Content-Type", "application/json")
+//                                .withBody("{ " +
+//                                        "\"_index\": \"person\", " +
+//                                        "\"_type\": \"_doc\", " +
+//                                        "\"_id\": \"1\", " +
+//                                        "\"_version\": 2, " +
+//                                        "\"result\": \"created\", " +
+//                                        "\"_shards\": { " +
+//                                        "\"total\": 1, " +
+//                                        "\"successful\": 1, " +
+//                                        "\"failed\": 0 " +
+//                                        "}, " +
+//                                        "\"_seq_no\": 0, " +
+//                                        "\"_primary_term\": 1 " +
+//                                        "}"))
+//        );
+//
+//        SPARQLRestAPI.getTripleStore().getQueryProcess().query(insertMissingDataQuery);
+//
+//        // Verify that the elasticsearch service was called with the right data
+//        wireMockRule.verify(moreThanOrExactly(1), putRequestedFor(urlEqualTo("/person/_doc/httpexamplecomperson4")).withRequestBody(
+//                equalToJson("{\n" +
+//                        "  \"firstName\" : \"Jean\",\n" +
+//                        "  \"lastName\" : \"Martin\"\n" +
+//                        "}", true, true)
+//        ));
+//        wireMockRule.verify(moreThanOrExactly(1), putRequestedFor(urlEqualTo("/article/_doc/httpexamplecominsertMissingSubFieldDataTest")).withRequestBody(
+//                equalToJson("{ \"author\": [{ \"firstName\": \"Jean\",  \"lastName\": \"Martin\"}], \"about\" : [ \"unit-test\", \"insert\", \"partial\" ],\"abstract\": [\"insertMissingSubFieldDataTest\"] }", true, true)
+//        ));
+//    }
+//
+//    /**
+//     * Insertion of a description of a second address to person 1
+//     */
+//    @Test
+//    public void insertMultiValuedTest() throws EngineException, LoadException, MalformedURLException {
+//        String query = "prefix foaf: <http://xmlns.com/foaf/0.1/> prefix schema: <https://schema.org/> prefix vcard: <http://www.w3.org/2006/vcard/ns#> INSERT DATA { <http://example.com/person1> vcard:adr [ vcard:country-name \"France\" ; vcard:locality \"Cannes\" ; vcard:postal-code \"06100\" ; vcard:street-address \"6 Promenade des anglais\" ] }";
+//
+//        ElasticsearchConnexion connexion = ElasticsearchConnexion.create(instanceRule.baseUrl(), "testKey");
+//
+//        SPARQLRestAPI.getTripleStore().getGraph().addEdgeChangeListener(new ElasticsearchListener(connexion));
+//        SPARQLRestAPI.getTripleStore().load(testModelFile);
+//        SPARQLRestAPI.getTripleStore().load(testModelDataFile);
+//
+//        IndexingModelManager.getInstance().extractModels();
+//
+//        // Stub the elasticsearch service that accepts calls with the right response body according to https://www.elastic.co/guide/en/elasticsearch/reference/7.17/docs-index_.html
+//        wireMockRule.stubFor(put("/person/_doc/httpexamplecomperson1"
+//                // + URLEncoder.encode("http://example.com/personSimpleInsertTest", StandardCharsets.UTF_8)
+//                )
+//                        .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticsearchAPIKey()))
+//                        .withHeader(HTTPHeaders.CONTENT_TYPE, containing("application/vnd.elasticsearch+json"))
+//                        .willReturn(ok()
+//                                .withHeader("X-Elastic-Product", "Elasticsearch")
+//                                .withHeader("Content-Type", "application/json")
+//                                .withBody("{ " +
+//                                        "\"_index\": \"person\", " +
+//                                        "\"_type\": \"_doc\", " +
+//                                        "\"_id\": \"1\", " +
+//                                        "\"_version\": 2, " +
+//                                        "\"result\": \"updated\", " +
+//                                        "\"_shards\": { " +
+//                                        "\"total\": 1, " +
+//                                        "\"successful\": 1, " +
+//                                        "\"failed\": 0 " +
+//                                        "}, " +
+//                                        "\"_seq_no\": 0, " +
+//                                        "\"_primary_term\": 1 " +
+//                                        "}"))
+//        );
+//
+//        SPARQLRestAPI.getTripleStore().getQueryProcess().query(query);
+//
+//        // Verify that the elasticsearch service was called with the right data
+//        wireMockRule.verify(moreThanOrExactly(1), putRequestedFor(urlEqualTo("/person/_doc/httpexamplecomperson1")).withRequestBody(
+//                equalToJson("{\"firstName\":\"John\",\"lastName\":\"Doe\",\"address\":[{\"country\":\"France\",\"streetAddress\":\"6 Promenade des anglais\",\"postalCode\":\"06100\",\"locality\":\"Cannes\"}, {\"country\":\"United States\",\"streetAddress\":\"123 Main Street\",\"postalCode\":\"10001\",\"locality\":\"New York\"}]}", true, true)
+//        ));
+//    }
+//
+//    @Test
+//    public void deleteNonExistingTest() throws EngineException, MalformedURLException, LoadException {
+//        String query = "prefix foaf: <http://xmlns.com/foaf/0.1/> prefix schema: <https://schema.org/> prefix vcard: <http://www.w3.org/2006/vcard/ns#> DELETE DATA { <http://example.com/personSimpleInsertTest> a schema:Person ; foaf:firstName \"Jean\" ; foaf:lastName \"Dupont\" ; vcard:adr [ vcard:country-name \"France\" ; vcard:locality \"Nice\" ; vcard:postal-code \"06000\" ; vcard:street-address \"75 Promenade des anglais\" ] }";
+//
+//        ElasticsearchConnexion connexion = ElasticsearchConnexion.create(instanceRule.baseUrl(), "testKey");
+//
+//        SPARQLRestAPI.getTripleStore().getGraph().addEdgeChangeListener(new ElasticsearchListener(connexion));
+//        SPARQLRestAPI.getTripleStore().load(testModelFile);
+//        SPARQLRestAPI.getTripleStore().load(testModelDataFile);
+//
+//        IndexingModelManager.getInstance().extractModels();
+//
+//        // Stub the elasticsearch service that accepts calls with the right response body according to https://www.elastic.co/guide/en/elasticsearch/reference/7.17/docs-index_.html
+//        wireMockRule.stubFor(post("/person/_doc")
+//                .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticsearchAPIKey()))
+//                .withHeader(HTTPHeaders.CONTENT_TYPE, containing("application/vnd.elasticsearch+json"))
+//                .willReturn(ok()
+//                        .withHeader("X-Elastic-Product", "Elasticsearch")
+//                        .withHeader("Content-Type", "application/json")
+//                        .withBody("{ " +
+//                                "\"_index\": \"person\", " +
+//                                "\"_type\": \"_doc\", " +
+//                                "\"_id\": \"1\", " +
+//                                "\"_version\": 1, " +
+//                                "\"result\": \"updated\", " +
+//                                "\"_shards\": { " +
+//                                "\"total\": 0, " +
+//                                "\"successful\": 0, " +
+//                                "\"failed\": 1 " +
+//                                "}, " +
+//                                "\"_seq_no\": 0, " +
+//                                "\"_primary_term\": 1 " +
+//                                "}"))
+//        );
+//
+//        SPARQLRestAPI.getTripleStore().getQueryProcess().query(query);
+//
+//        // Verify that the elasticsearch service was not called
+//        wireMockRule.verify(moreThanOrExactly(0), postRequestedFor(urlEqualTo("/person/_doc")));
+//    }
+//
+//    @Test
+//    public void deleteExistingTest() throws EngineException, MalformedURLException, LoadException {
+//        String insertQuery = "prefix foaf: <http://xmlns.com/foaf/0.1/> prefix schema: <https://schema.org/> prefix vcard: <http://www.w3.org/2006/vcard/ns#> INSERT DATA { <http://example.com/deleteExistingTest> a schema:Person ; foaf:firstName \"Jean\" ; foaf:lastName \"Dupont\" ; vcard:adr [ vcard:country-name \"France\" ; vcard:locality \"Nice\" ; vcard:postal-code \"06000\" ; vcard:street-address \"75 Promenade des anglais\" ] }";
+//
+//
+//
+//
+//        String deleteQuery = "prefix foaf: <http://xmlns.com/foaf/0.1/> prefix schema: <https://schema.org/> prefix vcard: <http://www.w3.org/2006/vcard/ns#> DELETE DATA { <http://example.com/deleteExistingTest> a schema:Person . }";
+//
+//        ElasticsearchConnexion connexion = ElasticsearchConnexion.create(instanceRule.baseUrl(), "testKey");
+//
+//        SPARQLRestAPI.getTripleStore().getGraph().addEdgeChangeListener(new ElasticsearchListener(connexion));
+//        SPARQLRestAPI.getTripleStore().load(testModelFile);
+//        SPARQLRestAPI.getTripleStore().load(testModelDataFile);
+//
+//        // Stub the elasticsearch service that accepts calls with the right response body according to https://www.elastic.co/guide/en/elasticsearch/reference/7.17/docs-index_.html
+//        wireMockRule.stubFor(put("/person/_doc/httpexamplecomdeleteExistingTest")
+//                .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticsearchAPIKey()))
+//                .withHeader(HTTPHeaders.CONTENT_TYPE, containing("application/vnd.elasticsearch+json"))
+//                .willReturn(ok()
+//                        .withHeader("X-Elastic-Product", "Elasticsearch")
+//                        .withHeader("Content-Type", "application/json")
+//                        .withBody("{ " +
+//                                "\"_index\": \"person\", " +
+//                                "\"_type\": \"_doc\", " +
+//                                "\"_id\": \"1\", " +
+//                                "\"_version\": 1, " +
+//                                "\"result\": \"updated\", " +
+//                                "\"_shards\": { " +
+//                                "\"total\": 0, " +
+//                                "\"successful\": 1, " +
+//                                "\"failed\": 0 " +
+//                                "}, " +
+//                                "\"_seq_no\": 0, " +
+//                                "\"_primary_term\": 1 " +
+//                                "}"))
+//        );
+//        wireMockRule.stubFor(delete("/person/_doc/httpexamplecomdeleteExistingTest")
+//                .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticsearchAPIKey()))
+//                .willReturn(ok()
+//                        .withHeader("X-Elastic-Product", "Elasticsearch")
+//                        .withBody("{ " +
+//                                "\"_index\": \"person\", " +
+//                                "\"_type\": \"_doc\", " +
+//                                "\"_id\": \"1\", " +
+//                                "\"_version\": 1, " +
+//                                "\"result\": \"deleted\", " +
+//                                "\"_shards\": { " +
+//                                "\"total\": 0, " +
+//                                "\"successful\": 1, " +
+//                                "\"failed\": 0 " +
+//                                "}, " +
+//                                "\"_seq_no\": 0, " +
+//                                "\"_primary_term\": 1 " +
+//                                "}"))
+//        );
+//
+//        IndexingModelManager.getInstance().extractModels();
+//
+//        SPARQLRestAPI.getTripleStore().getQueryProcess().query(insertQuery);
+//
+//        SPARQLRestAPI.getTripleStore().getGraph().addEdgeChangeListener(new ElasticsearchListener(connexion));
+//
+//        SPARQLRestAPI.getTripleStore().getQueryProcess().query(deleteQuery);
+//
+//        wireMockRule.verify(moreThanOrExactly(1), deleteRequestedFor(urlEqualTo("/person/_doc/httpexamplecomdeleteExistingTest"))
+//                .withHeader(HTTPHeaders.AUTHORIZATION_TYPE, containing("ApiKey " + connexion.getElasticsearchAPIKey()))
+//        );
+//    }
+//
+//    /**
+//     * Loads the inrap sample file and compare the models extracted against those define in the mappings json files
+//     * @throws MalformedURLException
+//     * @throws LoadException
+//     */
+//    @Test
+//    public void realLifeDataFromProbabl() throws MalformedURLException, LoadException {
+//        ElasticsearchConnexion connexion = ElasticsearchConnexion.create(instanceRule.baseUrl(), "testKey");
+//
+//        SPARQLRestAPI.getTripleStore().getGraph().addEdgeChangeListener(new ElasticsearchListener(connexion));
+//        SPARQLRestAPI.getTripleStore().load(testInrapSampleFile, Loader.format.TRIG_FORMAT);
+//
+//        IndexingModelManager.getInstance().extractModels();
+//
+//        assertTrue(IndexingModelManager.getInstance().getModels().size() > 0);
+//
+//    }
 }

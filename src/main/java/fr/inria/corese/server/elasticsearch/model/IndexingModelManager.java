@@ -51,7 +51,7 @@ public class IndexingModelManager {
     }
 
     /**
-     * Extracts models from the server into the class model map.
+     * Extracts the model associated to the given URI and put it into the class model map.
      */
     public void extractModels(String targetClassUri) {
         // Extract model fields from the server
