@@ -1,5 +1,6 @@
 package fr.inria.corese.server.webservice;
 
+import fr.inria.corese.core.api.Loader;
 import fr.inria.corese.core.sparql.exceptions.EngineException;
 import fr.inria.corese.core.sparql.triple.parser.Context;
 import fr.inria.corese.core.Graph;
@@ -113,7 +114,7 @@ public class SPIN {
                         + "    sp:predicate [sp:varName \"p\"] ;\n"
                         + "    sp:subject [sp:varName \"x\"]])] .";
             }
-            ld.loadString(query, Load.TURTLE_FORMAT);
+            ld.loadString(query, Loader.format.TURTLE_FORMAT);
 
             Context c = new Context().setTransform(Transformer.TOSPIN).setQueryString(query).setService(TOSPARQL_SERVICE);
             complete(c);

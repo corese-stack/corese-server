@@ -90,7 +90,7 @@ public class SPARQLResult implements ResultFormatDef, URLParam {
             List<String> uri, List<String> param, List<String> mode,
             String query, String access,
             List<String> defaut, List<String> named,
-            String format, int type, List<String> transform) {
+            String format, ResultFormatDef.format type, List<String> transform) {
 
         try {
             logger.info("Endpoint URL: " + getRequest().getRequestURL());
@@ -411,7 +411,7 @@ public class SPARQLResult implements ResultFormatDef, URLParam {
         }
     }
 
-    ResultFormat getFormat(Mappings map, Dataset ds, String format, int type, List<String> transformList) {
+    ResultFormat getFormat(Mappings map, Dataset ds, String format, ResultFormatDef.format type, List<String> transformList) {
         // predefined parameter associated to URL/mode in urlparameter.ttl
         transformList = selectTransformation(ds.getContext(), getValue(ds.getContext(), TRANSFORM, transformList));
         if (map.getQuery().isDebug()) {
@@ -431,7 +431,7 @@ public class SPARQLResult implements ResultFormatDef, URLParam {
      * document
      * b) otherwise transformation result
      */
-    ResultFormat getFormatTransform(Mappings map, Dataset ds, String format, int type, List<String> transformList) {
+    ResultFormat getFormatTransform(Mappings map, Dataset ds, String format, ResultFormatDef.format type, List<String> transformList) {
         logger.info("Transform: " + transformList);
 
         boolean link = ds.getContext().hasAnyValue(LINK, LINK_REST);
@@ -450,7 +450,7 @@ public class SPARQLResult implements ResultFormatDef, URLParam {
         } else {
             // return transform result
             // record std result in href document in case transform generate link href
-            int mytype = (type == ResultFormat.HTML_FORMAT) ? ResultFormat.UNDEF_FORMAT : type;
+            ResultFormatDef.format mytype = (type == ResultFormatDef.format.HTML_FORMAT) ? ResultFormatDef.format.UNDEF_FORMAT : type;
             std = getFormatSimple(map, ds, format, mytype);
         }
 
@@ -482,7 +482,7 @@ public class SPARQLResult implements ResultFormatDef, URLParam {
      * and return empty
      * Otherwise return result of (first) transformation
      */
-    Optional<ResultFormat> getFormatTransformList(Mappings map, Dataset ds, String format, int type,
+    Optional<ResultFormat> getFormatTransformList(Mappings map, Dataset ds, String format, ResultFormatDef.format type,
             List<String> transformList) {
         ResultFormat fst = null;
         Context c = ds.getContext();
@@ -548,9 +548,9 @@ public class SPARQLResult implements ResultFormatDef, URLParam {
         return null;
     }
 
-    ResultFormat getFormatTransform(Mappings map, Dataset ds, String format, int type, String transform) {
+    ResultFormat getFormatTransform(Mappings map, Dataset ds, String format, ResultFormatDef.format type, String transform) {
         ResultFormat ft;
-        if (type == UNDEF_FORMAT) {
+        if (type == ResultFormatDef.format.UNDEF_FORMAT) {
             ft = ResultFormat.create(map, format, transform).init(ds);
         } else {
             ft = ResultFormat.create(map, type, transform).init(ds);
@@ -562,8 +562,8 @@ public class SPARQLResult implements ResultFormatDef, URLParam {
         return ft;
     }
 
-    ResultFormat getFormatSimple(Mappings map, Dataset ds, String format, int type) {
-        if (type == UNDEF_FORMAT) {
+    ResultFormat getFormatSimple(Mappings map, Dataset ds, String format, ResultFormatDef.format type) {
+        if (type == ResultFormatDef.format.UNDEF_FORMAT) {
             return ResultFormat.create(map, format).init(ds);
         } else {
             return ResultFormat.create(map, type).init(ds);

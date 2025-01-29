@@ -1,7 +1,7 @@
 package fr.inria.corese.server.webservice;
 
 import static fr.inria.corese.core.print.ResultFormat.TURTLE_TEXT;
-import static fr.inria.corese.core.api.Loader.TURTLE_FORMAT;
+import static fr.inria.corese.core.api.Loader.format.TURTLE_FORMAT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -17,6 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import fr.inria.corese.core.sparql.api.ResultFormatDef;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
@@ -107,7 +108,7 @@ public class GraphStoreProtocolTest {
         Graph describeGraph = new Graph();
         Load load = Load.create(describeGraph);
         InputStream inputStream = new ByteArrayInputStream(content.toString().getBytes());
-        load.parse(inputStream, TURTLE_FORMAT);
+        load.parse(inputStream, Load.format.TURTLE_FORMAT);
 
         // FIXME: fix test
         // assertEquals(200, status);
@@ -141,7 +142,7 @@ public class GraphStoreProtocolTest {
         Graph describeGraph = new Graph();
         Load load = Load.create(describeGraph);
         InputStream inputStream = new ByteArrayInputStream(content.toString().getBytes());
-        load.parse(inputStream, TURTLE_FORMAT);
+        load.parse(inputStream, Load.format.TURTLE_FORMAT);
 
         // FIXME: fix test
         // assertEquals(200, status);
@@ -177,7 +178,7 @@ public class GraphStoreProtocolTest {
         Graph describeGraph = new Graph();
         Load load = Load.create(describeGraph);
         InputStream inputStream = new ByteArrayInputStream(content.toString().getBytes());
-        load.parse(inputStream, TURTLE_FORMAT);
+        load.parse(inputStream, Load.format.TURTLE_FORMAT);
 
         //FIXME: fix test
         // assertTrue(absenceTest);

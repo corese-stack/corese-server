@@ -56,7 +56,7 @@ repositories {
 }
 
 dependencies {
-    api("fr.inria.corese:corese-core:5.0.0-SNAPSHOT")
+    api("fr.inria.corese:corese-core:4.6.1")
     api("fr.inria.corese:corese-jena:5.0.0-SNAPSHOT")
     api("fr.inria.corese:corese-rdf4j:5.0.0-SNAPSHOT")
     api("javax.xml.bind:jaxb-api:2.3.1")

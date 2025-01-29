@@ -1,6 +1,6 @@
 package fr.inria.corese.server.webservice;
 
-import static fr.inria.corese.core.api.Loader.RDFXML_FORMAT;
+import static fr.inria.corese.core.api.Loader.format.RDFXML_FORMAT;
 import static fr.inria.corese.core.print.ResultFormat.RDF_XML;
 import static fr.inria.corese.core.print.ResultFormat.SPARQL_RESULTS_CSV;
 import static fr.inria.corese.core.print.ResultFormat.SPARQL_RESULTS_XML;
@@ -149,7 +149,7 @@ public class SPARQLTestUtils {
         Graph constructGraph = new Graph();
         Load load = Load.create(constructGraph);
         InputStream inputStream = new ByteArrayInputStream(content.toString().getBytes());
-        load.parse(inputStream, RDFXML_FORMAT);
+        load.parse(inputStream, Load.format.RDFXML_FORMAT);
 
         return constructGraph;
     }
