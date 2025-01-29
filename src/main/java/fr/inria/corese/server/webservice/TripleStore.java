@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 
+import fr.inria.corese.core.api.Loader;
 import org.slf4j.LoggerFactory;
 
 import fr.inria.corese.core.Graph;
@@ -151,23 +152,10 @@ public class TripleStore implements URLParam {
 
     }
 
-    // void load(String[] load) {
-    // Load ld = Load.create(graph);
-    // for (String f : load) {
-    // try {
-    // logger.info("Load: " + f);
-    // //ld.loadWE(f, f, Load.TURTLE_FORMAT);
-    // ld.parse(f, Load.TURTLE_FORMAT);
-    // } catch (LoadException ex) {
-    // logger.error(ex.getMessage());
-    // }
-    // }
-    // }
-
     void load(String path, String src) throws LoadException {
         Load ld = Load.create(getGraph());
         ld.setDataManager(getDataManager());
-        ld.parse(path, src, Load.TURTLE_FORMAT);
+        ld.parse(path, src, Loader.format.TURTLE_FORMAT);
     }
 
     /**

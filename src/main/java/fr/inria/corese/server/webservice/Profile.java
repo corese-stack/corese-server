@@ -1,5 +1,6 @@
 package fr.inria.corese.server.webservice;
 
+import fr.inria.corese.core.api.Loader;
 import fr.inria.corese.core.compiler.federate.FederateVisitor;
 import fr.inria.corese.core.sparql.api.IDatatype;
 import fr.inria.corese.core.sparql.datatype.DatatypeMap;
@@ -374,7 +375,7 @@ public class Profile {
     void load(GraphStore g, String path, boolean event) throws LoadException{
         Load load = Load.create(g);
         load.setEvent(event);
-        load.parse(path, Load.TURTLE_FORMAT);       
+        load.parse(path, Loader.format.TURTLE_FORMAT);
     }
 
     String read(String path) throws IOException, LoadException {
