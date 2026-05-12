@@ -79,3 +79,7 @@ target/
 
 # Other build directories and generated files
 /bin/
+
+data/*.ttl
+data/*.nt
+data/*.rdf
