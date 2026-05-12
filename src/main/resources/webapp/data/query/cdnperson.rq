@@ -1,8 +1,0 @@
-construct {
-  ?x rdfs:label ?l
-} 
-where {
-  ?x a foaf:Person; 
-  rdfs:label ?l
-} 
-order by ?x

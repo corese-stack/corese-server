@@ -1,0 +1,19 @@
+services:
+  corese-server:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      CORESE_DATA_PATH: "/data/init.ttl"
+      CORESE_DUMP_PATH: "/data/dump.nt"
+      CORESE_AUTH_ENABLED: "false"
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s

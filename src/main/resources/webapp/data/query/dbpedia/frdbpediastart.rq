@@ -1,7 +1,0 @@
-#
-# Construct a fresh new Graph or copy current Graph, use case: loop dbpedia copy
-#
-construct 
-where {
-  ?x ?p ?y
-}

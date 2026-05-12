@@ -1,60 +1,147 @@
 # Corese-Server
 
-[![License: CECILL-C](https://img.shields.io/badge/License-CECILL--C-blue.svg)](https://cecill.info/licences/Licence_CeCILL-C_V1-en.html) [![Discussions](https://img.shields.io/badge/Discussions-GitHub-blue)](https://github.com/orgs/corese-stack/discussions)
+[![Discussions](https://img.shields.io/badge/Discussions-GitHub-blue)](https://github.com/orgs/corese-stack/discussions)
+[![Java](https://img.shields.io/badge/Java-25-orange)](https://openjdk.org/projects/jdk/25/)
+[![Javalin](https://img.shields.io/badge/Javalin-7.2-green)](https://javalin.io/)
 
-Corese-Server is the server-side component of the Corese platform. It provides an HTTP interface to expose Corese functionalities, allowing users to send SPARQL queries and updates via a web API, manipulate RDF data, and manage reasoning tasks.
+Corese-Server is the HTTP server component of the [corese-core](https://github.com/corese-stack/corese-core/tree/feature/corese-next) as a SPARQL 1.1 endpoint over HTTP,
+following the [SPARQL 1.1 Protocol](https://www.w3.org/TR/sparql11-protocol/) W3C Recommendation.
 
 ## Features
 
-- Expose RDF data through an HTTP interface.
-- Process SPARQL queries and updates.
-- RESTful API for querying and updating RDF datasets.
+- SPARQL 1.1 Protocol compliant endpoint (`/sparql`)
+- All three query transmission forms: GET, POST URL-encoded, POST direct
+- Content negotiation: XML, JSON, CSV, TSV (SELECT/ASK) — Turtle, RDF/XML, N-Triples, JSON-LD (CONSTRUCT/DESCRIBE)
+- NTriples persistence — dump on shutdown, reload on startup
+- Health and status endpoints (`/health`, `/status`)
 
-## Getting Started
+## Quick Start
 
-### Download and Install
+### Run with JAR
 
-You can run Corese-Server using Docker or by downloading and executing the JAR file.
+```bash
+# Build
+./gradlew shadowJar
 
-**Docker:**
-
-To run the server using Docker, pull the latest image and run the container:
-
-``` bash
-docker run --name my-corese \
-    -p 8080:8080 \
-    -d wimmics/corese
 ```
 
-The server will be running at `http://localhost:8080`. Check the [Docker Hub page](https://hub.docker.com/r/wimmics/corese) for more information.
+The server starts at `http://localhost:8080`.
 
-**JAR File:**
+### Run with Docker
 
-Download the latest version of the Corese-Server JAR from the [releases page](https://github.com/corese-stack/corese-server/releases), then start the server with the following command:
-
-``` bash
-java -jar corese-server-4.5.0.jar
+```bash
+docker build -t corese-server .
+docker run -p 8080:8080 corese-server
 ```
 
-By default, the server will be running at `http://localhost:8080`.
+## SPARQL Endpoint
 
-## Documentation
+### Query — `GET /sparql`
 
-Explore the available documentation to help you get started with Corese-Core:
+**Linux / macOS:**
+```bash
+# Form 1 — §2.1.1 GET
+curl "http://localhost:8080/sparql?query=SELECT+*+WHERE+{+?s+?p+?o+}"
+ 
+# Form 1 — with content negotiation
+curl -H "Accept: application/sparql-results+json" \
+     "http://localhost:8080/sparql?query=SELECT+*+WHERE+{+?s+?p+?o+}"
+ 
+# Form 2 — §2.1.2 POST URL-encoded
+curl -X POST http://localhost:8080/sparql \
+     -H "Content-Type: application/x-www-form-urlencoded" \
+     --data-urlencode "query=SELECT * WHERE { ?s ?p ?o }"
+ 
+# Form 3 — §2.1.3 POST direct
+curl -X POST http://localhost:8080/sparql \
+     -H "Content-Type: application/sparql-query" \
+     -d "SELECT * WHERE { ?s ?p ?o }"
+```
 
-- [Getting Started Guide](https://corese-stack.github.io/corese-server/v4.5.0/getting_started/getting_started_with_corese-server.html)
-- [API Documentation](https://corese-stack.github.io/corese-server/v4.5.0/java_api/library_root.html)
+**Windows PowerShell:**
+```powershell
+# Form 1 — §2.1.1 GET
+Invoke-WebRequest "http://localhost:8080/sparql?query=SELECT+*+WHERE+{+?s+?p+?o+}"
+ 
+# Form 1 — with content negotiation
+Invoke-WebRequest -Uri "http://localhost:8080/sparql?query=SELECT+*+WHERE+{+?s+?p+?o+}" `
+    -Headers @{ Accept = "application/sparql-results+json" }
+ 
+# Form 2 — §2.1.2 POST URL-encoded
+Invoke-WebRequest -Uri "http://localhost:8080/sparql" `
+    -Method POST `
+    -ContentType "application/x-www-form-urlencoded" `
+    -Body "query=SELECT+*+WHERE+{+?s+?p+?o+}"
+ 
+# Form 3 — §2.1.3 POST direct
+Invoke-WebRequest -Uri "http://localhost:8080/sparql" `
+    -Method POST `
+    -ContentType "application/sparql-query" `
+    -Body "SELECT * WHERE { ?s ?p ?o }"
+```
 
-## Contributions and Community
+### Health & Status
 
-We welcome contributions to improve Corese-Server! Here’s how you can get involved:
+```bash
+curl http://localhost:8080/health
+# → {"status":"UP","version":"4.6.4"}
 
-- **Discussions:** If you have questions, ideas, or suggestions, please participate in our [discussion forum](https://github.com/orgs/corese-stack/discussions).
-- **Issue Tracker:** Found a bug or want to request a new feature? Use our [issue tracker](https://github.com/corese-stack/corese-server/issues).
-- **Pull Requests:** We accept pull requests. You can submit your changes [here](https://github.com/corese-stack/corese-server/pulls).
+curl http://localhost:8080/status
+# → {"status":"UP","uptime":"PT5M","triples":0,"graphs":0,...}
+```
 
-## Useful Links
+## Development
 
-- [Corese Official Website](https://corese-stack.github.io/corese-server/v4.5.0/index.html)
-- **Mailing List:** <corese-users@inria.fr>
-- **Join the Mailing List:** Send an email to <corese-users-request@inria.fr> with the subject: `subscribe`
+### Prerequisites
+
+- Java 25
+- Gradle 9.5.0
+
+### Build and Test
+
+```bash
+# Compile
+./gradlew compileJava
+
+# Run tests
+./gradlew test
+
+# Build fat JAR
+./gradlew shadowJar
+
+# Full build with coverage
+./gradlew build
+```
+## Architecture
+
+```
+fr.inria.corese.server
+├── app/             ServerApplication.java      Entry point — wires all components
+├── config/          ServerConfig, Role,          Configuration + RBAC roles
+│                    SecurityConfig               OIDC config
+├── http/
+│   ├── handler/     SPARQLQueryHandler           GET/POST /sparql — query
+│   │                SPARQLUpdateHandler          POST /sparql — update
+│   │                
+│   ├── middleware/  CorsMiddleware, AuthMiddleware Cross-cutting HTTP concerns
+│   └── model/       SparqlRequest, SparqlResponse Immutable data transfer objects
+├── service/         SparqlExecutionService       SPARQL business logic
+│                    
+│                    ContentNegotiator            Accept header → corese-core format
+└── store/           TripleStoreManager           Interface to corese-core
+                     CoreseTripleStoreManager     corese-core 4.6.4 implementation
+```
+
+**Dependency rule:** `http/` → `service/` → `store/` → `corese-core`
+## Migration from legacy corese-server
+
+| Legacy component       | New component                          |
+|------------------------|----------------------------------------|
+| Jersey 3.0.4           | Javalin 7.2.0                          |
+| Jetty 11 (EOL)         | Jetty 12 (embedded via Javalin 7)      |
+| EmbeddedJettyServer    | ServerApplication.java                 |
+| SPARQLRestAPI (god obj)| Focused handlers + services            |
+| Log4j2                 | SLF4J + Logback                        |
+| JUnit 4                | JUnit 5                                |
+| Java 11                | Java 25                                |
+ 

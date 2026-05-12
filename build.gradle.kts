@@ -2,102 +2,110 @@ plugins {
     `java-library`
     `maven-publish`
     `jacoco`
-    id("org.gradlex.extra-java-module-info") version "1.8"
     id("com.gradleup.shadow") version "8.3.1"
     signing
-    application
+}
+
+jacoco {
+    toolVersion = "0.8.12"
 }
 
 java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(25))
+    }
     withJavadocJar()
     withSourcesJar()
-    sourceCompatibility = JavaVersion.VERSION_11
 }
-tasks.withType<Javadoc> { isFailOnError = false }
 
-tasks.withType<JavaCompile>() {
+tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
+    options.release.set(25)
 }
 
-tasks.withType<Javadoc>() {
+tasks.withType<Javadoc> {
     options.encoding = "UTF-8"
+    isFailOnError = false
 }
 
+tasks.shadowJar {
+    manifest {
+        attributes(
+            "Main-Class" to "fr.inria.corese.server.app.ServerApplication",
+            "Implementation-Version" to project.version
+        )
+    }
+    archiveClassifier.set("app")
+    mergeServiceFiles()
+    exclude("module-info.class")
+    exclude("META-INF/versions/*/module-info.class")
+}
+
+tasks.build {
+    dependsOn(tasks.shadowJar)
+}
+
+// JaCoCo 0.8.12 cannot instrument Java 25 (class file major version 69).
+// Re-enable when toolVersion is upgraded to 0.8.13+.
 tasks.jacocoTestReport {
-    dependsOn(tasks.test)
-    executionData.setFrom(fileTree(buildDir).include("/jacoco/*.exec"))
+    enabled = false
+}
 
-    reports {
-        xml.required.set(true)
+// Gradle 9.x Testing DSL — handles junit-platform-launcher automatically
+testing {
+    suites {
+        val test by getting(JvmTestSuite::class) {
+            useJUnitJupiter("5.10.3")
+        }
     }
 }
 
 tasks.test {
-    finalizedBy(tasks.jacocoTestReport)
-}
-
-project.setProperty("mainClassName","fr.inria.corese.server.webservice.EmbeddedJettyServer")
-tasks {
-    shadowJar {
-        manifest {
-            attributes(
-                "Main-Class" to "fr.inria.corese.server.webservice.EmbeddedJettyServer"
-            )
-        }
-        this.archiveClassifier = "app"
+    configure<JacocoTaskExtension> {
+        isEnabled = false
     }
 }
 
 repositories {
     mavenLocal()
-    maven {
-        url = uri("https://repo.maven.apache.org/maven2/")
+    mavenCentral()
+    maven { url = uri("https://repo.maven.apache.org/maven2/") }
+}
+
+// ── Dependency vulnerability fixes ────────────────────────────────────────
+configurations.all {
+    resolutionStrategy {
+        // CVE-2012-0881, CVE-2022-23437, CVE-2013-4002, CVE-2020-14338, CVE-2009-2625
+        force("xerces:xercesImpl:2.12.2")
+        // Jetty CVEs fixed by Javalin 7 (Jetty 12)
     }
 }
 
 dependencies {
-    api("fr.inria.corese:corese-core:4.6.1")
-    api("fr.inria.corese:corese-jena:5.0.0-SNAPSHOT")
-    api("fr.inria.corese:corese-rdf4j:5.0.0-SNAPSHOT")
-    api("javax.xml.bind:jaxb-api:2.3.1")
-    api("com.sun.xml.bind:jaxb-core:2.3.0.1")
-    api("com.sun.xml.bind:jaxb-impl:2.3.2")
 
-    val jersey_version = "3.0.4"
-    api("org.glassfish.jersey.core:jersey-client:${jersey_version}")
-    api("org.glassfish.jersey.containers:jersey-container-jetty-http:${jersey_version}")
-    api("org.glassfish.jersey.containers:jersey-container-servlet-core:${jersey_version}")
-    api("org.glassfish.jersey.media:jersey-media-multipart:${jersey_version}")
-    api("org.glassfish.jersey.inject:jersey-hk2:${jersey_version}")
+    // SPARQL engine — corese-core
+    api("fr.inria.corese:corese-core:4.6.4")
 
-    api("org.glassfish.metro:webservices-rt:4.0.4")
+    // HTTP framework — Javalin 7 + Jetty 12
+    // Fixes: CVE-2026-2332, CVE-2024-6763, CVE-2025-11143 (Jetty 11 → 12)
+    implementation("io.javalin:javalin:7.2.0")
 
-    val lo4j_version = "2.18.0"
-    api("org.apache.logging.log4j:log4j-slf4j18-impl:${lo4j_version}")
-    api("org.apache.logging.log4j:log4j-api:${lo4j_version}")
-    api("org.apache.logging.log4j:log4j-core:${lo4j_version}")
+    // Logging — SLF4J + Logback
+    implementation("org.slf4j:slf4j-api:2.0.17")
+    implementation("ch.qos.logback:logback-classic:1.5.6")
 
-    api("commons-lang:commons-lang:2.4")
-    api("commons-cli:commons-cli:1.4")
-    api("commons-vfs:commons-vfs:1.0")
-    api("commons-io:commons-io:2.11.0")
+    // JSON
+    implementation("org.json:json:20250517")
 
-    api("org.jsoup:jsoup:1.15.3")
-    api("org.json:json:20240303")
+    // Tests
+    testImplementation("io.javalin:javalin-testtools:7.2.0")
+    testImplementation("org.mockito:mockito-core:5.12.0")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.12.0")
 
-    val jetty_version = "11.0.24"
-    api("org.eclipse.jetty:jetty-server:${jetty_version}")
-    api("org.eclipse.jetty:jetty-servlets:${jetty_version}")
-    api("org.eclipse.jetty.websocket:websocket-jetty-server:${jetty_version}")
-    api("org.eclipse.jetty:jetty-util:${jetty_version}")
-
-    testImplementation("junit:junit:4.13.2")
 }
 
 group = "fr.inria.corese"
-version = "5.0.0-SNAPSHOT"
-description = "corese-server"
-java.sourceCompatibility = JavaVersion.VERSION_11
+version = "4.6.4"
 
 publishing {
     publications.create<MavenPublication>("maven") {
@@ -105,25 +113,8 @@ publishing {
     }
 }
 
-tasks.withType<JavaCompile>() {
-    options.encoding = "UTF-8"
-}
-
-tasks.withType<Javadoc>() {
-    options.encoding = "UTF-8"
-}
-
-extraJavaModuleInfo {
-    failOnMissingModuleInfo.set(false)
-    automaticModule("fr.com.hp.hpl.jena.rdf.arp:arp", "arp")
-    automaticModule("com.github.jsonld-java:jsonld-java", "jsonld.java")
-    automaticModule("commons-lang:commons-lang", "commons.lang")
-    automaticModule("commons-cli:commons-cli", "commons.cli")
-    automaticModule("commons-vfs:commons-vfs", "commons.vfs")
-    automaticModule("fr.inria.lille.shexjava:shexjava-core", "shexjava.core")
-    automaticModule("org.eclipse.rdf4j:rdf4j-model", "rdf4j.model")
-    automaticModule("org.glassfish.jersey.media:jersey-media-multipart", "jersey.media.multipart")
-    automaticModule("org.glassfish.jersey.containers:jersey-container-servlet-core", "jersey.container.servlet.core")
-    automaticModule("org.glassfish.jersey.core:jersey-server", "jersey.server")
-    automaticModule("org.glassfish.jersey.core:jersey-common", "jersey.common")
+tasks.processResources {
+    filesMatching("version.properties") {
+        expand("version" to project.version)
+    }
 }

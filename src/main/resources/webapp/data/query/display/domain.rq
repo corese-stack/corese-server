@@ -1,7 +1,0 @@
-select *
-where {
-    ?x rdfs:domain ?y  
-    bind (st:setclass(?x, "property") as ?b)
-}
-
-

@@ -1,4 +1,0 @@
-[] owl:imports <ontology.ttl>, <data.ttl>
-.
-
-
