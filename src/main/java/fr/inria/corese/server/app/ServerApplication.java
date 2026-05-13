@@ -107,7 +107,7 @@ public class ServerApplication {
 
         // Start
         app.start();
-        log.info("Corese-Server ready → http://localhost:{}/sparql", config.port());
+        log.info("Corese-Server ready: http://localhost:{}/sparql", config.port());
     }
 
     /**

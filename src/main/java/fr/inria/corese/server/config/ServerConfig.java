@@ -29,7 +29,7 @@ public record ServerConfig(
         );
     }
 
-
+    @SuppressWarnings("SameParameterValue")
     private static int intEnv(String key, int def) {
         String v = System.getenv(key);
         if (v == null || v.isBlank()) return def;
@@ -40,11 +40,13 @@ public record ServerConfig(
         }
     }
 
+    @SuppressWarnings("SameParameterValue")
     private static String stringEnv(String key, String def) {
         String v = System.getenv(key);
         return (v == null || v.isBlank()) ? def : v.trim();
     }
 
+    @SuppressWarnings("SameParameterValue")
     private static boolean boolEnv(String key, boolean def) {
         String v = System.getenv(key);
         if (v == null || v.isBlank()) return def;

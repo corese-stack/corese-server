@@ -48,7 +48,6 @@ public class AuthMiddleware {
     }
 
     // Role resolution
-
     private Role resolveRole(Context ctx) {
         if (!config.authEnabled()) return Role.ANONYMOUS;
 
@@ -58,7 +57,6 @@ public class AuthMiddleware {
     }
 
     // Authorisation
-
     private boolean isAuthorised(Role effective, Set<? extends RouteRole> required) {
         if (required == null || required.isEmpty() || required.contains(Role.ANONYMOUS))
             return true;
