@@ -40,19 +40,19 @@ docker run -p 8080:8080 corese-server
 
 **Linux / macOS:**
 ```bash
-# Form 1 — §2.1.1 GET
+# Form 1 — GET
 curl "http://localhost:8080/sparql?query=SELECT+*+WHERE+{+?s+?p+?o+}"
  
 # Form 1 — with content negotiation
 curl -H "Accept: application/sparql-results+json" \
      "http://localhost:8080/sparql?query=SELECT+*+WHERE+{+?s+?p+?o+}"
  
-# Form 2 — §2.1.2 POST URL-encoded
+# Form 2 —  POST URL-encoded
 curl -X POST http://localhost:8080/sparql \
      -H "Content-Type: application/x-www-form-urlencoded" \
      --data-urlencode "query=SELECT * WHERE { ?s ?p ?o }"
  
-# Form 3 — §2.1.3 POST direct
+# Form 3 —  POST direct
 curl -X POST http://localhost:8080/sparql \
      -H "Content-Type: application/sparql-query" \
      -d "SELECT * WHERE { ?s ?p ?o }"
@@ -60,20 +60,20 @@ curl -X POST http://localhost:8080/sparql \
 
 **Windows PowerShell:**
 ```powershell
-# Form 1 — §2.1.1 GET
+# Form 1 — GET
 Invoke-WebRequest "http://localhost:8080/sparql?query=SELECT+*+WHERE+{+?s+?p+?o+}"
  
 # Form 1 — with content negotiation
 Invoke-WebRequest -Uri "http://localhost:8080/sparql?query=SELECT+*+WHERE+{+?s+?p+?o+}" `
     -Headers @{ Accept = "application/sparql-results+json" }
  
-# Form 2 — §2.1.2 POST URL-encoded
+# Form 2 — POST URL-encoded
 Invoke-WebRequest -Uri "http://localhost:8080/sparql" `
     -Method POST `
     -ContentType "application/x-www-form-urlencoded" `
     -Body "query=SELECT+*+WHERE+{+?s+?p+?o+}"
  
-# Form 3 — §2.1.3 POST direct
+# Form 3 — POST direct
 Invoke-WebRequest -Uri "http://localhost:8080/sparql" `
     -Method POST `
     -ContentType "application/sparql-query" `
@@ -144,4 +144,4 @@ fr.inria.corese.server
 | Log4j2                 | SLF4J + Logback                        |
 | JUnit 4                | JUnit 5                                |
 | Java 11                | Java 25                                |
- 
+| gradle-8.10.1          | Gradle 9.5.0                           |
