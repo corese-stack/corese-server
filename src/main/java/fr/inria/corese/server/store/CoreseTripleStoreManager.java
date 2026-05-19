@@ -95,10 +95,8 @@ public class CoreseTripleStoreManager implements TripleStoreManager {
     public void deleteGraph(String graphUri) {
         writeLock();
         try {
-            newQueryProcess().query("DROP SILENT GRAPH <%s>".formatted(graphUri));
+            graphStore.getStore().remove(graphUri);
             log.debug("Deleted graph: {}", graphUri);
-        } catch (Exception e) {
-            log.warn("deleteGraph({}) error: {}", graphUri, e.getMessage());
         } finally {
             writeUnlock();
         }

@@ -4,11 +4,16 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * Immutable HTTP response produced by the service layer.
+ *
  * <p>Status codes follow SPARQL 1.1 Protocol
- * 200 — successful query,
- * 204 — successful update (no body),
- * 400 — malformed SPARQL,
- * 500 — internal service error.
+ * and Graph Store HTTP Protocol:
+ * <ul>
+ *   <li>200 — successful query with body</li>
+ *   <li>204 — successful update / graph operation (no body)</li>
+ *   <li>400 — malformed SPARQL or bad RDF payload</li>
+ *   <li>404 — named graph not found (Graph Store Protocol)</li>
+ *   <li>500 — internal service error</li>
+ * </ul>
  *
  * @param statusCode  HTTP status code
  * @param contentType value of the {@code Content-Type} header, or {@code null} for no body
@@ -19,6 +24,7 @@ public record SparqlResponse(
         String contentType,
         byte[] body
 ) {
+
     /**
      * 200 OK with a string body.
      *
@@ -42,7 +48,7 @@ public record SparqlResponse(
     }
 
     /**
-     * 204 No Content — successful update SHOULD return 2XX.
+     * 204 No Content — successful update or graph operation.
      *
      * @return a 204 response with no body
      */
@@ -51,13 +57,24 @@ public record SparqlResponse(
     }
 
     /**
-     * 400 Bad Request — malformed SPARQL
+     * 400 Bad Request — malformed SPARQL or bad RDF payload.
      *
      * @param message error description
      * @return a 400 response with the message as plain text
      */
     public static SparqlResponse badRequest(String message) {
         return new SparqlResponse(400, "text/plain;charset=utf-8",
+                message.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * 404 Not Found — named graph does not exist (Graph Store Protocol).
+     *
+     * @param message error description
+     * @return a 404 response with the message as plain text
+     */
+    public static SparqlResponse notFound(String message) {
+        return new SparqlResponse(404, "text/plain;charset=utf-8",
                 message.getBytes(StandardCharsets.UTF_8));
     }
 
