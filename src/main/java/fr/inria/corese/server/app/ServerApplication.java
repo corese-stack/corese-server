@@ -2,10 +2,12 @@ package fr.inria.corese.server.app;
 
 import fr.inria.corese.server.config.Role;
 import fr.inria.corese.server.config.ServerConfig;
+import fr.inria.corese.server.http.handler.GraphStoreHandler;
 import fr.inria.corese.server.http.handler.SPARQLQueryHandler;
 import fr.inria.corese.server.http.handler.SPARQLUpdateHandler;
 import fr.inria.corese.server.http.middleware.AuthMiddleware;
 import fr.inria.corese.server.http.middleware.CorsMiddleware;
+import fr.inria.corese.server.service.GraphStoreService;
 import fr.inria.corese.server.service.SparqlExecutionService;
 import fr.inria.corese.server.store.CoreseTripleStoreManager;
 import fr.inria.corese.server.store.TripleStoreManager;
@@ -47,10 +49,12 @@ public class ServerApplication {
 
         // Services
         SparqlExecutionService sparqlService = new SparqlExecutionService(store);
+        GraphStoreService graphService = new GraphStoreService(store);
 
         // Handlers
         SPARQLQueryHandler queryHandler = new SPARQLQueryHandler(sparqlService);
         SPARQLUpdateHandler updateHandler = new SPARQLUpdateHandler(sparqlService);
+        GraphStoreHandler graphHandler = new GraphStoreHandler(graphService);
 
         // Middlewares
         CorsMiddleware corsMiddleware = new CorsMiddleware();
@@ -69,6 +73,7 @@ public class ServerApplication {
             // SPARQL 1.1 Protocol query
             cfg.routes.get("/sparql", queryHandler::handle, Role.ANONYMOUS);
 
+            // query POST / update POST
             cfg.routes.post("/sparql", ctx -> {
                 String ct = ctx.contentType() != null ? ctx.contentType() : "";
                 if (ct.contains("sparql-update")
@@ -80,12 +85,18 @@ public class ServerApplication {
                 }
             }, Role.ANONYMOUS);
 
-            // Health
+            // Graph Store HTTP Protocol
+            cfg.routes.get("/rdf-graph-store", graphHandler::get, Role.ANONYMOUS);
+            cfg.routes.put("/rdf-graph-store", graphHandler::put, Role.USER_W);
+            cfg.routes.post("/rdf-graph-store", graphHandler::post, Role.USER_W);
+            cfg.routes.delete("/rdf-graph-store", graphHandler::delete, Role.ADMIN);
+
+            //Health
             cfg.routes.get("/health", ctx ->
                             ctx.json(Map.of("status", "UP", "version", VERSION)),
                     Role.ANONYMOUS);
 
-            //  Status
+            // Status
             cfg.routes.get("/status", ctx ->
                             ctx.json(Map.of(
                                     "status", "UP",
