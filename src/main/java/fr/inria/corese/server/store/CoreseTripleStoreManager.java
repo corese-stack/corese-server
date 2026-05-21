@@ -2,6 +2,7 @@ package fr.inria.corese.server.store;
 
 import fr.inria.corese.core.Graph;
 import fr.inria.corese.core.GraphStore;
+import fr.inria.corese.core.api.Loader;
 import fr.inria.corese.core.load.Load;
 import fr.inria.corese.core.load.LoadException;
 import fr.inria.corese.core.print.ResultFormat;
@@ -71,7 +72,7 @@ public class CoreseTripleStoreManager implements TripleStoreManager {
                         .create(graph, ResultFormatDef.format.TURTLE_FORMAT)
                         .toString();
                 Load loader = Load.create(graphStore);
-                loader.parse(turtle, graphUri);
+                loader.loadString(turtle, graphUri, Loader.format.TURTLE_FORMAT);
             }
         } catch (Exception e) {
             log.error("addToGraph({}) failed: {}", graphUri, e.getMessage(), e);

@@ -7,12 +7,6 @@ import fr.inria.corese.core.query.QueryProcess;
  * Abstraction over the RDF triplestore.
  * This is the ONLY entry point to corese-core in the entire project.
  * No other class imports corese-core types directly.
- * Responsibilities:
- * - Expose a QueryProcess for query/update execution
- * - Manage named graphs (CRUD)
- * - Own the ReadWriteLock (services call lock methods, store owns the lock)
- * - Handle lifecycle (loadInitialData, dumpToFile, reset)
- * - Expose statistics (tripleCount, graphCount)
  */
 public interface TripleStoreManager {
 

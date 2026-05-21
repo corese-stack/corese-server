@@ -3,8 +3,7 @@ package fr.inria.corese.server.service;
 import fr.inria.corese.core.sparql.api.ResultFormatDef;
 
 /**
- * Maps HTTP Accept headers to corese-core ResultFormatDef.format enum values.
- * Source confirmed from ResultFormat.java
+ * Maps HTTP Accept headers to corese-core
  */
 public final class ContentNegotiator {
 

@@ -83,3 +83,5 @@ target/
 data/*.ttl
 data/*.nt
 data/*.rdf
+
+postman

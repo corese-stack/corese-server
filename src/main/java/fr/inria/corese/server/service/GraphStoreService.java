@@ -148,8 +148,6 @@ public class GraphStoreService {
     /**
      * Parse an RDF string payload into a Graph.
      *
-     * <p>Uses {@code Load.loadString(String, String, Loader.format)} —
-     * confirmed non-deprecated in decompiled Load.java source.
      *
      * @param body        the RDF content as a string
      * @param contentType the HTTP Content-Type header value

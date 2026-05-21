@@ -34,7 +34,7 @@ public class ServerApplication {
     /**
      * Application entry point.
      *
-     * @param args command-line arguments (not used; configuration via environment variables)
+     * @param args command-line arguments
      */
     public static void main(String[] args) {
 
@@ -57,7 +57,7 @@ public class ServerApplication {
         GraphStoreHandler graphHandler = new GraphStoreHandler(graphService);
 
         // Middlewares
-        CorsMiddleware corsMiddleware = new CorsMiddleware();
+        CorsMiddleware corsMiddleware = new CorsMiddleware(VERSION);
         AuthMiddleware authMiddleware = new AuthMiddleware(config);
 
         Javalin app = Javalin.create(cfg -> {
@@ -136,7 +136,9 @@ public class ServerApplication {
                 String v = props.getProperty("version");
                 if (v != null && !v.startsWith("@") && !v.startsWith("$")) return v;
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            log.debug("Could not read version.properties: {}", e.getMessage());
+
         }
         return "dev";
     }
