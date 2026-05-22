@@ -3,11 +3,15 @@ package fr.inria.corese.server.http.handler;
 import fr.inria.corese.server.http.model.SparqlResponse;
 import fr.inria.corese.server.service.GraphStoreService;
 import io.javalin.http.Context;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * HTTP handler for the SPARQL 1.1 Graph Store HTTP Protocol.
  */
 public class GraphStoreHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GraphStoreHandler.class);
 
     private final GraphStoreService service;
 
@@ -18,6 +22,24 @@ public class GraphStoreHandler {
      */
     public GraphStoreHandler(GraphStoreService service) {
         this.service = service;
+    }
+
+
+    /**
+     * Check existence of a named graph without retrieving its content.
+     * Returns 200 if the graph exists, 404 if not.
+     *
+     * @param ctx the Javalin request context
+     */
+    public void head(Context ctx) {
+        String graphUri = extractGraphUri(ctx);
+        if (graphUri == null) {
+            ctx.status(400);
+            return;
+        }
+        boolean exists = service.graphExists(graphUri);
+        ctx.status(exists ? 200 : 404);
+        log.debug("HEAD graph <{}> → {}", graphUri, exists ? 200 : 404);
     }
 
 
@@ -39,6 +61,7 @@ public class GraphStoreHandler {
 
     /**
      * Replace the content of a named graph.
+     * Creates the graph if it does not exist.
      *
      * @param ctx the Javalin request context
      */
@@ -60,6 +83,7 @@ public class GraphStoreHandler {
 
     /**
      * Add triples to a named graph.
+     * Creates the graph if it does not exist.
      *
      * @param ctx the Javalin request context
      */

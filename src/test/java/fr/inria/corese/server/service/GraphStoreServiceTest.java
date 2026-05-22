@@ -34,6 +34,28 @@ class GraphStoreServiceTest {
 
 
     @Test
+    @DisplayName("HEAD non-existent graph -> false")
+    void head_unknownGraph_returnsFalse() {
+        assertFalse(service.graphExists(GRAPH_URI));
+    }
+
+    @Test
+    @DisplayName("HEAD after PUT -> true")
+    void head_afterPut_returnsTrue() {
+        service.putGraph(GRAPH_URI, TURTLE_DATA, "text/turtle");
+        assertTrue(service.graphExists(GRAPH_URI));
+    }
+
+    @Test
+    @DisplayName("HEAD after DELETE -> false")
+    void head_afterDelete_returnsFalse() {
+        service.putGraph(GRAPH_URI, TURTLE_DATA, "text/turtle");
+        service.deleteGraph(GRAPH_URI);
+        assertFalse(service.graphExists(GRAPH_URI));
+    }
+
+
+    @Test
     @DisplayName("GET non-existent graph -> 404")
     void get_unknownGraph_returns404() {
         SparqlResponse res = service.getGraph(GRAPH_URI, null);
@@ -55,6 +77,14 @@ class GraphStoreServiceTest {
     void put_validTurtle_returns204() {
         SparqlResponse res = service.putGraph(GRAPH_URI, TURTLE_DATA, "text/turtle");
         assertEquals(204, res.statusCode());
+    }
+
+    @Test
+    @DisplayName("PUT creates graph — HEAD becomes true")
+    void put_createsGraph_headTrue() {
+        assertFalse(service.graphExists(GRAPH_URI));
+        service.putGraph(GRAPH_URI, TURTLE_DATA, "text/turtle");
+        assertTrue(service.graphExists(GRAPH_URI));
     }
 
     @Test
@@ -106,6 +136,14 @@ class GraphStoreServiceTest {
                 "Graph should contain data from both PUT and POST");
     }
 
+    @Test
+    @DisplayName("POST creates graph if not exists — HEAD becomes true")
+    void post_createsGraph_ifNotExists() {
+        assertFalse(service.graphExists(GRAPH_URI));
+        service.postGraph(GRAPH_URI, TURTLE_DATA, "text/turtle");
+        assertTrue(service.graphExists(GRAPH_URI));
+    }
+
 
     @Test
     @DisplayName("DELETE existing graph -> 204")
@@ -129,5 +167,14 @@ class GraphStoreServiceTest {
         service.deleteGraph(GRAPH_URI);
         SparqlResponse res = service.getGraph(GRAPH_URI, null);
         assertEquals(404, res.statusCode());
+    }
+
+    @Test
+    @DisplayName("DELETE then HEAD -> false")
+    void delete_thenHead_returnsFalse() {
+        service.putGraph(GRAPH_URI, TURTLE_DATA, "text/turtle");
+        assertTrue(service.graphExists(GRAPH_URI));
+        service.deleteGraph(GRAPH_URI);
+        assertFalse(service.graphExists(GRAPH_URI));
     }
 }

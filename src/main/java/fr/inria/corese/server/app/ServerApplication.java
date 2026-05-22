@@ -67,13 +67,12 @@ public class ServerApplication {
             // CORS — runs before every request
             cfg.routes.before(corsMiddleware::apply);
 
-            // RBAC — runs after a matching route is found
+            // RBAC
             cfg.routes.beforeMatched(authMiddleware::handle);
 
-            // SPARQL 1.1 Protocol query
+            // SPARQL 1.1 Protocol / query
             cfg.routes.get("/sparql", queryHandler::handle, Role.ANONYMOUS);
 
-            // query POST / update POST
             cfg.routes.post("/sparql", ctx -> {
                 String ct = ctx.contentType() != null ? ctx.contentType() : "";
                 if (ct.contains("sparql-update")
@@ -86,6 +85,7 @@ public class ServerApplication {
             }, Role.ANONYMOUS);
 
             // Graph Store HTTP Protocol
+            cfg.routes.head("/rdf-graph-store", graphHandler::head, Role.ANONYMOUS);
             cfg.routes.get("/rdf-graph-store", graphHandler::get, Role.ANONYMOUS);
             cfg.routes.put("/rdf-graph-store", graphHandler::put, Role.USER_W);
             cfg.routes.post("/rdf-graph-store", graphHandler::post, Role.USER_W);

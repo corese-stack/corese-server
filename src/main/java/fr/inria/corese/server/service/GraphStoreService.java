@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Implements the 4 CRUD operations of the SPARQL 1.1 Graph Store HTTP Protocol.
+ * Implements the 5 CRUD operations of the SPARQL 1.1 Graph Store HTTP Protocol.
  *
  */
 public class GraphStoreService {
@@ -28,6 +28,24 @@ public class GraphStoreService {
      */
     public GraphStoreService(TripleStoreManager store) {
         this.store = store;
+    }
+
+
+    /**
+     * Check if a named graph exists.
+     * Corresponds to HEAD /rdf-graph-store?graph=&lt;uri&gt;
+     *
+     * @param graphUri the URI of the named graph to check
+     * @return {@code true} if the graph exists and is non-empty
+     */
+    public boolean graphExists(String graphUri) {
+        store.readLock();
+        try {
+            Graph graph = store.getNamedGraph(graphUri);
+            return graph != null;
+        } finally {
+            store.readUnlock();
+        }
     }
 
 
