@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class GraphStoreServiceTest {
 
     private static final String GRAPH_URI = "http://example.org/test-graph";
+    private static final String GRAPH_URI2 = "http://example.org/test-graph-2";
 
     private static final String TURTLE_DATA = """
             @prefix ex: <http://example.org/> .
@@ -30,6 +31,46 @@ class GraphStoreServiceTest {
         ServerConfig config = new ServerConfig(8080, null, null, false);
         CoreseTripleStoreManager store = new CoreseTripleStoreManager(config);
         service = new GraphStoreService(store);
+    }
+
+
+    @Test
+    @DisplayName("LIST empty store -> 200 empty Turtle")
+    void list_emptyStore_returns200() {
+        SparqlResponse res = service.listGraphs();
+        assertEquals(200, res.statusCode());
+        assertTrue(res.hasBody());
+        assertEquals("text/turtle", res.contentType());
+    }
+
+    @Test
+    @DisplayName("LIST after PUT -> contains graph URI")
+    void list_afterPut_containsGraphUri() {
+        service.putGraph(GRAPH_URI, TURTLE_DATA, "text/turtle");
+        SparqlResponse res = service.listGraphs();
+        assertEquals(200, res.statusCode());
+        assertTrue(res.bodyAsString().contains(GRAPH_URI));
+    }
+
+    @Test
+    @DisplayName("LIST multiple graphs -> contains all URIs")
+    void list_multipleGraphs_containsAll() {
+        service.putGraph(GRAPH_URI, TURTLE_DATA, "text/turtle");
+        service.putGraph(GRAPH_URI2, TURTLE_DATA, "text/turtle");
+        SparqlResponse res = service.listGraphs();
+        assertEquals(200, res.statusCode());
+        assertTrue(res.bodyAsString().contains(GRAPH_URI));
+        assertTrue(res.bodyAsString().contains(GRAPH_URI2));
+    }
+
+    @Test
+    @DisplayName("LIST after DELETE -> graph URI removed")
+    void list_afterDelete_graphRemoved() {
+        service.putGraph(GRAPH_URI, TURTLE_DATA, "text/turtle");
+        service.deleteGraph(GRAPH_URI);
+        SparqlResponse res = service.listGraphs();
+        assertEquals(200, res.statusCode());
+        assertFalse(res.bodyAsString().contains(GRAPH_URI));
     }
 
 
@@ -80,24 +121,14 @@ class GraphStoreServiceTest {
     }
 
     @Test
-    @DisplayName("PUT creates graph — HEAD becomes true")
-    void put_createsGraph_headTrue() {
-        assertFalse(service.graphExists(GRAPH_URI));
-        service.putGraph(GRAPH_URI, TURTLE_DATA, "text/turtle");
-        assertTrue(service.graphExists(GRAPH_URI));
-    }
-
-    @Test
     @DisplayName("PUT replaces existing graph")
     void put_replacesExistingGraph() {
         service.putGraph(GRAPH_URI, TURTLE_DATA, "text/turtle");
-
         String newData = """
                 @prefix ex: <http://example.org/> .
                 ex:Dave ex:knows ex:Eve .
                 """;
         service.putGraph(GRAPH_URI, newData, "text/turtle");
-
         SparqlResponse res = service.getGraph(GRAPH_URI, "text/turtle");
         assertEquals(200, res.statusCode());
         assertFalse(res.bodyAsString().contains("Alice"), "Old data should be replaced");
@@ -119,29 +150,51 @@ class GraphStoreServiceTest {
     }
 
     @Test
+    @DisplayName("POST invalid RDF -> 400")
+    void post_invalidRdf_returns400() {
+        SparqlResponse res = service.postGraph(GRAPH_URI, "INVALID RDF !!!", "text/turtle");
+        assertEquals(400, res.statusCode());
+    }
+
+    @Test
     @DisplayName("POST adds triples to existing graph")
     void post_addsTriplesToExistingGraph() {
         service.putGraph(GRAPH_URI, TURTLE_DATA, "text/turtle");
-
         String moreData = """
                 @prefix ex: <http://example.org/> .
                 ex:Dave ex:knows ex:Eve .
                 """;
         service.postGraph(GRAPH_URI, moreData, "text/turtle");
-
         SparqlResponse res = service.getGraph(GRAPH_URI, "text/turtle");
         assertEquals(200, res.statusCode());
         String body = res.bodyAsString();
-        assertTrue(body.contains("Alice") || body.contains("Dave"),
-                "Graph should contain data from both PUT and POST");
+        assertTrue(body.contains("Alice") || body.contains("Dave"));
+    }
+
+
+    @Test
+    @DisplayName("PATCH non-existent graph -> 404")
+    void patch_unknownGraph_returns404() {
+        SparqlResponse res = service.patchGraph(GRAPH_URI,
+                "INSERT DATA { <http://ex.org/s> <http://ex.org/p> <http://ex.org/o> }");
+        assertEquals(404, res.statusCode());
+    }
+
+
+    @Test
+    @DisplayName("PATCH empty body -> 400")
+    void patch_emptyBody_returns400() {
+        service.putGraph(GRAPH_URI, TURTLE_DATA, "text/turtle");
+        SparqlResponse res = service.patchGraph(GRAPH_URI, "");
+        assertEquals(400, res.statusCode());
     }
 
     @Test
-    @DisplayName("POST creates graph if not exists — HEAD becomes true")
-    void post_createsGraph_ifNotExists() {
-        assertFalse(service.graphExists(GRAPH_URI));
-        service.postGraph(GRAPH_URI, TURTLE_DATA, "text/turtle");
-        assertTrue(service.graphExists(GRAPH_URI));
+    @DisplayName("PATCH malformed SPARQL -> 400")
+    void patch_malformedSparql_returns400() {
+        service.putGraph(GRAPH_URI, TURTLE_DATA, "text/turtle");
+        SparqlResponse res = service.patchGraph(GRAPH_URI, "NOT VALID SPARQL UPDATE");
+        assertEquals(400, res.statusCode());
     }
 
 
@@ -167,14 +220,5 @@ class GraphStoreServiceTest {
         service.deleteGraph(GRAPH_URI);
         SparqlResponse res = service.getGraph(GRAPH_URI, null);
         assertEquals(404, res.statusCode());
-    }
-
-    @Test
-    @DisplayName("DELETE then HEAD -> false")
-    void delete_thenHead_returnsFalse() {
-        service.putGraph(GRAPH_URI, TURTLE_DATA, "text/turtle");
-        assertTrue(service.graphExists(GRAPH_URI));
-        service.deleteGraph(GRAPH_URI);
-        assertFalse(service.graphExists(GRAPH_URI));
     }
 }

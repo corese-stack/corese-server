@@ -11,8 +11,10 @@ import fr.inria.corese.server.store.TripleStoreManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
+
 /**
- * Implements the 5 CRUD operations of the SPARQL 1.1 Graph Store HTTP Protocol.
+ * Implements the CRUD operations of the SPARQL 1.1 Graph Store HTTP Protocol.
  *
  */
 public class GraphStoreService {
@@ -32,17 +34,41 @@ public class GraphStoreService {
 
 
     /**
+     * List all named graphs available in the store.
+     *
+     * @return 200 with Turtle listing of named graph URIs
+     */
+    public SparqlResponse listGraphs() {
+        store.readLock();
+        try {
+            Collection<String> names = store.getGraphNames();
+            StringBuilder sb = new StringBuilder();
+            sb.append("# Named graphs in Corese-Server\n");
+            for (String name : names) {
+                sb.append("<").append(name)
+                        .append("> a <http://www.w3.org/ns/sparql-service-description#NamedGraph> .\n");
+            }
+            log.debug("LIST graphs — {} graph(s)", names.size());
+            return SparqlResponse.ok("text/turtle", sb.toString());
+        } catch (Exception e) {
+            log.error("listGraphs() failed: {}", e.getMessage(), e);
+            return SparqlResponse.serverError("Failed to list graphs: " + e.getMessage());
+        } finally {
+            store.readUnlock();
+        }
+    }
+
+
+    /**
      * Check if a named graph exists.
-     * Corresponds to HEAD /rdf-graph-store?graph=&lt;uri&gt;
      *
      * @param graphUri the URI of the named graph to check
-     * @return {@code true} if the graph exists and is non-empty
+     * @return {@code true} if the graph exists
      */
     public boolean graphExists(String graphUri) {
         store.readLock();
         try {
-            Graph graph = store.getNamedGraph(graphUri);
-            return graph != null;
+            return store.getNamedGraph(graphUri) != null;
         } finally {
             store.readUnlock();
         }
@@ -140,6 +166,48 @@ public class GraphStoreService {
 
 
     /**
+     * Apply a SPARQL Update operation scoped to a named graph.
+     *
+     * @param graphUri     the URI of the named graph to patch
+     * @param sparqlUpdate the SPARQL Update string
+     * @return 204 No Content, 400 syntax error, 404 not found, 500 error
+     */
+    public SparqlResponse patchGraph(String graphUri, String sparqlUpdate) {
+        if (sparqlUpdate == null || sparqlUpdate.isBlank()) {
+            return SparqlResponse.badRequest("Missing SPARQL Update body for PATCH.");
+        }
+
+        store.writeLock();
+        try {
+            if (store.getNamedGraph(graphUri) == null) {
+                return SparqlResponse.notFound("Graph not found: " + graphUri);
+            }
+
+            String scopedUpdate = scopeUpdate(sparqlUpdate, graphUri);
+            store.newQueryProcess().query(scopedUpdate);
+
+            log.debug("PATCH graph <{}>", graphUri);
+            return SparqlResponse.noContent();
+
+        } catch (Exception e) {
+            String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+            boolean syntax = msg.toLowerCase().contains("parse")
+                    || msg.toLowerCase().contains("syntax")
+                    || msg.toLowerCase().contains("unexpected")
+                    || msg.toLowerCase().contains("encountered");
+            if (syntax) {
+                log.debug("PATCH graph <{}> syntax error: {}", graphUri, msg);
+                return SparqlResponse.badRequest("SPARQL syntax error: " + msg);
+            }
+            log.error("patchGraph({}) failed: {}", graphUri, msg, e);
+            return SparqlResponse.serverError("Failed to patch graph: " + msg);
+        } finally {
+            store.writeUnlock();
+        }
+    }
+
+
+    /**
      * Drop the named graph identified by the given URI.
      *
      * @param graphUri the URI of the named graph to delete
@@ -164,8 +232,32 @@ public class GraphStoreService {
 
 
     /**
-     * Parse an RDF string payload into a Graph.
+     * Scope a SPARQL Update to a named graph.
      *
+     * @param sparqlUpdate the original SPARQL Update string
+     * @param graphUri     the named graph URI to scope to
+     * @return scoped SPARQL Update string
+     */
+    private String scopeUpdate(String sparqlUpdate, String graphUri) {
+        String trimmed = sparqlUpdate.trim();
+        String upper = trimmed.toUpperCase();
+
+        if (upper.startsWith("WITH") || upper.contains("USING ")) {
+            return sparqlUpdate;
+        }
+
+        if (upper.startsWith("INSERT DATA") || upper.startsWith("DELETE DATA")) {
+            return trimmed.replaceFirst(
+                    "(?i)(INSERT|DELETE)\\s+DATA\\s*\\{",
+                    "$1 DATA { GRAPH <" + graphUri + "> "
+            ) + " }";
+        }
+
+        return "WITH <" + graphUri + ">\n" + trimmed;
+    }
+
+    /**
+     * Parse an RDF string payload into a Graph.
      *
      * @param body        the RDF content as a string
      * @param contentType the HTTP Content-Type header value

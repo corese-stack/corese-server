@@ -3,6 +3,8 @@ package fr.inria.corese.server.store;
 import fr.inria.corese.core.Graph;
 import fr.inria.corese.core.query.QueryProcess;
 
+import java.util.Collection;
+
 /**
  * Abstraction over the RDF triplestore.
  * This is the ONLY entry point to corese-core in the entire project.
@@ -51,6 +53,13 @@ public interface TripleStoreManager {
      * @param graphUri the named graph URI to delete
      */
     void deleteGraph(String graphUri);
+
+    /**
+     * Returns the URIs of all named graphs in the store.
+     *
+     * @return collection of named graph URIs (may be empty, never null)
+     */
+    Collection<String> getGraphNames();
 
     // Lifecycle
 

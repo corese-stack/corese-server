@@ -89,6 +89,7 @@ public class ServerApplication {
             cfg.routes.get("/rdf-graph-store", graphHandler::get, Role.ANONYMOUS);
             cfg.routes.put("/rdf-graph-store", graphHandler::put, Role.USER_W);
             cfg.routes.post("/rdf-graph-store", graphHandler::post, Role.USER_W);
+            cfg.routes.patch ("/rdf-graph-store", graphHandler::patch,  Role.USER_W);
             cfg.routes.delete("/rdf-graph-store", graphHandler::delete, Role.ADMIN);
 
             //Health

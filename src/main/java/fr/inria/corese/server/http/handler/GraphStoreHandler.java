@@ -44,12 +44,20 @@ public class GraphStoreHandler {
 
 
     /**
-     * Retrieve a named graph.
+     * Retrieve a named graph, or list all graphs if no graph parameter.
      *
      * @param ctx the Javalin request context
      */
     public void get(Context ctx) {
         String graphUri = extractGraphUri(ctx);
+
+        if (graphUri == null && !ctx.queryParamMap().containsKey("graph")
+                && !ctx.queryParamMap().containsKey("default")) {
+            SparqlResponse response = service.listGraphs();
+            writeResponse(ctx, response);
+            return;
+        }
+
         if (graphUri == null) {
             ctx.status(400).result(missingGraphParam());
             return;
@@ -61,7 +69,6 @@ public class GraphStoreHandler {
 
     /**
      * Replace the content of a named graph.
-     * Creates the graph if it does not exist.
      *
      * @param ctx the Javalin request context
      */
@@ -102,6 +109,31 @@ public class GraphStoreHandler {
         writeResponse(ctx, response);
     }
 
+    /**
+     * Apply a SPARQL Update to a named graph (partial modification).
+     *
+     * @param ctx the Javalin request context
+     */
+    public void patch(Context ctx) {
+        String graphUri = extractGraphUri(ctx);
+        if (graphUri == null) {
+            ctx.status(400).result(missingGraphParam());
+            return;
+        }
+
+        String ct = ctx.contentType() != null ? ctx.contentType() : "";
+        if (!ct.contains("sparql-update")) {
+            ctx.status(415).result(
+                    "Unsupported Media Type for PATCH. " +
+                            "Use Content-Type: application/sparql-update"
+            );
+            return;
+        }
+
+        String body = ctx.body();
+        SparqlResponse response = service.patchGraph(graphUri, body);
+        writeResponse(ctx, response);
+    }
 
     /**
      * Drop a named graph.

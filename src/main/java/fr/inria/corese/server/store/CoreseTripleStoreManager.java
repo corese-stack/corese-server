@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.util.Collection;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -35,7 +36,7 @@ public class CoreseTripleStoreManager implements TripleStoreManager {
     /**
      * Creates a new empty triplestore. RDFS inference is disabled.
      *
-     * @param config server configuration (data path, dump path, etc.)
+     * @param config server configuration
      */
     public CoreseTripleStoreManager(ServerConfig config) {
         this.config = config;
@@ -63,11 +64,8 @@ public class CoreseTripleStoreManager implements TripleStoreManager {
         try {
             Graph existing = graphStore.getNamedGraph(graphUri);
             if (existing == null) {
-                // graphStore.setNamedGraph(String, Graph) — confirmed
                 graphStore.setNamedGraph(graphUri, graph);
             } else {
-                // Merge: copy all edges from graph into existing
-                // Use SPARQL INSERT via serialization
                 String turtle = ResultFormat
                         .create(graph, ResultFormatDef.format.TURTLE_FORMAT)
                         .toString();
@@ -103,7 +101,11 @@ public class CoreseTripleStoreManager implements TripleStoreManager {
         }
     }
 
-    //Lifecycle
+    @Override
+    public Collection<String> getGraphNames() {
+        return graphStore.getNames();
+    }
+
     @Override
     public void loadInitialData() {
         if (config.dataPath() == null || config.dataPath().isBlank()) {
