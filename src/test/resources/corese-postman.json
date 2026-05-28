@@ -1,0 +1,803 @@
+{
+  "info": {
+    "name": "Corese-Server Tests",
+    "description": "SPARQL 1.1 Protocol + Graph Store HTTP Protocol tests for Corese-Server",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health & Status",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/health"
+          }
+        },
+        {
+          "name": "Status + statistics",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/status"
+          }
+        }
+      ]
+    },
+    {
+      "name": "SPARQL Query",
+      "item": [
+        {
+          "name": "GET SELECT - XML (default)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/sparql?query=SELECT * WHERE { ?s ?p ?o }",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sparql"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "SELECT * WHERE { ?s ?p ?o }"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET SELECT - Accept JSON",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/sparql-results+json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sparql?query=SELECT * WHERE { ?s ?p ?o }",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sparql"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "SELECT * WHERE { ?s ?p ?o }"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET SELECT - Accept CSV",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/csv"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sparql?query=SELECT * WHERE { ?s ?p ?o }",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sparql"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "SELECT * WHERE { ?s ?p ?o }"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET SELECT - Accept TSV",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/tab-separated-values"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sparql?query=SELECT * WHERE { ?s ?p ?o }",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sparql"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "SELECT * WHERE { ?s ?p ?o }"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST URL-encoded",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "query",
+                  "value": "SELECT * WHERE { ?s ?p ?o }"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/sparql"
+          }
+        },
+        {
+          "name": "POST direct SPARQL body",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/sparql-query"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "SELECT * WHERE { ?s ?p ?o }"
+            },
+            "url": "{{baseUrl}}/sparql"
+          }
+        },
+        {
+          "name": "ASK query",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/sparql?query=ASK { ?s ?p ?o }",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sparql"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "ASK { ?s ?p ?o }"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Malformed SPARQL → 400",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/sparql?query=NOT VALID SPARQL",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sparql"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "NOT VALID SPARQL"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "No query param → 400",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/sparql"
+          }
+        }
+      ]
+    },
+    {
+      "name": "SPARQL Update",
+      "item": [
+        {
+          "name": "INSERT DATA",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/sparql-update"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "INSERT DATA {\n  <http://example.org/Alice> <http://example.org/knows> <http://example.org/Bob> .\n  <http://example.org/Bob>   <http://example.org/knows> <http://example.org/Carol> .\n}"
+            },
+            "url": "{{baseUrl}}/sparql"
+          }
+        },
+        {
+          "name": "SELECT after INSERT - should return 2 results",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/sparql?query=SELECT * WHERE { ?s ?p ?o }",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sparql"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "SELECT * WHERE { ?s ?p ?o }"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE DATA",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/sparql-update"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "DELETE DATA {\n  <http://example.org/Alice> <http://example.org/knows> <http://example.org/Bob> .\n}"
+            },
+            "url": "{{baseUrl}}/sparql"
+          }
+        },
+        {
+          "name": "POST URL-encoded update",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "update",
+                  "value": "INSERT DATA { <http://example.org/X> <http://example.org/y> <http://example.org/Z> . }"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/sparql"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Graph Store Protocol",
+      "item": [
+        {
+          "name": "GET - list all named graphs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/turtle"
+              }
+            ],
+            "url": "{{baseUrl}}/rdf-graph-store"
+          }
+        },
+        {
+          "name": "HEAD non-existent graph → 404",
+          "request": {
+            "method": "HEAD",
+            "url": {
+              "raw": "{{baseUrl}}/rdf-graph-store?graph=http://example.org/graph1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rdf-graph-store"
+              ],
+              "query": [
+                {
+                  "key": "graph",
+                  "value": "http://example.org/graph1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET non-existent graph → 404",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/rdf-graph-store?graph=http://example.org/graph1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rdf-graph-store"
+              ],
+              "query": [
+                {
+                  "key": "graph",
+                  "value": "http://example.org/graph1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "PUT - create named graph",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/turtle"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "@prefix ex: <http://example.org/> .\nex:Alice ex:knows ex:Bob .\nex:Bob   ex:knows ex:Carol ."
+            },
+            "url": {
+              "raw": "{{baseUrl}}/rdf-graph-store?graph=http://example.org/graph1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rdf-graph-store"
+              ],
+              "query": [
+                {
+                  "key": "graph",
+                  "value": "http://example.org/graph1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "HEAD existing graph → 200",
+          "request": {
+            "method": "HEAD",
+            "url": {
+              "raw": "{{baseUrl}}/rdf-graph-store?graph=http://example.org/graph1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rdf-graph-store"
+              ],
+              "query": [
+                {
+                  "key": "graph",
+                  "value": "http://example.org/graph1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET graph - Accept Turtle",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/turtle"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/rdf-graph-store?graph=http://example.org/graph1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rdf-graph-store"
+              ],
+              "query": [
+                {
+                  "key": "graph",
+                  "value": "http://example.org/graph1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET graph - Accept RDF/XML",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/rdf+xml"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/rdf-graph-store?graph=http://example.org/graph1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rdf-graph-store"
+              ],
+              "query": [
+                {
+                  "key": "graph",
+                  "value": "http://example.org/graph1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST - add triples to graph",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/turtle"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "@prefix ex: <http://example.org/> .\nex:Dave ex:knows ex:Eve ."
+            },
+            "url": {
+              "raw": "{{baseUrl}}/rdf-graph-store?graph=http://example.org/graph1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rdf-graph-store"
+              ],
+              "query": [
+                {
+                  "key": "graph",
+                  "value": "http://example.org/graph1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET after POST - should contain Alice + Dave",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/turtle"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/rdf-graph-store?graph=http://example.org/graph1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rdf-graph-store"
+              ],
+              "query": [
+                {
+                  "key": "graph",
+                  "value": "http://example.org/graph1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH - INSERT triple into graph",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/sparql-update"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "INSERT DATA {\n  <http://example.org/Patched> <http://example.org/by> <http://example.org/PATCH> .\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/rdf-graph-store?graph=http://example.org/graph1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rdf-graph-store"
+              ],
+              "query": [
+                {
+                  "key": "graph",
+                  "value": "http://example.org/graph1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET after PATCH - should contain Patched",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/turtle"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/rdf-graph-store?graph=http://example.org/graph1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rdf-graph-store"
+              ],
+              "query": [
+                {
+                  "key": "graph",
+                  "value": "http://example.org/graph1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH - DELETE triple from graph",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/sparql-update"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "DELETE DATA {\n  <http://example.org/Patched> <http://example.org/by> <http://example.org/PATCH> .\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/rdf-graph-store?graph=http://example.org/graph1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rdf-graph-store"
+              ],
+              "query": [
+                {
+                  "key": "graph",
+                  "value": "http://example.org/graph1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "PATCH wrong Content-Type → 415",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/turtle"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "@prefix ex: <http://example.org/> . ex:s ex:p ex:o ."
+            },
+            "url": {
+              "raw": "{{baseUrl}}/rdf-graph-store?graph=http://example.org/graph1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rdf-graph-store"
+              ],
+              "query": [
+                {
+                  "key": "graph",
+                  "value": "http://example.org/graph1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "PUT - replace graph (Alice disappears)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/turtle"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "@prefix ex: <http://example.org/> .\nex:NewSubject ex:newPredicate ex:newObject ."
+            },
+            "url": {
+              "raw": "{{baseUrl}}/rdf-graph-store?graph=http://example.org/graph1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rdf-graph-store"
+              ],
+              "query": [
+                {
+                  "key": "graph",
+                  "value": "http://example.org/graph1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET after PUT replace - only NewSubject",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/turtle"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/rdf-graph-store?graph=http://example.org/graph1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rdf-graph-store"
+              ],
+              "query": [
+                {
+                  "key": "graph",
+                  "value": "http://example.org/graph1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET - list graphs (graph1 visible)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/turtle"
+              }
+            ],
+            "url": "{{baseUrl}}/rdf-graph-store"
+          }
+        },
+        {
+          "name": "DELETE - drop named graph",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/rdf-graph-store?graph=http://example.org/graph1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rdf-graph-store"
+              ],
+              "query": [
+                {
+                  "key": "graph",
+                  "value": "http://example.org/graph1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "HEAD after DELETE → 404",
+          "request": {
+            "method": "HEAD",
+            "url": {
+              "raw": "{{baseUrl}}/rdf-graph-store?graph=http://example.org/graph1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rdf-graph-store"
+              ],
+              "query": [
+                {
+                  "key": "graph",
+                  "value": "http://example.org/graph1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET after DELETE → 404",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/rdf-graph-store?graph=http://example.org/graph1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "rdf-graph-store"
+              ],
+              "query": [
+                {
+                  "key": "graph",
+                  "value": "http://example.org/graph1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET - list graphs (graph1 gone)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/turtle"
+              }
+            ],
+            "url": "{{baseUrl}}/rdf-graph-store"
+          }
+        }
+      ]
+    }
+  ]
+}
