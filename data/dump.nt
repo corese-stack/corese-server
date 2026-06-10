@@ -1,1 +1,8 @@
+@prefix ns1: <http://example.org/> .
+
+ns1:Bob ns1:knows ns1:Carol .
+
+ns1:Alice ns1:knows ns1:Bob .
+
+ns1:DumpTest ns1:createdAt "before-dump" .
 

@@ -8,6 +8,7 @@ import fr.inria.corese.server.http.handler.SPARQLUpdateHandler;
 import fr.inria.corese.server.http.middleware.AuthMiddleware;
 import fr.inria.corese.server.http.middleware.CorsMiddleware;
 import fr.inria.corese.server.service.GraphStoreService;
+import fr.inria.corese.server.service.ScheduledDumpService;
 import fr.inria.corese.server.service.SparqlExecutionService;
 import fr.inria.corese.server.store.CoreseTripleStoreManager;
 import fr.inria.corese.server.store.TripleStoreManager;
@@ -21,6 +22,7 @@ import java.util.Map;
 
 /**
  * Corese-Server entry point — wire-only layer.
+ *
  */
 public class ServerApplication {
 
@@ -40,8 +42,8 @@ public class ServerApplication {
 
         // Configuration
         ServerConfig config = ServerConfig.fromEnv();
-        log.info("Starting Corese-Server {} on port {} (auth={})",
-                VERSION, config.port(), config.authEnabled());
+        log.info("Starting Corese-Server {} on port {} (auth={}, dumpInterval={}s)",
+                VERSION, config.port(), config.authEnabled(), config.dumpIntervalSeconds());
 
         // Store
         TripleStoreManager store = new CoreseTripleStoreManager(config);
@@ -50,6 +52,8 @@ public class ServerApplication {
         // Services
         SparqlExecutionService sparqlService = new SparqlExecutionService(store);
         GraphStoreService graphService = new GraphStoreService(store);
+        ScheduledDumpService dumpService = new ScheduledDumpService(store, config);
+        dumpService.start();
 
         // Handlers
         SPARQLQueryHandler queryHandler = new SPARQLQueryHandler(sparqlService);
@@ -64,10 +68,7 @@ public class ServerApplication {
 
             cfg.jetty.port = config.port();
 
-            // CORS — runs before every request
             cfg.routes.before(corsMiddleware::apply);
-
-            // RBAC
             cfg.routes.beforeMatched(authMiddleware::handle);
 
             // SPARQL 1.1 Protocol / query
@@ -105,19 +106,21 @@ public class ServerApplication {
                                     "uptime", Duration.between(startTime, Instant.now()).toString(),
                                     "startedAt", startTime.toString(),
                                     "triples", store.tripleCount(),
-                                    "graphs", store.graphCount()
+                                    "graphs", store.graphCount(),
+                                    "dumps", dumpService.getDumpCount(),
+                                    "dumpInterval", config.dumpIntervalSeconds()
                             )),
                     Role.ANONYMOUS);
         });
 
-        // Shutdown hook
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            log.info("Shutdown — dumping store to {}", config.dumpPath());
+            log.info("Shutdown — stopping scheduled dump...");
+            dumpService.stop();
+            log.info("Shutdown — final dump to {}...", config.dumpPath());
             store.dumpToFile(config.dumpPath());
             log.info("Shutdown complete");
         }, "corese-shutdown"));
 
-        // Start
         app.start();
         log.info("Corese-Server ready: http://localhost:{}/sparql", config.port());
     }
@@ -139,7 +142,6 @@ public class ServerApplication {
             }
         } catch (Exception e) {
             log.debug("Could not read version.properties: {}", e.getMessage());
-
         }
         return "dev";
     }

@@ -58,8 +58,10 @@ public class AuthMiddleware {
 
     // Authorisation
     private boolean isAuthorised(Role effective, Set<? extends RouteRole> required) {
-        if (required == null || required.isEmpty() || required.contains(Role.ANONYMOUS))
-            return true;
+//        if (required == null || required.isEmpty() || required.contains(Role.ANONYMOUS))
+//            return true;
+
+        if (!config.authEnabled()) return true;
         return switch (effective) {
             case ADMIN -> true;
             case USER_W -> required.contains(Role.USER_W) || required.contains(Role.USER_R);

@@ -16,11 +16,9 @@ class CoreseTripleStoreManagerTest {
 
     @BeforeEach
     void setUp() {
-        ServerConfig config = new ServerConfig(8080, null, null, false);
+        ServerConfig config = new ServerConfig(8080, null, null, false, 0);
         store = new CoreseTripleStoreManager(config);
     }
-
-    // Initial state
 
     @Test
     @DisplayName("New store is empty")
@@ -28,8 +26,6 @@ class CoreseTripleStoreManagerTest {
         assertEquals(0, store.tripleCount());
         assertEquals(0, store.graphCount());
     }
-
-    // Query execution
 
     @Test
     @DisplayName("newQueryProcess returns non-null")
@@ -64,7 +60,6 @@ class CoreseTripleStoreManagerTest {
         }
     }
 
-    // Named graph operations
 
     @Test
     @DisplayName("getNamedGraph returns null for unknown graph")
@@ -80,8 +75,6 @@ class CoreseTripleStoreManagerTest {
         );
     }
 
-
-    // Concurrency locks
 
     @Test
     @DisplayName("readLock / readUnlock — no exception")
@@ -101,7 +94,6 @@ class CoreseTripleStoreManagerTest {
         });
     }
 
-    // loadInitialData
 
     @Test
     @DisplayName("loadInitialData — null dataPath does nothing")
@@ -113,7 +105,7 @@ class CoreseTripleStoreManagerTest {
     @Test
     @DisplayName("loadInitialData — missing file logs warning, no exception")
     void loadInitialData_missingFile_noException() {
-        ServerConfig config = new ServerConfig(8080, "/does/not/exist.ttl", null, false);
+        ServerConfig config = new ServerConfig(8080, null, null, false, 0);
         CoreseTripleStoreManager s = new CoreseTripleStoreManager(config);
         assertDoesNotThrow(s::loadInitialData);
         assertEquals(0, s.tripleCount());

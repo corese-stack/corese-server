@@ -21,7 +21,7 @@ class SPARQLQueryHandlerTest {
 
     @BeforeEach
     void setUp() {
-        ServerConfig config = new ServerConfig(8080, null, null, false);
+        ServerConfig config = new ServerConfig(8080, null, null, false, 0);
         CoreseTripleStoreManager store = new CoreseTripleStoreManager(config);
         service = new SparqlExecutionService(store);
     }

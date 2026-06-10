@@ -798,6 +798,49 @@
           }
         }
       ]
+    },
+    {
+      "name": "Scheduled Dump",
+      "item": [
+        {
+          "name": "Status - check dumps count",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/status"
+          }
+        },
+        {
+          "name": "INSERT triple before dump",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/sparql-update"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "INSERT DATA {\n  <http://example.org/DumpTest> <http://example.org/createdAt> \"before-dump\" .\n}"
+            },
+            "url": "{{baseUrl}}/sparql"
+          }
+        },
+        {
+          "name": "Status - verify triples=1 + dumpInterval",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/status"
+          }
+        },
+        {
+          "name": "Health - server still UP after dump",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/health"
+          }
+        }
+      ]
     }
   ]
 }

@@ -15,20 +15,6 @@ public record SecurityConfig(
         String audience
 ) {
 
-    /**
-     * Load security configuration from environment variables.
-     *
-     * @return a fully-initialized {@link SecurityConfig}
-     */
-    @SuppressWarnings("SameParameterValue")
-    public static SecurityConfig fromEnv() {
-        return new SecurityConfig(
-                boolEnv("CORESE_AUTH_ENABLED", false),
-                System.getenv("CORESE_OIDC_ISSUER"),
-                System.getenv("CORESE_JWKS_URI"),
-                stringEnv("CORESE_OIDC_AUDIENCE", "corese-server")
-        );
-    }
 
     /**
      * Create a Phase 1 config — auth disabled, no OIDC.
@@ -49,16 +35,4 @@ public record SecurityConfig(
                 && jwksUri != null && !jwksUri.isBlank();
     }
 
-    @SuppressWarnings("SameParameterValue")
-    private static boolean boolEnv(String key, boolean def) {
-        String v = System.getenv(key);
-        if (v == null || v.isBlank()) return def;
-        return "true".equalsIgnoreCase(v.trim());
-    }
-
-    @SuppressWarnings("SameParameterValue")
-    private static String stringEnv(String key, String def) {
-        String v = System.getenv(key);
-        return (v == null || v.isBlank()) ? def : v.trim();
-    }
 }

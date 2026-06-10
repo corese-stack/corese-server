@@ -64,7 +64,6 @@ public class SPARQLQueryHandler {
         }
 
         // Extract dataset parameters
-        // For Form 3 these come from URL query string even on a POST request
         List<String> defaultGraphUris = ctx.queryParams("default-graph-uri");
         List<String> namedGraphUris = ctx.queryParams("named-graph-uri");
 

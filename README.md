@@ -12,6 +12,7 @@ following the [SPARQL 1.1 Protocol](https://www.w3.org/TR/sparql11-protocol/) W3
 - SPARQL 1.1 Protocol compliant endpoint (`/sparql`)
 - All three query transmission forms: GET, POST URL-encoded, POST direct
 - Content negotiation: XML, JSON, CSV, TSV (SELECT/ASK) — Turtle, RDF/XML, N-Triples, JSON-LD (CONSTRUCT/DESCRIBE)
+- Graph Store HTTP Protocol (`/rdf-graph-store`) — HEAD, GET, PUT, POST, PATCH, DELETE
 - NTriples persistence — dump on shutdown, reload on startup
 - Health and status endpoints (`/health`, `/status`)
 
@@ -23,6 +24,8 @@ following the [SPARQL 1.1 Protocol](https://www.w3.org/TR/sparql11-protocol/) W3
 # Build
 ./gradlew shadowJar
 
+# Run
+java -jar build/libs/corese-server-4.6.4-app.jar
 ```
 
 The server starts at `http://localhost:8080`.
@@ -36,13 +39,13 @@ docker run -p 8080:8080 corese-server
 
 ## SPARQL Endpoint
 
-### Query — `GET /sparql`
+### Query — `/sparql`
 
 **Linux / macOS:**
 ```bash
 # Form 1 — GET
 curl "http://localhost:8080/sparql?query=SELECT+*+WHERE+{+?s+?p+?o+}"
- 
+
 # Form 1 — with content negotiation
 curl -H "Accept: application/sparql-results+json" \
      "http://localhost:8080/sparql?query=SELECT+*+WHERE+{+?s+?p+?o+}"
@@ -62,21 +65,15 @@ curl -X POST http://localhost:8080/sparql \
 ```powershell
 # Form 1 — GET
 Invoke-WebRequest "http://localhost:8080/sparql?query=SELECT+*+WHERE+{+?s+?p+?o+}"
- 
-# Form 1 — with content negotiation
-Invoke-WebRequest -Uri "http://localhost:8080/sparql?query=SELECT+*+WHERE+{+?s+?p+?o+}" `
-    -Headers @{ Accept = "application/sparql-results+json" }
- 
+
 # Form 2 — POST URL-encoded
 Invoke-WebRequest -Uri "http://localhost:8080/sparql" `
-    -Method POST `
-    -ContentType "application/x-www-form-urlencoded" `
+    -Method POST -ContentType "application/x-www-form-urlencoded" `
     -Body "query=SELECT+*+WHERE+{+?s+?p+?o+}"
  
 # Form 3 — POST direct
 Invoke-WebRequest -Uri "http://localhost:8080/sparql" `
-    -Method POST `
-    -ContentType "application/sparql-query" `
+    -Method POST -ContentType "application/sparql-query" `
     -Body "SELECT * WHERE { ?s ?p ?o }"
 ```
 
@@ -87,7 +84,7 @@ curl http://localhost:8080/health
 # → {"status":"UP","version":"4.6.4"}
 
 curl http://localhost:8080/status
-# → {"status":"UP","uptime":"PT5M","triples":0,"graphs":0,...}
+# → {"status":"UP","uptime":"PT5M","triples":0,"graphs":0,"dumps":3,"dumpInterval":300,...}
 ```
 
 ## Development
@@ -116,20 +113,21 @@ curl http://localhost:8080/status
 
 ```
 fr.inria.corese.server
-├── app/             ServerApplication.java      Entry point — wires all components
-├── config/          ServerConfig, Role,          Configuration + RBAC roles
-│                    SecurityConfig               OIDC config
+├── app/             ServerApplication.java        Entry point — wires all components
+├── config/          ServerConfig, Role,            Configuration + RBAC roles
+│                    SecurityConfig                 OIDC config (Phase 3)
 ├── http/
-│   ├── handler/     SPARQLQueryHandler           GET/POST /sparql — query
-│   │                SPARQLUpdateHandler          POST /sparql — update
-│   │                
-│   ├── middleware/  CorsMiddleware, AuthMiddleware Cross-cutting HTTP concerns
-│   └── model/       SparqlRequest, SparqlResponse Immutable data transfer objects
-├── service/         SparqlExecutionService       SPARQL business logic
-│                    
-│                    ContentNegotiator            Accept header → corese-core format
-└── store/           TripleStoreManager           Interface to corese-core
-                     CoreseTripleStoreManager     corese-core 4.6.4 implementation
+│   ├── handler/     SPARQLQueryHandler             GET/POST /sparql — query
+│   │                SPARQLUpdateHandler            POST /sparql — update
+│   │                GraphStoreHandler              HEAD/GET/PUT/POST/PATCH/DELETE /rdf-graph-store
+│   ├── middleware/  CorsMiddleware, AuthMiddleware  Cross-cutting HTTP concerns
+│   └── model/       SparqlRequest, SparqlResponse  Immutable data transfer objects
+├── service/         SparqlExecutionService         SPARQL business logic
+│                    GraphStoreService              Graph Store CRUD operations
+│                    ContentNegotiator              Accept header → corese-core format
+│                    ScheduledDumpService           Periodic NTriples dump
+└── store/           TripleStoreManager             Interface to corese-core
+                     CoreseTripleStoreManager       corese-core 4.6.4 implementation
 ```
 
 **Dependency rule:** `http/` → `service/` → `store/` → `corese-core`

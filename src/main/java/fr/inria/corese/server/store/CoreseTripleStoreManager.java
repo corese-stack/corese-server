@@ -188,7 +188,12 @@ public class CoreseTripleStoreManager implements TripleStoreManager {
 
     @Override
     public long tripleCount() {
-        return graphStore.size();
+        long count = graphStore.size();
+        for (String name : graphStore.getNames()) {
+            Graph g = graphStore.getNamedGraph(name);
+            if (g != null) count += g.size();
+        }
+        return count;
     }
 
     @Override
