@@ -197,6 +197,87 @@
           }
         },
         {
+          "name": "CONSTRUCT query - Accept Turtle",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/turtle"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sparql?query=CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sparql"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "CONSTRUCT query - Accept RDF/XML",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/rdf+xml"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sparql?query=CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sparql"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "DESCRIBE query",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/turtle"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sparql?query=DESCRIBE <http://example.org/Alice>",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sparql"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "DESCRIBE <http://example.org/Alice>"
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Malformed SPARQL → 400",
           "request": {
             "method": "GET",
@@ -304,6 +385,423 @@
               ]
             },
             "url": "{{baseUrl}}/sparql"
+          }
+        },
+        {
+          "name": "INSERT WHERE",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/sparql-update"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "INSERT { ?s <http://example.org/copy> ?o }\nWHERE { ?s <http://example.org/knows> ?o }"
+            },
+            "url": "{{baseUrl}}/sparql"
+          }
+        },
+        {
+          "name": "DELETE WHERE",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/sparql-update"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "DELETE { ?s <http://example.org/copy> ?o }\nWHERE { ?s <http://example.org/copy> ?o }"
+            },
+            "url": "{{baseUrl}}/sparql"
+          }
+        },
+        {
+          "name": "CLEAR GRAPH",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/sparql-update"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "CLEAR GRAPH <http://example.org/update-test-graph>"
+            },
+            "url": "{{baseUrl}}/sparql"
+          }
+        },
+        {
+          "name": "DROP GRAPH",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/sparql-update"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "DROP GRAPH <http://example.org/update-test-graph>"
+            },
+            "url": "{{baseUrl}}/sparql"
+          }
+        },
+        {
+          "name": "DROP SILENT GRAPH (non-existent)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/sparql-update"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "DROP SILENT GRAPH <http://example.org/does-not-exist>"
+            },
+            "url": "{{baseUrl}}/sparql"
+          }
+        },
+        {
+          "name": "LOAD remote file into graph",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/sparql-update"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "LOAD <https://www.w3.org/People/Berners-Lee/card> INTO GRAPH <http://example.org/loaded-graph>"
+            },
+            "url": "{{baseUrl}}/sparql"
+          }
+        }
+      ]
+    },
+    {
+      "name": "SPARQL Dataset",
+      "item": [
+        {
+          "name": "Setup - INSERT into graph g1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/sparql-update"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "INSERT DATA { GRAPH <http://ex.org/g1> { <http://ex.org/Alice> <http://ex.org/knows> <http://ex.org/Bob> } }"
+            },
+            "url": "{{baseUrl}}/sparql"
+          }
+        },
+        {
+          "name": "Setup - INSERT into graph g2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/sparql-update"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "INSERT DATA { GRAPH <http://ex.org/g2> { <http://ex.org/Carol> <http://ex.org/knows> <http://ex.org/Dave> } }"
+            },
+            "url": "{{baseUrl}}/sparql"
+          }
+        },
+        {
+          "name": "default-graph-uri scopes SELECT to g1 only",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/sparql?query=SELECT * WHERE { ?s ?p ?o }&default-graph-uri=http://ex.org/g1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sparql"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "SELECT * WHERE { ?s ?p ?o }"
+                },
+                {
+                  "key": "default-graph-uri",
+                  "value": "http://ex.org/g1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "named-graph-uri + GRAPH clause targets g2",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/sparql?query=SELECT * WHERE { GRAPH <http://ex.org/g2> { ?s ?p ?o } }&named-graph-uri=http://ex.org/g2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sparql"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "SELECT * WHERE { GRAPH <http://ex.org/g2> { ?s ?p ?o } }"
+                },
+                {
+                  "key": "named-graph-uri",
+                  "value": "http://ex.org/g2"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "multiple default-graph-uri merges g1+g2",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/sparql?query=SELECT * WHERE { ?s ?p ?o }&default-graph-uri=http://ex.org/g1&default-graph-uri=http://ex.org/g2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sparql"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "SELECT * WHERE { ?s ?p ?o }"
+                },
+                {
+                  "key": "default-graph-uri",
+                  "value": "http://ex.org/g1"
+                },
+                {
+                  "key": "default-graph-uri",
+                  "value": "http://ex.org/g2"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "no dataset params - queries entire store",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/sparql?query=SELECT * WHERE { GRAPH ?g { ?s ?p ?o } }",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sparql"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "SELECT * WHERE { GRAPH ?g { ?s ?p ?o } }"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "using-graph-uri scopes INSERT",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/sparql-update"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "INSERT { ?s <http://ex.org/copy> ?o } WHERE { ?s <http://ex.org/knows> ?o }"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sparql?using-graph-uri=http://ex.org/g1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sparql"
+              ],
+              "query": [
+                {
+                  "key": "using-graph-uri",
+                  "value": "http://ex.org/g1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Verify - SELECT copy (should be Alice only, from g1)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/sparql?query=SELECT * WHERE { ?s <http://ex.org/copy> ?o }",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sparql"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "SELECT * WHERE { ?s <http://ex.org/copy> ?o }"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "using-named-graph-uri + GRAPH in WHERE",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/sparql-update"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "INSERT { ?s <http://ex.org/markedFrom> <http://ex.org/g2> } WHERE { GRAPH <http://ex.org/g2> { ?s ?p ?o } }"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sparql?using-named-graph-uri=http://ex.org/g2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sparql"
+              ],
+              "query": [
+                {
+                  "key": "using-named-graph-uri",
+                  "value": "http://ex.org/g2"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "ERROR: using-graph-uri + explicit USING → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/sparql-update"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "INSERT { ?s ?p ?o } USING <http://ex.org/g1> WHERE { ?s ?p ?o }"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sparql?using-graph-uri=http://ex.org/g2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sparql"
+              ],
+              "query": [
+                {
+                  "key": "using-graph-uri",
+                  "value": "http://ex.org/g2"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "ERROR: using-graph-uri + explicit WITH → 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/sparql-update"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "WITH <http://ex.org/g1> DELETE { ?s ?p ?o } WHERE { ?s ?p ?o }"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sparql?using-graph-uri=http://ex.org/g2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sparql"
+              ],
+              "query": [
+                {
+                  "key": "using-graph-uri",
+                  "value": "http://ex.org/g2"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "using-graph-uri + INSERT DATA (no WHERE) - executes unmodified",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/sparql-update"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "INSERT DATA { <http://ex.org/NoWhereClause> <http://ex.org/p> <http://ex.org/o> }"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sparql?using-graph-uri=http://ex.org/g1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sparql"
+              ],
+              "query": [
+                {
+                  "key": "using-graph-uri",
+                  "value": "http://ex.org/g1"
+                }
+              ]
+            }
           }
         }
       ]

@@ -7,6 +7,7 @@ import fr.inria.corese.core.sparql.api.ResultFormatDef;
 import fr.inria.corese.server.http.model.SparqlRequest;
 import fr.inria.corese.server.http.model.SparqlResponse;
 import fr.inria.corese.server.store.TripleStoreManager;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,15 +49,11 @@ public class SparqlExecutionService {
         store.readLock();
         try {
             QueryProcess exec = store.newQueryProcess();
-            String queryStr = applyDataset(request);
+            String queryStr = applyQueryDataset(request);
             Mappings mappings = exec.query(queryStr);
 
-            // Resolve content-type string first
             String contentType = resolveContentType(request, mappings);
-            // Map to corese-core enum — confirmed from ResultFormat.initFormat()
             ResultFormatDef.format fmt = ContentNegotiator.toFormat(contentType);
-
-            // ResultFormat.create(Mappings, format) — confirmed in decompiled source
             ResultFormat rf = ResultFormat.create(mappings, fmt);
             String body = rf.toString();
 
@@ -64,11 +61,13 @@ public class SparqlExecutionService {
             return SparqlResponse.ok(contentType, body);
 
         } catch (Exception e) {
-            log.warn("Query error: {}", e.getMessage());
             String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
-            boolean syntax = msg.toLowerCase().contains("parse")
-                    || msg.toLowerCase().contains("syntax")
-                    || msg.toLowerCase().contains("unexpected");
+            boolean syntax = isSyntaxError(msg);
+            if (syntax) {
+                log.debug("SPARQL syntax error (400): {}", msg);
+            } else {
+                log.warn("Query error (500): {}", msg);
+            }
             return syntax
                     ? SparqlResponse.badRequest("SPARQL syntax error: %s".formatted(msg))
                     : SparqlResponse.serverError("SPARQL execution error: %s".formatted(msg));
@@ -94,17 +93,27 @@ public class SparqlExecutionService {
             );
         }
 
+        String updateStr;
+        try {
+            updateStr = applyUpdateDataset(request);
+        } catch (IllegalArgumentException e) {
+            return SparqlResponse.badRequest(e.getMessage());
+        }
+
         store.writeLock();
         try {
-            store.newQueryProcess().query(request.updateString());
+            store.newQueryProcess().query(updateStr);
             log.debug("Update OK");
             return SparqlResponse.noContent();
 
         } catch (Exception e) {
-            log.warn("Update error: {}", e.getMessage());
             String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
-            boolean syntax = msg.toLowerCase().contains("parse")
-                    || msg.toLowerCase().contains("syntax");
+            boolean syntax = isSyntaxError(msg);
+            if (syntax) {
+                log.debug("SPARQL update syntax error (400): {}", msg);
+            } else {
+                log.warn("Update error (500): {}", msg);
+            }
             return syntax
                     ? SparqlResponse.badRequest("SPARQL update syntax error: %s".formatted(msg))
                     : SparqlResponse.serverError("SPARQL update error: %s".formatted(msg));
@@ -113,30 +122,108 @@ public class SparqlExecutionService {
         }
     }
 
-    // Helpers
 
     /**
-     * prepend FROM / FROM NAMED clauses if dataset params are present.
+     * insert FROM / FROM NAMED clauses right before the WHERE
+     * keyword (valid SPARQL position), or right after the query form
+     * keyword if no WHERE is present (e.g. DESCRIBE without WHERE).
+     *
      */
-    private String applyDataset(SparqlRequest request) {
+    private String applyQueryDataset(SparqlRequest request) {
         if (!request.hasDataset()) return request.queryString();
-        StringBuilder sb = new StringBuilder();
+
+        StringBuilder clauses = new StringBuilder();
         for (String uri : request.defaultGraphUris())
-            sb.append("FROM <").append(uri).append(">\n");
+            clauses.append("FROM <").append(uri).append("> ");
         for (String uri : request.namedGraphUris())
-            sb.append("FROM NAMED <").append(uri).append(">\n");
+            clauses.append("FROM NAMED <").append(uri).append("> ");
+
         String query = request.queryString().trim();
-        int pos = findQueryKeyword(query);
-        return "%s\n%s%s".formatted(query.substring(0, pos), sb, query.substring(pos));
+        String upper = query.toUpperCase();
+
+        int wherePos = indexOfKeyword(upper);
+        if (wherePos != -1) {
+            return query.substring(0, wherePos) + clauses + query.substring(wherePos);
+        }
+        return query + " " + clauses;
     }
 
-    private int findQueryKeyword(String query) {
-        String upper = query.toUpperCase();
-        for (String kw : new String[]{"SELECT", "ASK", "CONSTRUCT", "DESCRIBE"}) {
-            int k = upper.indexOf(kw);
-            if (k != -1) return k;
+    /**
+     * insert USING / USING NAMED clauses right before the WHERE
+     * keyword of a DELETE/INSERT...WHERE operation.
+     *
+     *
+     * @throws IllegalArgumentException if the request already contains
+     *         USING, USING NAMED, or WITH (§2.2.3 conflict)
+     */
+    private String applyUpdateDataset(SparqlRequest request) {
+        boolean hasUsingParams = !request.usingGraphUris().isEmpty()
+                || !request.usingNamedGraphUris().isEmpty();
+
+        if (!hasUsingParams) {
+            return request.updateString();
         }
-        return 0;
+
+        String update = request.updateString().trim();
+        String upper = getString(update);
+
+        int wherePos = indexOfKeyword(upper);
+        if (wherePos == -1) {
+            return update;
+        }
+
+        StringBuilder clauses = new StringBuilder();
+        for (String uri : request.usingGraphUris())
+            clauses.append("USING <").append(uri).append("> ");
+        for (String uri : request.usingNamedGraphUris())
+            clauses.append("USING NAMED <").append(uri).append("> ");
+
+        return update.substring(0, wherePos) + clauses + update.substring(wherePos);
+    }
+
+    @NotNull
+    private String getString(String update) {
+        String upper  = update.toUpperCase();
+
+        if (containsUsingClause(upper) || containsWithClause(upper)) {
+            throw new IllegalArgumentException(
+                    "Bad Request: using-graph-uri/using-named-graph-uri protocol parameters " +
+                            "cannot be combined with an update request that already contains a " +
+                            "USING, USING NAMED, or WITH clause. " +
+                            "See https://www.w3.org/TR/sparql11-protocol/#update-operation"
+            );
+        }
+        return upper;
+    }
+
+    private boolean containsUsingClause(String upperUpdate) {
+        return upperUpdate.matches("(?s).*\\bUSING\\b.*");
+    }
+
+    private boolean containsWithClause(String upperUpdate) {
+        return upperUpdate.matches("(?s).*\\bWITH\\s+<.*");
+    }
+
+    /**
+     * Find the index of a SPARQL keyword as a whole word (not a substring
+     * of another identifier), case-insensitively, in the uppercased input.
+     *
+     * @param upper the query/update string already uppercased
+     * @return index of the keyword, or -1 if not found
+     */
+    private int indexOfKeyword(String upper) {
+        var matcher = java.util.regex.Pattern
+                .compile("\\b" + "WHERE" + "\\b")
+                .matcher(upper);
+        return matcher.find() ? matcher.start() : -1;
+    }
+
+    private boolean isSyntaxError(String msg) {
+        String lower = msg.toLowerCase();
+        return lower.contains("parse")
+                || lower.contains("syntax")
+                || lower.contains("unexpected")
+                || lower.contains("encountered");
     }
 
     /**
